@@ -1,5 +1,5 @@
 🎓 Student Academic Insight System
-🔹 Purpose (In Short)
+🔹 Purpose 
 
 This project is a student-focused academic insight system.
 
