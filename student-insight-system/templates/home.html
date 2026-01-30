@@ -1,18 +1,81 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Student Academic Insight System</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <meta charset="UTF-8">
+    <title>Student Academic Insight</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <h1>Student Academic Insight & Burnout Prediction System</h1>
 
-    <p>
-        This system analyzes student academic performance beyond CGPA
-        and predicts burnout and learning overload using machine learning.
-    </p>
+<!-- NAVBAR -->
+<nav class="top-nav">
+    <div class="nav-logo">Student Insight</div>
 
-    <a href="/login">Login</a> |
-    <a href="/register">Register</a>
+    <ul class="nav-links">
+        <li><a href="/">Home</a></li>
+        <li><a href="{{ url_for('auth.login') }}">Login</a></li>
+        <li><a href="{{ url_for('auth.register') }}">Sign Up</a>li>
+    </ul>
+</nav>
+
+
+<!-- HERO -->
+<section class="hero">
+    <div class="hero-content">
+        <span class="tag">Academic Analytics Platform</span>
+
+        <h1>
+            Student Academic <br>
+            <span>Insight System</span>
+        </h1>
+
+        <p>
+            Predict burnout, enhance performance, and support students
+            using machine learning and data-driven insights.
+        </p>
+
+        <div class="hero-buttons">
+            <a href="/register" class="btn-primary">Get Started</a>
+            <a href="/login" class="btn-secondary">Login</a>
+        </div>
+    </div>
+
+    <div class="hero-image">
+        <img src="{{ url_for('static', filename='student.png') }}" alt="Student">
+    </div>
+</section>
+<script>
+let targetX = 0;
+let targetY = 0;
+let currentX = 0;
+let currentY = 0;
+
+const strength = 1.00;   // smooth pull strength
+const influence = 1.00; // how much the cursor affects the grid
+
+document.addEventListener("mousemove", (e) => {
+    const xRatio = e.clientX / window.innerWidth - 0.5;
+    const yRatio = e.clientY / window.innerHeight - 0.5;
+
+    // ✅ SAME direction as cursor (NOT inverted)
+    targetX = xRatio * influence * 100;
+    targetY = yRatio * influence * 100;
+});
+
+function animate() {
+    currentX += (targetX - currentX) * strength;
+    currentY += (targetY - currentY) * strength;
+
+    document.body.style.backgroundPosition =
+        `${currentX}px ${currentY}px`;
+
+    requestAnimationFrame(animate);
+}
+
+animate();
+</script>
 </body>
 </html>

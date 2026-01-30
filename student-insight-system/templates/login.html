@@ -66,11 +66,7 @@
     </style>
 </head>
 <body>
-
-    <a href="/" class="home-corner-btn">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="white"><path d="M8 3.293l6 6V13.5a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5V9.293l6-6Z"/></svg>
-        Home
-    </a>
+<a href="{{ url_for('home') }}" class="home-corner-btn">Home</a>
 
     <button type="button" class="btn btn-primary" style="width:250px; margin-top: 100px; display: block; margin-left: auto; margin-right: auto;" data-toggle="modal" data-target="#portalModal">
         Open Portal
