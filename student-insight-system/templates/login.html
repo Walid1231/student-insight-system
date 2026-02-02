@@ -1,201 +1,291 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Insight System | Portal</title>
+    <title>Login | Student Insight</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
-    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
-        /* 1. RESTORED BACKGROUND */
+        :root {
+            --primary-navy: #002D62;
+            --accent-gold: #D4AF37;
+        }
+
         body {
+            font-family: 'Inter', sans-serif;
             display: flex;
             justify-content: center;
-            margin-top: 150px;
-            background-color: #f8f9fa;
-            background-image: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"%3E%3Cg fill-rule="evenodd"%3E%3Cg fill="%239C92AC" fill-opacity="0.4"%3E%3Cpath opacity=".5" d="M96 95h4v1h-4v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9zm-1 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-9-10h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm9-10v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-9-10h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm9-10v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-9-10h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm9-10v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-9-10h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm9-10v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-9-10h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm9-10v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-9-10h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9z"/%3E%3Cpath d="M6 5V0H5v5H0v1h5v94h1V6h94V5H6z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');
+            align-items: center;
+            min-height: 100vh;
+            background: #f4f6f9;
+            margin: 0;
+            overflow: hidden;
         }
 
-        /* 2. RESTORED HOME BUTTON */
-        .home-corner-btn {
-            position: fixed; top: 25px; right: 25px; display: flex; align-items: center; gap: 8px;
-            padding: 8px 18px; background: linear-gradient(to right, #f1da36 0%, #fca86c 99%);
-            color: white !important; text-decoration: none !important; border-radius: 50px;
-            font-family: 'PT Sans', sans-serif; font-size: 0.85rem; font-weight: bold;
-            letter-spacing: 1px; text-transform: uppercase; box-shadow: 0 4px 15px rgba(252, 168, 108, 0.4);
-            z-index: 1051; transition: 0.3s;
-        }
-        .home-corner-btn:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(252, 168, 108, 0.6); }
-
-        /* 3. MODAL STYLING */
-        .modal-content { border-radius: 4rem; width: 140%; margin-left: -20%; border: none; overflow: hidden; }
-        .modal-body { display: flex; padding: 0; min-height: 550px; position: relative; }
-
-        .column { padding: 60px; transition: all 0.4s ease; }
-        #main { flex: 100%; display: flex; flex-direction: column; justify-content: center; background: white; }
-        #secondary { 
-            display: none; flex: 35%; background-color: #F9BC35; 
-            text-align: center; color: white; flex-direction: column; justify-content: center;
+        /* CANVAS BACKGROUND */
+        #particle-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
         }
 
-        #modal-divider { 
-            display: none; position: absolute; left: 63.5%; top: 0; height: 100%; z-index: 10; 
+        .auth-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            padding: 50px 40px;
+            border-radius: 20px;
+            box-shadow: 0 15px 40px rgba(0, 45, 98, 0.15);
+            width: 100%;
+            max-width: 420px;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            z-index: 10;
         }
 
-        /* 4. CHOICE CARDS */
-        .role-container { display: flex; gap: 25px; justify-content: center; margin-top: 30px; }
-        .role-card {
-            flex: 1; padding: 40px 20px; border: 2px solid #f1da36; border-radius: 2rem;
-            cursor: pointer; transition: 0.3s; background: white; text-align: center;
+        .auth-logo {
+            text-align: center;
+            font-size: 26px;
+            font-weight: 800;
+            color: var(--primary-navy);
+            margin-bottom: 30px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
-        .role-card:hover { transform: translateY(-10px); border-color: #fca86c; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
-        .role-card h4 { text-transform: uppercase; font-size: 1.2rem; margin-top: 15px; color: #444; }
 
-        /* 5. BUTTONS & FORMS */
-        .btn-primary { 
-            background: linear-gradient(to right, #f1da36 0%,#fca86c 99%); border: none; 
-            text-transform: uppercase; letter-spacing: 2px; font-weight: bold; padding: 12px; border-radius: 5px;
+        .btn-primary {
+            background: var(--primary-navy);
+            border: none;
+            font-weight: 600;
+            padding: 14px;
+            border-radius: 8px;
+            width: 100%;
+            color: white;
+            margin-top: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: 0.3s;
         }
-        .btn-outline-white { 
-            border: 2px solid white; color: white; background: transparent; 
-            border-radius: 50px; padding: 8px 30px; margin-top: 20px; font-weight: bold;
+
+        .btn-primary:hover {
+            background: #004080;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 45, 98, 0.2);
         }
-        .btn-outline-white:hover { background: white; color: #F9BC35; }
-        
-        h1 { font-weight: 800; letter-spacing: -1px; }
+
+        .form-control {
+            border-radius: 8px;
+            padding: 12px;
+            height: auto;
+            border: 1px solid #ddd;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-navy);
+            box-shadow: 0 0 0 0.2rem rgba(0, 45, 98, 0.15);
+        }
+
+        .auth-footer {
+            text-align: center;
+            margin-top: 25px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .auth-footer a {
+            color: var(--primary-navy);
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        label {
+            font-weight: 600;
+            font-size: 13px;
+            color: #444;
+            text-transform: uppercase;
+        }
+
+        .error-msg {
+            color: #dc3545;
+            font-size: 14px;
+            text-align: center;
+            margin-bottom: 20px;
+            display: none;
+            background: rgba(220, 53, 69, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+        }
     </style>
 </head>
+
 <body>
 
-    <a href="/" class="home-corner-btn">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="white"><path d="M8 3.293l6 6V13.5a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5V9.293l6-6Z"/></svg>
-        Home
-    </a>
+    <canvas id="particle-canvas"></canvas>
 
-    <button type="button" class="btn btn-primary" style="width:250px; margin-top: 100px; display: block; margin-left: auto; margin-right: auto;" data-toggle="modal" data-target="#portalModal">
-        Open Portal
-    </button>
+    <div class="auth-card">
+        <div class="auth-logo">Student Insight</div>
 
-    <div class="modal fade" id="portalModal" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog modal-lg" role="document">
-            <div class="modal-content">
-                <div class="modal-body">
-                    
-                    <div class="column" id="main">
-                        
-                        <div id="role-view">
-                            <h1 class="text-center">Who are you?</h1>
-                            <p class="text-center text-muted">Please select your role to continue</p>
-                            <div class="role-container">
-                                <div class="role-card" onclick="startPortal('student')">
-                                    <div style="font-size: 3.5rem;">🎓</div>
-                                    <h4>Student</h4>
-                                </div>
-                                <div class="role-card" onclick="startPortal('teacher')">
-                                    <div style="font-size: 3.5rem;">👨‍🏫</div>
-                                    <h4>Teacher</h4>
-                                </div>
-                            </div>
-                        </div>
+        <div class="error-msg" id="errorMsg"></div>
 
-                        <div id="login-view" style="display: none;">
-                            <h1 id="login-title">LOGIN</h1>
-                            <p class="mb-4">Enter your credentials to access your dashboard.</p>
-                            <form>
-                                <div class="form-group"><label>Email Address</label><input type="email" class="form-control" placeholder="name@example.com"></div>
-                                <div class="form-group"><label>Password</label><input type="password" class="form-control" placeholder="••••••••"></div>
-                                <button type="submit" class="btn btn-primary btn-block">Sign In</button>
-                            </form>
-                        </div>
-
-                        <div id="signup-view" style="display: none;">
-                            <h1 id="signup-title">SIGN UP</h1>
-                            <p class="mb-4">Create your account to get started.</p>
-                            <form>
-                                <div class="form-group"><label>Full Name</label><input type="text" class="form-control" placeholder="John Doe"></div>
-                                <div class="form-group"><label>Email Address</label><input type="email" class="form-control" placeholder="name@example.com"></div>
-                                <div class="form-group"><label>Create Password</label><input type="password" class="form-control" placeholder="••••••••"></div>
-                                <button type="submit" class="btn btn-primary btn-block">Create Account</button>
-                            </form>
-                        </div>
-                    </div>
-
-                    <div id="modal-divider">
-                        <svg width="67px" height="578px" viewBox="0 0 67 578" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M11.3847656,-5.68434189e-14 C-7.44726562,36.7213542 5.14322917,126.757812 49.15625,270.109375 C70.9827986,341.199016 54.8877465,443.829224 0.87109375,578 L67,578 L67,-5.68434189e-14 L11.3847656,-5.68434189e-14 Z" fill="#F9BC35"></path>
-                        </svg>
-                    </div>
-
-                    <div class="column" id="secondary">
-                        <div id="side-content-login">
-                            <h2>New Here?</h2>
-                            <p>Sign up and discover great possibilities for your education!</p>
-                            <button class="btn btn-outline-white" onclick="switchTo('signup')">Sign Up</button>
-                        </div>
-                        <div id="side-content-signup" style="display: none;">
-                            <h2>Welcome Back!</h2>
-                            <p>To keep connected with us please login with your personal info</p>
-                            <button class="btn btn-outline-white" onclick="switchTo('login')">Login</button>
-                        </div>
-                    </div>
-
-                </div>
+        <form id="loginForm">
+            <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" id="email" class="form-control" placeholder="name@example.com" required>
             </div>
+
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="password" class="form-control" placeholder="••••••••">
+            </div>
+
+            <div class="form-group">
+                <label>Login As</label>
+                <select id="role" class="form-control">
+                    <option value="student">Student</option>
+                    <option value="teacher">Teacher</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Sign In</button>
+        </form>
+
+        <div class="auth-footer">
+            New here? <a href="{{ url_for('auth.register') }}">Create an account</a>
         </div>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
-
+    <!-- Script to handle JSON response -->
     <script>
-        let currentRole = '';
+        document.getElementById('loginForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const role = document.getElementById('role').value;
+            const errorDiv = document.getElementById('errorMsg');
 
-        function startPortal(role) {
-            currentRole = role;
-            
-            // 1. Hide selection screen
-            document.getElementById('role-view').style.display = 'none';
-            
-            // 2. Expand layout
-            document.getElementById('main').style.flex = '65%';
-            document.getElementById('secondary').style.display = 'flex';
-            document.getElementById('modal-divider').style.display = 'block';
-            
-            // 3. Set titles and show default login
-            switchTo('login');
+            try {
+                const formData = new FormData();
+                formData.append('email', email);
+                formData.append('password', password);
+                formData.append('role', role);
+
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Backend sets cookies.
+                    if (data.role === 'student') {
+                        window.location.href = '/student/dashboard';
+                    } else {
+                        window.location.href = '/teacher/dashboard';
+                    }
+                } else {
+                    errorDiv.innerText = "Login failed: " + (data.msg || "Unknown error");
+                    errorDiv.style.display = 'block';
+                }
+            } catch (err) {
+                console.error(err);
+                errorDiv.innerText = "An error occurred.";
+                errorDiv.style.display = 'block';
+            }
+        });
+
+        // Background Particle Script (Shared)
+        const canvas = document.getElementById('particle-canvas');
+        const ctx = canvas.getContext('2d');
+
+        let width, height;
+        let particles = [];
+
+        const particleCount = 50;
+        const connectionDistance = 150;
+        const mouseDistance = 200;
+
+        let mouse = { x: null, y: null };
+
+        window.addEventListener('mousemove', (e) => {
+            mouse.x = e.x;
+            mouse.y = e.y;
+        });
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
         }
+        window.addEventListener('resize', resize);
+        resize();
 
-        function switchTo(view) {
-            if(view === 'signup') {
-                // Forms
-                document.getElementById('login-view').style.display = 'none';
-                document.getElementById('signup-view').style.display = 'block';
-                document.getElementById('signup-title').innerText = currentRole.toUpperCase() + " SIGN UP";
-                
-                // Sidebar
-                document.getElementById('side-content-login').style.display = 'none';
-                document.getElementById('side-content-signup').style.display = 'block';
-            } else {
-                // Forms
-                document.getElementById('login-view').style.display = 'block';
-                document.getElementById('signup-view').style.display = 'none';
-                document.getElementById('login-title').innerText = currentRole.toUpperCase() + " LOGIN";
-                
-                // Sidebar
-                document.getElementById('side-content-login').style.display = 'block';
-                document.getElementById('side-content-signup').style.display = 'none';
+        class Particle {
+            constructor() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height;
+                this.vx = (Math.random() - 0.5) * 0.5;
+                this.vy = (Math.random() - 0.5) * 0.5;
+                this.size = Math.random() * 2 + 1;
+                this.color = '#002D62';
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                if (this.x < 0 || this.x > width) this.vx *= -1;
+                if (this.y < 0 || this.y > height) this.vy *= -1;
+            }
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.globalAlpha = 0.4;
+                ctx.fill();
             }
         }
 
-        // RESET ON CLOSE
-        $('#portalModal').on('hidden.bs.modal', function () {
-            document.getElementById('role-view').style.display = 'block';
-            document.getElementById('login-view').style.display = 'none';
-            document.getElementById('signup-view').style.display = 'none';
-            document.getElementById('secondary').style.display = 'none';
-            document.getElementById('modal-divider').style.display = 'none';
-            document.getElementById('main').style.flex = '100%';
-        });
+        for (let i = 0; i < particleCount; i++) { particles.push(new Particle()); }
+
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+            particles.forEach((p, index) => {
+                p.update();
+                p.draw();
+                for (let j = index; j < particles.length; j++) {
+                    const p2 = particles[j];
+                    const dist = Math.hypot(p.x - p2.x, p.y - p2.y);
+                    if (dist < connectionDistance) {
+                        ctx.beginPath();
+                        ctx.strokeStyle = '#002D62';
+                        ctx.lineWidth = 0.5;
+                        ctx.globalAlpha = 1 - (dist / connectionDistance);
+                        ctx.moveTo(p.x, p.y);
+                        ctx.lineTo(p2.x, p2.y);
+                        ctx.stroke();
+                    }
+                }
+                if (mouse.x != null) {
+                    const dist = Math.hypot(p.x - mouse.x, p.y - mouse.y);
+                    if (dist < mouseDistance) {
+                        ctx.beginPath();
+                        ctx.strokeStyle = '#D4AF37'; // Gold
+                        ctx.lineWidth = 0.8;
+                        ctx.globalAlpha = 1 - (dist / mouseDistance);
+                        ctx.moveTo(p.x, p.y);
+                        ctx.lineTo(mouse.x, mouse.y);
+                        ctx.stroke();
+                    }
+                }
+            });
+            requestAnimationFrame(animate);
+        }
+        animate();
     </script>
+
 </body>
+
 </html>
