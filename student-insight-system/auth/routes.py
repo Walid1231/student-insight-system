@@ -1,5 +1,5 @@
-from flask import Blueprint, render_template, request, redirect, url_for, jsonify
-from flask_jwt_extended import create_access_token
+from flask import Blueprint, render_template, request, redirect, url_for, jsonify, make_response
+from flask_jwt_extended import create_access_token, set_access_cookies
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -10,9 +10,10 @@ def register():
         email = request.form.get("email")
         role = request.form.get("role")
 
-        # DB save will come later
+        db.session.add(new_user)
+        db.session.commit()
 
-        return redirect(url_for("auth.login"))
+        return jsonify({"msg": "Registration successful", "email": email})
 
     return render_template("register.html")
 
@@ -21,15 +22,15 @@ def register():
 def login():
     if request.method == "POST":
         email = request.form.get("email")
-
-        # TEMP role (later from DB)
-        role = "student" if "student" in email else "teacher"
+        role = request.form.get("role")  # Use role from form
 
         access_token = create_access_token(
             identity=email,
             additional_claims={"role": role}
         )
 
-        return jsonify(access_token=access_token, role=role)
+        resp = jsonify({"msg": "Login successful", "role": role})
+        set_access_cookies(resp, access_token)
+        return resp
 
-    return render_template("login.html")
+    return render_template("register.html")
