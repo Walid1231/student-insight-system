@@ -1,4 +1,7 @@
-import sqlite3
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 import app
 from models import db, StudentProfile, AcademicMetric, StudentSkill, StudentCourse, CareerInterest, AnalyticsResult
 from werkzeug.security import generate_password_hash
