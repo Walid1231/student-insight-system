@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign Up | Student Insight</title>
+    <title>Authentication | Student Insight</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
@@ -15,17 +15,23 @@
             align-items: center;
             min-height: 100vh;
             background-color: #f8f9fa;
-            background-image: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"%3E%3Cg fill-rule="evenodd"%3E%3Cg fill="%239C92AC" fill-opacity="0.1"%3E%3Cpath opacity=".5" d="M96 95h4v1h-4v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9zm-1 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-9-10h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm9-10v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-9-10h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm9-10v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-9-10h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9z"/%3E%3Cpath d="M6 5V0H5v5H0v1h5v94h1V6h94V5H6z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');
+            /* Grid Pattern Background */
+            background-image: linear-gradient(#e1e1e1 1px, transparent 1px),
+                linear-gradient(90deg, #e1e1e1 1px, transparent 1px);
+            background-size: 40px 40px;
+            margin: 0;
         }
 
         .auth-card {
             background: white;
             padding: 40px;
             border-radius: 20px;
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.05);
             width: 100%;
             max-width: 450px;
-            border: 1px solid rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(0, 0, 0, 0.02);
+            position: relative;
+            overflow: hidden;
         }
 
         .auth-logo {
@@ -44,7 +50,10 @@
             border-radius: 50px;
             width: 100%;
             color: white;
-            margin-top: 10px;
+            margin-top: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: 0.3s;
         }
 
         .btn-primary:hover {
@@ -57,11 +66,18 @@
             border-radius: 10px;
             padding: 12px;
             background: #fdfdfd;
+            border: 1px solid #eee;
+            margin-bottom: 5px;
+        }
+
+        .form-control:focus {
+            box-shadow: none;
+            border-color: #fca86c;
         }
 
         .auth-footer {
             text-align: center;
-            margin-top: 20px;
+            margin-top: 25px;
             font-size: 14px;
             color: #666;
         }
@@ -70,6 +86,46 @@
             color: #fca86c;
             font-weight: 600;
             text-decoration: none;
+            cursor: pointer;
+        }
+
+        .form-section {
+            display: none;
+            animation: fadeIn 0.4s ease-in-out;
+        }
+
+        .form-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        label {
+            font-weight: 500;
+            font-size: 13px;
+            color: #555;
+            margin-bottom: 5px;
+        }
+
+        .error-msg {
+            color: #dc3545;
+            font-size: 13px;
+            text-align: center;
+            margin-bottom: 15px;
+            display: none;
+            padding: 8px;
+            background: rgba(220, 53, 69, 0.1);
+            border-radius: 8px;
         }
     </style>
 </head>
@@ -77,40 +133,159 @@
 <body>
 
     <div class="auth-card">
-        <div class="auth-logo">Create Account</div>
+        <div class="auth-logo" id="pageTitle">Create Account</div>
+        <div class="error-msg" id="errorMsg"></div>
 
-        <form method="POST">
-            <div class="form-group">
-                <label>Full Name</label>
-                <input type="text" name="name" class="form-control" placeholder="John Doe" required>
+        <!-- REGISTRATION FORM -->
+        <div id="registerSection" class="form-section active">
+            <form id="registerForm">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="r-name" class="form-control" placeholder="John Doe" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" id="r-email" class="form-control" placeholder="name@example.com" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="r-pass" class="form-control" placeholder="••••••••" required>
+                </div>
+
+                <div class="form-group">
+                    <label>I am a:</label>
+                    <select id="r-role" class="form-control" required>
+                        <option value="student">Student</option>
+                        <option value="teacher">Teacher</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Sign Up</button>
+            </form>
+
+            <div class="auth-footer">
+                Already have an account? <a onclick="showLogin()">Login</a>
             </div>
+        </div>
 
-            <div class="form-group">
-                <label>Email Address</label>
-                <input type="email" name="email" class="form-control" placeholder="name@example.com" required>
+        <!-- LOGIN FORM -->
+        <div id="loginSection" class="form-section">
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" id="l-email" class="form-control" placeholder="name@example.com" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="l-pass" class="form-control" placeholder="••••••••" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Login As</label>
+                    <select id="l-role" class="form-control">
+                        <option value="student">Student</option>
+                        <option value="teacher">Teacher</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Sign In</button>
+            </form>
+
+            <div class="auth-footer">
+                New here? <a onclick="showRegister()">Create an account</a>
             </div>
-
-            <div class="form-group">
-                <label>Password</label>
-                <input type="password" name="password" class="form-control" placeholder="••••••••" required>
-            </div>
-
-            <div class="form-group">
-                <label>I am a:</label>
-                <select name="role" class="form-control" required>
-                    <option value="student">Student</option>
-                    <option value="teacher">Teacher</option>
-                </select>
-            </div>
-
-            <button type="submit" class="btn btn-primary">Sign Up</button>
-        </form>
-
-        <div class="auth-footer">
-            Already have an account? <a href="{{ url_for('auth.login') }}">Login</a>
         </div>
     </div>
 
+    <script>
+        const registerSection = document.getElementById('registerSection');
+        const loginSection = document.getElementById('loginSection');
+        const pageTitle = document.getElementById('pageTitle');
+        const errorMsg = document.getElementById('errorMsg');
+
+        function showLogin() {
+            registerSection.classList.remove('active');
+            loginSection.classList.add('active');
+            pageTitle.innerText = "Welcome Back";
+            errorMsg.style.display = 'none';
+        }
+
+        function showRegister() {
+            loginSection.classList.remove('active');
+            registerSection.classList.add('active');
+            pageTitle.innerText = "Create Account";
+            errorMsg.style.display = 'none';
+        }
+
+        // Handle Registration
+        document.getElementById('registerForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const formData = new FormData();
+            formData.append('name', document.getElementById('r-name').value);
+            formData.append('email', document.getElementById('r-email').value);
+            formData.append('password', document.getElementById('r-pass').value);
+            formData.append('role', document.getElementById('r-role').value);
+
+            try {
+                const response = await fetch('/register', { method: 'POST', body: formData });
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Auto-fill login email
+                    document.getElementById('l-email').value = document.getElementById('r-email').value;
+                    showLogin();
+                    // Optionally show success message
+                    errorMsg.style.color = '#28a745';
+                    errorMsg.style.background = 'rgba(40, 167, 69, 0.1)';
+                    errorMsg.innerText = "Registration successful! Please login.";
+                    errorMsg.style.display = 'block';
+                } else {
+                    showError(data.msg || "Registration failed");
+                }
+            } catch (err) {
+                showError("An error occurred.");
+            }
+        });
+
+        // Handle Login
+        document.getElementById('loginForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            console.log("Login submitted");
+            const formData = new FormData();
+            formData.append('email', document.getElementById('l-email').value);
+            formData.append('password', document.getElementById('l-pass').value);
+            formData.append('role', document.getElementById('l-role').value);
+
+            try {
+                const response = await fetch('/login', { method: 'POST', body: formData });
+                const data = await response.json();
+
+                if (response.ok) {
+                    window.location.href = data.role === 'student' ? '/student/dashboard' : '/teacher/dashboard';
+                } else {
+                    showError(data.msg || "Login failed");
+                }
+            } catch (err) {
+                console.error(err);
+                showError("An error occurred.");
+            }
+        });
+
+        function showError(msg) {
+            errorMsg.style.color = '#dc3545';
+            errorMsg.style.background = 'rgba(220, 53, 69, 0.1)';
+            errorMsg.innerText = msg;
+            errorMsg.style.display = 'block';
+        }
+
+        // Use URL hash to switch views if needed
+        if (window.location.hash === '#login') {
+            showLogin();
+        }
+    </script>
 </body>
 
 </html>
