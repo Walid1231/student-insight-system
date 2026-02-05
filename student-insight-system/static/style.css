@@ -1,6 +1,4 @@
-/* ===============================
-   1. VARIABLES & RESET
-================================ */
+
 :root {
     --primary-yellow: #FFD54F;
     --hover-yellow: #FFCA28;
@@ -17,7 +15,7 @@
 }
 
 body {
-    font-family: 'Poppins', sans-serif;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
     background-color: #f0f2f5;
     background-image:
     linear-gradient(rgba(0,0,0,0.15) 2px, transparent 8px),
@@ -30,9 +28,7 @@ body {
 }
 
 
-/* ===============================
-   2. NAVBAR
-================================ */
+
 .top-nav {
     max-width: 1200px;
     margin: 20px auto;
@@ -116,9 +112,6 @@ body {
     pointer-events: auto;
 }
 
-/* ===============================
-   3. HERO SECTION
-================================ */
 .hero {
     max-width: 1200px;
     margin: 80px auto;
