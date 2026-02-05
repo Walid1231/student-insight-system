@@ -1,4 +1,8 @@
 import google.generativeai as genai
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 from config import Config
 
 genai.configure(api_key=Config.GEMINI_API_KEY)
