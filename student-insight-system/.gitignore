@@ -2,3 +2,5 @@
 student_insight.db
 __pycache__/
 venv/
+*.exe
+*.msi
