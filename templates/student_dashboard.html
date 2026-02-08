@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Student Dashboard | Student Insight</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Shared Sidebar CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
+    <!-- Global CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/global.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body class="preload">
+
+    {% set active_page = 'legacy' %}
+    {% include 'components/sidebar.html' %}
+
+    <main class="main-content">
+        <div class="dashboard-container">
+
+            <div class="welcome-header">
+                <h1>Welcome{% if student %}, {{ student.full_name }}{% endif %}!</h1>
+                <p>Here is your dashboard overview.</p>
+            </div>
+
+            <div class="analytics-grid">
+                <!-- Stats Cards -->
+                <div class="stat-card span-4">
+                    <div class="stat-header">
+                        <div class="stat-icon">
+                            <i class="fas fa-graduation-cap"></i>
+                        </div>
+                    </div>
+                    <div class="stat-value">{% if student and student.cgpa %}{{ student.cgpa }}{% else %}--{% endif %}
+                    </div>
+                    <div class="stat-label">CGPA</div>
+                </div>
+
+                <div class="stat-card span-4">
+                    <div class="stat-header">
+                        <div class="stat-icon">
+                            <i class="fas fa-university"></i>
+                        </div>
+                    </div>
+                    <div class="stat-value">{% if student and student.university %}{{ student.university[:15] }}{% else
+                        %}--{% endif %}</div>
+                    <div class="stat-label">University</div>
+                </div>
+
+                <div class="stat-card span-4">
+                    <div class="stat-header">
+                        <div class="stat-icon">
+                            <i class="fas fa-book"></i>
+                        </div>
+                    </div>
+                    <div class="stat-value">{% if student and student.department %}{{ student.department[:15] }}{% else
+                        %}--{% endif %}</div>
+                    <div class="stat-label">Department</div>
+                </div>
+
+                <!-- Chart Card -->
+                <div class="stat-card span-8">
+                    <div class="card-header">
+                        <div class="card-title"><i class="fas fa-chart-line"></i> Performance Overview</div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="performanceChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Info Card -->
+                <div class="stat-card span-4">
+                    <div class="card-header">
+                        <div class="card-title"><i class="fas fa-info-circle"></i> Quick Info</div>
+                    </div>
+                    <div class="info-grid">
+                        {% if student %}
+                        <div class="info-group">
+                            <div class="info-label">Email</div>
+                            <div class="info-value">{{ student.email }}</div>
+                        </div>
+                        {% if student.current_year %}
+                        <div class="info-group">
+                            <div class="info-label">Year</div>
+                            <div class="info-value">{{ student.current_year }}</div>
+                        </div>
+                        {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upgrade Notice -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><i class="fas fa-rocket"></i> Try the New Dashboard</div>
+                </div>
+                <p style="margin-bottom: 20px; color: var(--text-muted);">
+                    Experience our enhanced dashboard with advanced analytics, career insights, and personalized
+                    recommendations.
+                </p>
+                <a href="/student/dashboard/v2" class="btn-action btn-save">
+                    <i class="fas fa-arrow-right"></i> Go to Dashboard V2
+                </a>
+            </div>
+
+        </div>
+
+        <script>
+      p            rmance chart
+            const            ocument.getElementById('performanceChart');
+            if (ctx) {
+                new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                        labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                        dataset                                          label: 'Performance',
+                                data: [65, 70, 75, 80],
+                                         lor: '#002D62',
+                                         dColor: 'rgba(0, 45, 98,                                            tension: 0.4
+                                                   },
+                                 {
+                                responsive: true,
+                              intainAspectRatio: false,
+                        plugins: {
+                                legend: {
+                                di                
+                                                                                                      
+                                                                                Zero: true,
+                                    max: 100
+                                }
+                                                  }
+                });
+            }
+        </script>
+    </main>
+</body>
+
+</html>

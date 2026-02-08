@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Student Growth Dashboard | Insight System</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Using the same fonts and Chart.js as the original -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Shared Sidebar CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
+    <!-- Global CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/global.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body class="preload">
+
+    {% set active_page = 'dashboard' %}
+    {% include 'components/sidebar.html' %}
+
+    <main class="main-content">
+        <div class="dashboard-container">
+
+            <div class="welcome-header">
+                <h1>Welcome, {{ data.name }}!</h1>
+                <p>Here is your comprehensive growth analysis for this week.</p>
+            </div>
+
+            <div class="grid">
+
+                <!-- A. PROFILE SNAPSHOT -->
+                <div class="card profile-card">
+                    <div class="profile-info">
+                        <h2>{{ data.department }} · Year {{ data.year }}</h2>
+                        <p>{{ data.university_name }}</p>
+                        <div class="profile-badges">
+                            <span class="status-badge {{ 'track' if data.status == 'On Track' else 'risk' }}">
+                                {{ data.status }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="profile-stats">
+                        <div class="p-stat-item">
+                            <div class="val">{{ data.cgpa }}</div>
+                            <div class="lbl">CGPA</div>
+                        </div>
+                        <div class="p-stat-item">
+                            <div class="val text-gold">{{ data.credits_completed }}</div>
+                            <div class="lbl">Credits</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- B. STRENGTH & WEAKNESS MAP -->
+                <div class="card strength-map">
+                    <div class="card-header">
+                        <div class="card-title">Subject Performance Map</div>
+                    </div>
+                    {% for subject in data.subjects %}
+                    <div class="subject-row">
+                        <div class="subject-name">{{ subject.name }}</div>
+                        <div class="subject-bar-bg">
+                            <div class="subject-bar-fill {{ 'bar-strong' if subject.score >= 80 else 'bar-avg' if subject.score >= 60 else 'bar-weak' }}"
+                                style="width: {{ subject.score }}%;"></div>
+                        </div>
+                        <div class="subject-grade">{{ subject.grade }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- C. CAREER COMPATIBILITY -->
+                <div class="card career-card">
+                    <div class="card-header">
+                        <div class="card-title">Career Fit</div>
+                    </div>
+                    {% for career in data.careers %}
+                    <div class="career-item">
+                        <div class="career-name">{{ career.role }}</div>
+                        <div class="career-score">{{ career.match }}%</div>
+                    </div>
+                    {% endfor %}
+                    <div style="margin-top: 15px; font-size: 13px; color: var(--text-muted); text-align: center;">
+                        Based on your skills & interests
+                    </div>
+                </div>
+
+                <!-- D. SKILL GAP -->
+                <div class="card skill-gap-card">
+                    <div class="card-header">
+                        <div class="card-title">Skill Roadmap</div>
+                    </div>
+                    <div class="skill-section">
+                        <h4>Acquired Skills</h4>
+                        <div class="skill-tags">
+                            {% for skill in data.skills_known %}
+                            <span class="skill-tag skill-known">✓ {{ skill }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="skill-section">
+                        <h4>Recommended to Learn</h4>
+                        <div class="skill-tags">
+                            {% for skill in data.skills_todo %}
+                            <span class="skill-tag skill-missing">+ {{ skill }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- E. WEEKLY PROGRESS -->
+                <div class="card progress-card">
+                    <div class="card-header">
+                        <div class="card-title">Study Consistency</div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="progressChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- F. GOAL ACHIEVABILITY -->
+                <div class="card goal-card">
+                    <div class="card-header">
+                        <div class="card-title">Semester Goal</div>
+                    </div>
+                    <div class="goal-circle"
+                        style="background: conic-gradient(var(--accent-gold) 0% {{ data.goal_prob }}%, #f3f4f6 {{ data.goal_prob }}% 100%);">
+                        <div class="goal-inner">
+                            <div class="goal-pct">{{ data.goal_prob }}%</div>
+                            <div class="goal-lbl">Probability</div>
+                        </div>
+                    </div>
+                    <div class="goal-alert">Target: {{ data.target_gpa }} GPA</div>
+                    <p style="font-size: 12px; color: #666; margin-top: 5px;">Estimated time: {{ data.time_to_goal }}
+                    </p>
+                </div>
+
+                <!-- G. GUIDANCE BOX -->
+                <div class="card guidance-card">
+                    <div class="guidance-title">
+                        <svg style="width:20px; height:20px; fill:currentColor;" viewBox="0 0 24 24">
+                            <path
+                                d="M11,9H13V7H11M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11,17H13V11H11V17Z" />
+                        </svg>
+                        AI Mentor Insight
+                    </div>
+                    <div class="guidance-text">
+                        "{{ data.guidance_msg }}"
+                        <br><br>
+                        <strong>Quick Tip:</strong> {{ data.guidance_tip }}
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        <script>
+            // CHART: Weekly Progress
+            // Check if canvas exists before initializing to prevent errors if element missing
+            const canvas = document.getElementById('progressChart');
+            if (canvas) {
+                const ctx = canvas.getContext('2d');
+                const progressChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                        datasets: [{
+                            label: 'Study Hours',
+                            data: {{ data.weekly_hours | tojson }},
+                    borderColor: '#002D62',
+                    backgroundColor: 'rgba(0, 45, 98, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#D4AF37'
+                }]
+                },
+            options: {
+                responsive: true,
+                    maintainAspectRatio: false,
+                        plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: { beginAtZero: true, grid: { borderDash: [5, 5] } },
+                    x: { grid: { display: false } }
+                }
+            }
+            });
+        }
+        </script>
+    </main>
+</body>
+
+</html>

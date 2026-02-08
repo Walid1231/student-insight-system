@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Insight Report | Student Insight System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --primary-navy: #002D62;
+            --accent-gold: #D4AF37;
+            --glass-bg: rgba(255, 255, 255, 0.85);
+            --text-dark: #1a1a1a;
+            --text-muted: #555;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f4f6f9;
+            color: var(--text-dark);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* CANVAS BACKGROUND */
+        #particle-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+
+        /* NAVBAR */
+        .top-nav {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-logo {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--primary-navy);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .back-link {
+            text-decoration: none;
+            color: var(--text-muted);
+            font-weight: 500;
+            font-size: 14px;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .back-link:hover {
+            color: var(--primary-navy);
+        }
+
+        /* CONTAINER */
+        .container {
+            max-width: 900px;
+            margin: 60px auto;
+            padding: 0 20px;
+        }
+
+        /* GLASS CARD */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(0, 45, 98, 0.12);
+            overflow: hidden;
+            animation: fadeInUp 0.6s ease;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* CARD HEADER */
+        .card-header {
+            background: linear-gradient(135deg, var(--primary-navy) 0%, #003d7a 100%);
+            color: white;
+            padding: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 300px;
+            height: 300px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 50%;
+        }
+
+        .card-header h1 {
+            margin: 0;
+            font-weight: 800;
+            font-size: 32px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .card-header p {
+            margin: 10px 0 0;
+            opacity: 0.9;
+            font-size: 16px;
+            font-weight: 400;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* CARD BODY */
+        .card-body {
+            padding: 40px;
+        }
+
+        /* FORM SECTIONS */
+        .form-section {
+            margin-bottom: 35px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--primary-navy);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 20px;
+            background: var(--accent-gold);
+            border-radius: 2px;
+        }
+
+        /* FORM GRID */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        /* FORM GROUP */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            font-size: 13px;
+            color: #333;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-group label .icon {
+            margin-right: 6px;
+            opacity: 0.7;
+        }
+
+        /* FORM CONTROLS */
+        .form-control {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid #e8ecef;
+            border-radius: 12px;
+            font-size: 15px;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-navy);
+            box-shadow: 0 0 0 4px rgba(0, 45, 98, 0.08);
+            transform: translateY(-1px);
+        }
+
+        .form-control::placeholder {
+            color: #aaa;
+            font-size: 14px;
+        }
+
+        select.form-control {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 18px center;
+            padding-right: 45px;
+        }
+
+        /* SUBMIT BUTTON */
+        .btn-generate {
+            width: 100%;
+            background: linear-gradient(135deg, var(--accent-gold) 0%, #c49b30 100%);
+            border: none;
+            color: white;
+            font-weight: 700;
+            padding: 18px 40px;
+            border-radius: 14px;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            margin-top: 30px;
+            box-shadow: 0 8px 20px rgba(212, 175, 55, 0.25);
+        }
+
+        .btn-generate:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(212, 175, 55, 0.35);
+        }
+
+        .btn-generate:active {
+            transform: translateY(-1px);
+        }
+
+        .btn-generate:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* LOADING SPINNER */
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 50px;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(0, 45, 98, 0.1);
+            border-top-color: var(--primary-navy);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .loading-text {
+            color: #666;
+            font-size: 15px;
+            font-weight: 500;
+        }
+
+        /* REPORT CONTAINER */
+        #reportContainer {
+            display: none;
+            margin-top: 40px;
+            animation: fadeInUp 0.6s ease;
+        }
+
+        .report-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #f0f0f0;
+        }
+
+        .report-header h2 {
+            color: var(--primary-navy);
+            font-weight: 800;
+            font-size: 26px;
+            margin: 0;
+        }
+
+        #reportContent {
+            background: white;
+            padding: 35px;
+            border-radius: 16px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.06);
+            line-height: 1.7;
+        }
+
+        #reportContent h3 {
+            color: var(--primary-navy);
+            font-weight: 700;
+            font-size: 20px;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #f5f5f5;
+        }
+
+        #reportContent h3:first-child {
+            margin-top: 0;
+        }
+
+        #reportContent p {
+            margin-bottom: 15px;
+            color: #444;
+        }
+
+        #reportContent ul {
+            padding-left: 25px;
+            margin-bottom: 20px;
+        }
+
+        #reportContent li {
+            margin-bottom: 12px;
+            color: #555;
+        }
+
+        #reportContent strong {
+            color: var(--primary-navy);
+            font-weight: 600;
+        }
+
+        #reportContent .alert {
+            background: rgba(220, 53, 69, 0.08);
+            border: none;
+            border-left: 4px solid #dc3545;
+            color: #721c24;
+            border-radius: 10px;
+            padding: 18px 22px;
+            margin: 20px 0;
+        }
+
+        /* SEMESTER LIST */
+        .semester-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .semester-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .semester-item .semester-label {
+            min-width: 100px;
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--primary-navy);
+            text-align: right;
+        }
+
+        .semester-item input {
+            flex: 1;
+            max-width: 200px;
+        }
+
+        .btn-remove-semester {
+            background: #dc3545;
+            border: none;
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .btn-remove-semester:hover {
+            background: #c82333;
+            transform: scale(1.05);
+        }
+
+        .btn-add-semester {
+            background: var(--primary-navy);
+            border: none;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .btn-add-semester:hover {
+            background: #003d7a;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 45, 98, 0.2);
+        }
+
+        /* SKILLS AND COURSES LIST */
+        .skill-list,
+        .course-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .skill-item,
+        .course-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: slideIn 0.3s ease;
+        }
+
+        .skill-item input,
+        .course-item input {
+            flex: 1;
+        }
+
+        .btn-remove-item {
+            background: #dc3545;
+            border: none;
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .btn-remove-item:hover {
+            background: #c82333;
+            transform: scale(1.05);
+        }
+
+        .btn-add-item {
+            background: var(--primary-navy);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 13px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .btn-add-item:hover {
+            background: #003d7a;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 45, 98, 0.2);
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .container {
+                margin: 30px auto;
+            }
+
+            .card-header {
+                padding: 30px 25px;
+            }
+
+            .card-header h1 {
+                font-size: 26px;
+            }
+
+            .card-body {
+                padding: 25px;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .top-nav {
+                padding: 15px 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- BACKGROUND -->
+    <canvas id="particle-canvas"></canvas>
+
+    <!-- NAV -->
+    <nav class="top-nav">
+        <div class="nav-logo">Student Insight</div>
+        <a href="/student/dashboard" class="back-link">
+            <span>←</span>
+            <span>Back to Dashboard</span>
+        </a>
+    </nav>
+
+    <!-- CONTENT -->
+    <div class="container">
+        <div class="glass-card">
+            <div class="card-header">
+                <h1>AI-Powered Insight Report</h1>
+                <p>Get personalized career guidance and academic analysis based on your profile</p>
+            </div>
+            <div class="card-body">
+                <form id="insightForm">
+                    <!-- Academic Information -->
+                    <div class="form-section">
+                        <div class="section-title">Academic Information</div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Department</label>
+                                <select name="department" class="form-control" required>
+                                    <option value="Computer Science">Computer Science</option>
+                                    <option value="Electrical Engineering">Electrical Engineering</option>
+                                    <option value="Business Administration">Business Administration</option>
+                                    <option value="Mechanical Engineering">Mechanical Engineering</option>
+                                    <option value="Data Science">Data Science</option>
+                                    <option value="Information Technology">Information Technology</option>
+                                    <option value="Civil Engineering">Civil Engineering</option>
+                                    <option value="Software Engineering">Software Engineering</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Current CGPA</label>
+                                <input type="number" step="0.01" min="0" max="4" name="cgpa" class="form-control"
+                                    placeholder="e.g., 3.25" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Semester GPA Trend</label>
+                            <div class="semester-list" id="semesterList">
+                                <!-- Semester items will be added here dynamically -->
+                            </div>
+                            <button type="button" class="btn-add-semester" onclick="addSemester()">
+                                <span>+</span>
+                                <span>Add Semester</span>
+                            </button>
+                            <small style="color: #888; font-size: 12px; margin-top: 8px; display: block;">Add your
+                                semester GPAs in chronological order</small>
+                        </div>
+                    </div>
+
+                    <!-- Skills & Strengths -->
+                    <div class="form-section">
+                        <div class="section-title">Skills & Strengths</div>
+                        <div class="form-group">
+                            <label>Your Skills</label>
+                            <div class="skill-list" id="skillList">
+                                <!-- Skill items will be added here dynamically -->
+                            </div>
+                            <button type="button" class="btn-add-item" onclick="addSkill()">
+                                <span>+</span>
+                                <span>Add Skill</span>
+                            </button>
+                            <small style="color: #888; font-size: 12px; margin-top: 8px; display: block;">Add your
+                                technical and soft skills</small>
+                        </div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Strong Courses</label>
+                                <div class="course-list" id="strongCourseList">
+                                    <!-- Strong course items will be added here dynamically -->
+                                </div>
+                                <button type="button" class="btn-add-item" onclick="addStrongCourse()">
+                                    <span>+</span>
+                                    <span>Add Course</span>
+                                </button>
+                            </div>
+                            <div class="form-group">
+                                <label>Weak Courses</label>
+                                <div class="course-list" id="weakCourseList">
+                                    <!-- Weak course items will be added here dynamically -->
+                                </div>
+                                <button type="button" class="btn-add-item" onclick="addWeakCourse()">
+                                    <span>+</span>
+                                    <span>Add Course</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Career Interests -->
+                    <div class="form-section">
+                        <div class="section-title">Career Interests</div>
+                        <div class="form-group">
+                            <label>What interests you?</label>
+                            <input type="text" name="interests" class="form-control"
+                                placeholder="e.g., Web Development, AI/ML, Cybersecurity, Data Analysis" required>
+                            <small style="color: #888; font-size: 12px; margin-top: 5px; display: block;">Describe your
+                                career aspirations and areas of interest</small>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-generate" id="generateBtn">
+                        Generate My Insight Report
+                    </button>
+                </form>
+
+                <div class="loading-spinner" id="loadingSpinner">
+                    <div class="spinner"></div>
+                    <p class="loading-text">Analyzing your profile with AI...</p>
+                </div>
+
+                <div id="reportContainer">
+                    <div class="report-header">
+                        <h2>Your Personalized Report</h2>
+                    </div>
+                    <div id="reportContent"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PARTICLE ANIMATION SCRIPT -->
+    <script>
+        const canvas = document.getElementById('particle-canvas');
+        const ctx = canvas.getContext('2d');
+
+        let width, height;
+        let particles = [];
+
+        const particleCount = 50;
+        const connectionDistance = 140;
+        const mouseDistance = 180;
+
+        let mouse = { x: null, y: null };
+
+        window.addEventListener('mousemove', (e) => {
+            mouse.x = e.x;
+            mouse.y = e.y;
+        });
+
+        window.addEventListener('mouseleave', () => {
+            mouse.x = null;
+            mouse.y = null;
+        });
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height;
+                this.vx = (Math.random() - 0.5) * 0.5;
+                this.vy = (Math.random() - 0.5) * 0.5;
+                this.size = Math.random() * 2 + 1;
+                this.color = '#002D62';
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+
+                if (this.x < 0 || this.x > width) this.vx *= -1;
+                if (this.y < 0 || this.y > height) this.vy *= -1;
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.globalAlpha = 0.5;
+                ctx.fill();
+            }
+        }
+
+        for (let i = 0; i < particleCount; i++) {
+            particles.push(new Particle());
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+
+            particles.forEach((p, index) => {
+                p.update();
+                p.draw();
+
+                for (let j = index; j < particles.length; j++) {
+                    const p2 = particles[j];
+                    const dx = p.x - p2.x;
+                    const dy = p.y - p2.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance < connectionDistance) {
+                        ctx.beginPath();
+                        ctx.strokeStyle = '#002D62';
+                        ctx.lineWidth = 0.5;
+                        ctx.globalAlpha = 1 - (distance / connectionDistance);
+                        ctx.moveTo(p.x, p.y);
+                        ctx.lineTo(p2.x, p2.y);
+                        ctx.stroke();
+                    }
+                }
+
+                if (mouse.x != null) {
+                    const dx = p.x - mouse.x;
+                    const dy = p.y - mouse.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance < mouseDistance) {
+                        ctx.beginPath();
+                        ctx.strokeStyle = '#D4AF37';
+                        ctx.lineWidth = 0.8;
+                        ctx.globalAlpha = 1 - (distance / mouseDistance);
+                        ctx.moveTo(p.x, p.y);
+                        ctx.lineTo(mouse.x, mouse.y);
+                        ctx.stroke();
+                    }
+                }
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        // SEMESTER GPA MANAGEMENT
+        let semesterCount = 0;
+
+        function addSemester() {
+            semesterCount++;
+            const semesterList = document.getElementById('semesterList');
+
+            const semesterItem = document.createElement('div');
+            semesterItem.className = 'semester-item';
+            semesterItem.id = `semester-${semesterCount}`;
+
+            semesterItem.innerHTML = `
+                <span class="semester-label">Semester ${semesterCount}</span>
+                <input 
+                    type="number" 
+                    step="0.01" 
+                    min="0" 
+                    max="4" 
+                    class="form-control semester-gpa-input" 
+                    placeholder="e.g., 3.25"
+                    required
+                    data-semester="${semesterCount}"
+                >
+                <button type="button" class="btn-remove-semester" onclick="removeSemester(${semesterCount})" title="Remove semester">
+                    ×
+                </button>
+            `;
+
+            semesterList.appendChild(semesterItem);
+        }
+
+        function removeSemester(semesterId) {
+            const semesterItem = document.getElementById(`semester-${semesterId}`);
+            if (semesterItem) {
+                semesterItem.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => {
+                    semesterItem.remove();
+                    renumberSemesters();
+                }, 300);
+            }
+        }
+
+        function renumberSemesters() {
+            const semesterItems = document.querySelectorAll('.semester-item');
+            semesterItems.forEach((item, index) => {
+                const label = item.querySelector('.semester-label');
+                if (label) {
+                    label.textContent = `Semester ${index + 1}`;
+                }
+            });
+        }
+
+        function getSemesterGPAs() {
+            const inputs = document.querySelectorAll('.semester-gpa-input');
+            const gpas = Array.from(inputs).map(input => input.value).filter(val => val !== '');
+            return gpas.join(', ');
+        }
+
+        // Initialize with 3 semesters
+        window.addEventListener('DOMContentLoaded', () => {
+            for (let i = 0; i < 3; i++) {
+                addSemester();
+            }
+            // Initialize skills and courses
+            addSkill();
+            addSkill();
+            addStrongCourse();
+            addWeakCourse();
+        });
+
+        // SKILLS MANAGEMENT
+        let skillCount = 0;
+
+        function addSkill() {
+            skillCount++;
+            const skillList = document.getElementById('skillList');
+
+            const skillItem = document.createElement('div');
+            skillItem.className = 'skill-item';
+            skillItem.id = `skill-${skillCount}`;
+
+            skillItem.innerHTML = `
+                <input 
+                    type="text" 
+                    class="form-control skill-input" 
+                    placeholder="e.g., Python, JavaScript, React"
+                    required
+                >
+                <button type="button" class="btn-remove-item" onclick="removeSkill(${skillCount})" title="Remove skill">
+                    ×
+                </button>
+            `;
+
+            skillList.appendChild(skillItem);
+        }
+
+        function removeSkill(skillId) {
+            const skillItem = document.getElementById(`skill-${skillId}`);
+            if (skillItem) {
+                skillItem.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => skillItem.remove(), 300);
+            }
+        }
+
+        function getSkills() {
+            const inputs = document.querySelectorAll('.skill-input');
+            const skills = Array.from(inputs).map(input => input.value.trim()).filter(val => val !== '');
+            return skills.join(', ');
+        }
+
+        // STRONG COURSES MANAGEMENT
+        // COURSE CATALOG DATA
+        const courseCatalog = {
+            'Computer Science': [
+                'Data Structures', 'Algorithms', 'Operating Systems', 'Database Systems',
+                'Artificial Intelligence', 'Computer Networks', 'Software Engineering',
+                'Web Development', 'Computer Architecture', 'Discrete Mathematics'
+            ],
+            'Electrical Engineering': [
+                'Circuits I', 'Signals & Systems', 'Digital Logic Design', 'Microprocessors',
+                'Power Systems', 'Control Systems', 'Electromagnetics', 'Electronics I'
+            ],
+            'Business Administration': [
+                'Principles of Management', 'Marketing Management', 'Financial Accounting',
+                'Microeconomics', 'Business Law', 'Organizational Behavior', 'Human Resource Management'
+            ],
+            'Mechanical Engineering': [
+                'Thermodynamics', 'Fluid Mechanics', 'Heat Transfer', 'Machine Design',
+                'Statics', 'Dynamics', 'Material Science'
+            ],
+            'Data Science': [
+                'Introduction to Data Science', 'Machine Learning', 'Data Mining',
+                'Big Data Analytics', 'Statistics', 'Data Visualization', 'Deep Learning'
+            ],
+            'Information Technology': [
+                'IT Infrastructure', 'System Administration', 'Network Security',
+                'Cloud Computing', 'Database Administration', 'Web Technologies'
+            ],
+            'Civil Engineering': [
+                'Structural Analysis', 'Fluid Mechanics', 'Geotechnical Engineering',
+                'Transportation Engineering', 'Surveying', 'Hydraulics'
+            ],
+            'Software Engineering': [
+                'Software Architecture', 'Requirements Engineering', 'Software Testing',
+                'Design Patterns', 'Agile Development', 'Project Management'
+            ]
+        };
+
+        // DEPARTMENT CHANGE LISTENER
+        document.querySelector('select[name="department"]').addEventListener('change', function () {
+            // Clear existing course lists when department changes to ensure consistency
+            document.getElementById('strongCourseList').innerHTML = '';
+            document.getElementById('weakCourseList').innerHTML = '';
+            strongCourseCount = 0;
+            weakCourseCount = 0;
+
+            // Re-add one empty field for convenience
+            addStrongCourse();
+            addWeakCourse();
+        });
+
+        // HELPER TO CREATE COURSE SELECT
+        function createCourseSelect(className) {
+            const department = document.querySelector('select[name="department"]').value;
+            const courses = courseCatalog[department] || [];
+
+            const select = document.createElement('select');
+            select.className = `form-control ${className}`;
+            select.required = true;
+
+            let defaultOption = document.createElement('option');
+            defaultOption.value = "";
+            defaultOption.text = "Select a course...";
+            defaultOption.disabled = true;
+            defaultOption.selected = true;
+            select.appendChild(defaultOption);
+
+            if (courses.length > 0) {
+                courses.forEach(course => {
+                    let option = document.createElement('option');
+                    option.value = course;
+                    option.text = course;
+                    select.appendChild(option);
+                });
+            } else {
+                // Fallback to text input if no courses found (or allow user to type)
+                const input = document.createElement('input');
+                input.className = `form-control ${className}`;
+                input.type = "text";
+                input.placeholder = "e.g., Course Name";
+                input.required = true;
+                return input;
+            }
+
+            return select;
+        }
+
+        // STRONG COURSES MANAGEMENT
+        let strongCourseCount = 0;
+
+        function addStrongCourse() {
+            strongCourseCount++;
+            const currentId = strongCourseCount; // Capture local copy for closure
+            const courseList = document.getElementById('strongCourseList');
+
+            const courseItem = document.createElement('div');
+            courseItem.className = 'course-item';
+            courseItem.id = `strong-course-${currentId}`;
+
+            const inputElement = createCourseSelect('strong-course-input');
+
+            const removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.className = 'btn-remove-item';
+            removeBtn.title = 'Remove course';
+            removeBtn.onclick = function () { removeStrongCourse(currentId); };
+            removeBtn.textContent = '×';
+
+            courseItem.appendChild(inputElement);
+            courseItem.appendChild(removeBtn);
+
+            courseList.appendChild(courseItem);
+        }
+
+        function removeStrongCourse(courseId) {
+            const courseItem = document.getElementById(`strong-course-${courseId}`);
+            if (courseItem) {
+                courseItem.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => courseItem.remove(), 300);
+            }
+        }
+
+        function getStrongCourses() {
+            const inputs = document.querySelectorAll('.strong-course-input');
+            const courses = Array.from(inputs).map(input => input.value.trim()).filter(val => val !== '');
+            return courses.join(', ');
+        }
+
+        // WEAK COURSES MANAGEMENT
+        let weakCourseCount = 0;
+
+        function addWeakCourse() {
+            weakCourseCount++;
+            const currentId = weakCourseCount; // Capture local copy for closure
+            const courseList = document.getElementById('weakCourseList');
+
+            const courseItem = document.createElement('div');
+            courseItem.className = 'course-item';
+            courseItem.id = `weak-course-${currentId}`;
+
+            const inputElement = createCourseSelect('weak-course-input');
+
+            const removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.className = 'btn-remove-item';
+            removeBtn.title = 'Remove course';
+            removeBtn.onclick = function () { removeWeakCourse(currentId); };
+            removeBtn.textContent = '×';
+
+            courseItem.appendChild(inputElement);
+            courseItem.appendChild(removeBtn);
+
+            courseList.appendChild(courseItem);
+        }
+
+        function removeWeakCourse(courseId) {
+            const courseItem = document.getElementById(`weak-course-${courseId}`);
+            if (courseItem) {
+                courseItem.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => courseItem.remove(), 300);
+            }
+        }
+
+        function getWeakCourses() {
+            const inputs = document.querySelectorAll('.weak-course-input');
+            const courses = Array.from(inputs).map(input => input.value.trim()).filter(val => val !== '');
+            return courses.join(', ');
+        }
+
+        // Add slideOut animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideOut {
+                from {
+                    opacity: 1;
+                    transform: translateX(0);
+                }
+                to {
+                    opacity: 0;
+                    transform: translateX(-20px);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // FORM SUBMISSION
+        document.getElementById('insightForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const form = e.target;
+            const btn = document.getElementById('generateBtn');
+            const spinner = document.getElementById('loadingSpinner');
+            const reportContainer = document.getElementById('reportContainer');
+            const reportContent = document.getElementById('reportContent');
+
+            btn.disabled = true;
+            btn.innerText = 'Generating...';
+            spinner.style.display = 'block';
+            reportContainer.style.display = 'none';
+
+            try {
+                const formData = new FormData(form);
+
+                // Collect semester GPAs from dynamic list
+                const semesterGPAs = getSemesterGPAs();
+                formData.set('semester_gpas', semesterGPAs);
+
+                // Collect skills from dynamic list
+                const skills = getSkills();
+                formData.set('skills', skills);
+
+                // Collect strong courses from dynamic list
+                const strongCourses = getStrongCourses();
+                formData.set('strong_courses', strongCourses);
+
+                // Collect weak courses from dynamic list
+                const weakCourses = getWeakCourses();
+                formData.set('weak_courses', weakCourses);
+
+                const response = await fetch('/student/insight-report', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    reportContent.innerHTML = data.report + `
+                        <div style="margin-top: 30px; text-align: center; border-top: 2px solid #f0f0f0; padding-top: 20px;">
+                            <p style="color: #666; margin-bottom: 15px;">Your dashboard has been updated with these new insights.</p>
+                            <a href="/student/dashboard" class="btn-generate" style="display: inline-block; text-decoration: none; width: auto; background: var(--primary-navy); box-shadow: 0 4px 15px rgba(0,45,98,0.3);">
+                                Go to My Dashboard 🚀
+                            </a>
+                        </div>
+                    `;
+                    reportContainer.style.display = 'block';
+                    reportContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                } else {
+                    alert('Error: ' + (data.error || 'Failed to generate report'));
+                }
+            } catch (err) {
+                console.error(err);
+                alert('An error occurred while generating the report.');
+            } finally {
+                btn.disabled = false;
+                btn.innerText = 'Generate My Insight Report';
+                spinner.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+
+</html>

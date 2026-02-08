@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>My Profile | Student Insight</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Shared Sidebar CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
+    <!-- Global CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/global.css') }}">
+</head>
+
+<body class="preload">
+
+    {% set active_page = 'profile' %}
+    {% include 'components/sidebar.html' %}
+
+    <div class="main-content">
+        <!-- 1. HEADER (Always Visible) -->
+        <div class="profile-header">
+            <div class="profile-img-container">
+                <img src="{{ url_for('static', filename='uploads/profile_pics/' + student.profile_picture) if student.profile_picture else 'https://ui-avatars.com/api/?name=' + student.full_name + '&background=0D8ABC&color=fff' }}"
+                    alt="Profile" class="profile-img" id="profileDisplay">
+                <label for="profile_upload" class="upload-btn">
+                    <i class="fas fa-camera"></i>
+                </label>
+            </div>
+            <div class="profile-info">
+                <h1>{{ student.full_name }}</h1>
+                <!-- Only show fields that exist in this quick header view -->
+                {% if student.university %}
+                <p><i class="fas fa-university" style="margin-right: 5px; color: var(--accent-gold);"></i>{{
+                    student.university }}</p>
+                {% else %}
+                <p>{{ student.email }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 2. READ-ONLY VIEW (Default) -->
+        <div id="read-only-view" class="card">
+            <div class="card-header">
+                <div class="card-title"><i class="fas fa-id-card"></i> Profile Details</div>
+                <!-- EDIT BUTTON -->
+                <button class="btn-action btn-edit" onclick="toggleEditMode()">
+                    <i class="fas fa-edit"></i> Edit Profile
+                </button>
+            </div>
+
+            <div class="info-grid">
+                <!-- Conditionally Render Fields -->
+                {% if student.full_name %}
+                <div class="info-group">
+                    <div class="info-label">Full Name</div>
+                    <div class="info-value">{{ student.full_name }}</div>
+                </div>
+                {% endif %}
+
+                {% if student.email %}
+                <div class="info-group">
+                    <div class="info-label">Email</div>
+                    <div class="info-value">{{ student.email }}</div>
+                </div>
+                {% endif %}
+
+                {% if student.university %}
+                <div class="info-group">
+                    <div class="info-label">University</div>
+                    <div class="info-value">{{ student.university }}</div>
+                </div>
+                {% endif %}
+
+                {% if student.department %}
+                <div class="info-group">
+                    <div class="info-label">Department</div>
+                    <div class="info-value">{{ student.department }}</div>
+                </div>
+                {% endif %}
+
+                {% if student.current_year %}
+                <div class="info-group">
+                    <div class="info-label">Year</div>
+                    <div class="info-value">{{ student.current_year }}</div>
+                </div>
+                {% endif %}
+
+                {% if student.cgpa %}
+                <div class="info-group">
+                    <div class="info-label">Target CGPA</div>
+                    <div class="info-value">{{ student.cgpa }}</div>
+                </div>
+                {% endif %}
+
+                {% if student.career_goal %}
+                <div class="info-group full-width">
+                    <div class="info-label">Career Goal</div>
+                    <div class="info-value">{{ student.career_goal }}</div>
+                </div>
+                {% endif %}
+
+                {% if student.bio %}
+                <div class="info-group full-width">
+                    <div class="info-label">Bio</div>
+                    <div class="info-value bio">{{ student.bio }}</div>
+                </div>
+                {% endif %}
+
+                {% if student.linkedin_profile %}
+                <div class="info-group">
+                    <div class="info-label">LinkedIn</div>
+                    <div class="info-value"><a href="{{ student.linkedin_profile }}" target="_blank">View Profile</a>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if student.github_profile %}
+                <div class="info-group">
+                    <div class="info-label">GitHub</div>
+                    <div class="info-value"><a href="{{ student.github_profile }}" target="_blank">View Profile</a>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="action-bar">
+                <button class="btn-action btn-cancel" style="border-color: #ef4444; color: #ef4444;"
+                    onclick="confirmDeleteProfile(event)">
+                    <i class="fas fa-trash-alt"></i> Delete Account
+                </button>
+            </div>
+        </div>
+
+        <!-- 3. EDIT VIEW (Hidden by default) -->
+        <div id="edit-view" class="card hidden">
+            <div class="card-header">
+                <div class="card-title"><i class="fas fa-user-edit"></i> Edit Profile</div>
+            </div>
+
+            <form action="{{ url_for('dashboard.student_profile') }}" method="POST" enctype="multipart/form-data">
+                <input type="file" id="profile_upload" name="profile_picture" accept="image/*" style="display: none;"
+                    onchange="previewImage(this)">
+
+                <div class="form-grid">
+                    <!-- Basic Info -->
+                    <div class="form-section-title">Basic Information</div>
+
+                    <div class="form-group">
+                        <label>Full Name</label>
+                        <input type="text" class="form-control" name="full_name" value="{{ student.full_name }}">
+                    </div>
+
+                    <div class="form-group">
+                        <label>University / College</label>
+                        <input type="text" class="form-control" name="university" value="{{ student.university or '' }}"
+                            placeholder="e.g. Daffodil International University">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Department</label>
+                        <input type="text" class="form-control" name="department" value="{{ student.department or '' }}"
+                            placeholder="e.g. Computer Science">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Current Year</label>
+                        <select class="form-control" name="current_year">
+                            <option value="1st Year" {% if student.current_year=='1st Year' %}selected{% endif %}>1st
+                                Year</option>
+                            <option value="2nd Year" {% if student.current_year=='2nd Year' %}selected{% endif %}>2nd
+                                Year</option>
+                            <option value="3rd Year" {% if student.current_year=='3rd Year' %}selected{% endif %}>3rd
+                                Year</option>
+                            <option value="4th Year" {% if student.current_year=='4th Year' %}selected{% endif %}>4th
+                                Year</option>
+                        </select>
+                    </div>
+
+                    <!-- Goals -->
+                    <div class="form-section-title">Goals & Links</div>
+
+                    <div class="form-group">
+                        <label>Target CGPA</label>
+                        <input type="number" step="0.01" class="form-control" name="cgpa"
+                            value="{{ student.cgpa or '' }}" placeholder="4.00">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Career Goal</label>
+                        <input type="text" class="form-control" name="career_goal"
+                            value="{{ student.career_goal or '' }}" placeholder="e.g. Software Engineer">
+                    </div>
+
+                    <div class="form-group">
+                        <label>LinkedIn Profile URL</label>
+                        <input type="url" class="form-control" name="linkedin_profile"
+                            value="{{ student.linkedin_profile or '' }}" placeholder="https://linkedin.com/in/...">
+                    </div>
+
+                    <div class="form-group">
+                        <label>GitHub Profile URL</label>
+                        <input type="url" class="form-control" name="github_profile"
+                            value="{{ student.github_profile or '' }}" placeholder="https://github.com/...">
+                    </div>
+
+                    <div class="form-section-title">About Me</div>
+                    <div class="form-group">
+                        <label>Bio</label>
+                        <textarea class="form-control" name="bio"
+                            placeholder="Tell us about yourself...">{{ student.bio or '' }}</textarea>
+                    </div>
+                </div>
+
+                <div class="action-bar">
+                    <button type="button" class="btn-action btn-cancel" onclick="toggleEditMode()">Cancel</button>
+                    <button type="submit" class="btn-action btn-save">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- DELETE MODAL -->
+    <div class="modal-overlay" id="deleteModal">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <div class="modal-title">Delete Account</div>
+            </div>
+            <div class="modal-body">
+                <p class="modal-warning-text">Are you sure you want to delete your account? This action cannot be
+                    undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn modal-btn-ok" onclick="executeDeleteProfile()">Yes, Delete</button>
+                <button class="modal-btn modal-btn-cancel" onclick="closeDeleteModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleEditMode() {
+            const readOnlyView = document.getElementById('read-only-view');
+            const editView = document.getElementById('edit-view');
+
+            if (readOnlyView.classList.contains('hidden')) {
+                // Swithing to READ ONLY
+                editView.classList.add('hidden');
+                readOnlyView.classList.remove('hidden');
+                READ_ONLY_MODE = true;
+
+                // Add fade in animation
+                readOnlyView.style.opacity = '0';
+                setTimeout(() => readOnlyView.style.opacity = '1', 10);
+            } else {
+                // Switching to EDIT MODE
+                readOnlyView.classList.add('hidden');
+                editView.classList.remove('hidden');
+                READ_ONLY_MODE = false;
+
+                // Add fade in animation
+                editView.style.opacity = '0';
+                setTimeout(() => editView.style.opacity = '1', 10);
+            }
+        }
+
+        function previewImage(input) {
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function (e) {
+                    document.getElementById('profileDisplay').src = e.target.result;
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        // PROFILE DELETION
+        function confirmDeleteProfile(event) {
+            event.preventDefault();
+            document.getElementById('deleteModal').classList.add('active');
+        }
+        function closeDeleteModal() { document.getElementById('deleteModal').classList.remove('active'); }
+        function executeDeleteProfile() {
+            closeDeleteModal();
+            fetch('/student/delete-profile', { method: 'DELETE', headers: { 'Content-Type': 'application/json' } })
+                .then(r => r.json()).then(d => {
+                    if (d.success) { alert('Profile deleted.'); window.location.href = "{{ url_for('home') }}"; }
+                    else alert('Error: ' + d.error);
+                }).catch(e => alert('Error deleting profile.'));
+        }
+        document.getElementById('deleteModal')?.addEventListener('click', function (e) { if (e.target === this) closeDeleteModal(); });
+    </script>
+</body>
+
+</html>

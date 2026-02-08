@@ -1,0 +1,4 @@
+*.db
+student_insight.db
+__pycache__/
+venv/
