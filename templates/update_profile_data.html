@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Update Profile Data | Student Insight</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-navy: #002D62;
+            --accent-gold: #D4AF37;
+            --bg-light: #f5f7fa;
+            --white: #ffffff;
+            --border: #e2e8f0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-light);
+            color: #333;
+            display: flex;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: var(--white);
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        h1 {
+            color: var(--primary-navy);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .form-section {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .form-section h3 {
+            color: var(--primary-navy);
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 14px;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary-navy);
+        }
+
+        .row {
+            display: flex;
+            gap: 20px;
+        }
+
+        .col {
+            flex: 1;
+        }
+
+        .btn-submit {
+            background: var(--primary-navy);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+            transition: background 0.2s;
+        }
+
+        .btn-submit:hover {
+            background: #001f44;
+        }
+
+        .helper-text {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Update Dashboard Data</h1>
+        <form action="/update-progress" method="POST">
+
+            <!-- 1. ACADEMIC INFO -->
+            <div class="form-section">
+                <h3>1. Academic Profile</h3>
+                <div class="form-group">
+                    <label>University Name</label>
+                    <input type="text" name="university" placeholder="e.g. Stanford University" required>
+                </div>
+                <div class="row">
+                    <div class="col form-group">
+                        <label>Department</label>
+                        <input type="text" name="department" placeholder="e.g. Computer Science" required>
+                    </div>
+                    <div class="col form-group">
+                        <label>Current Year</label>
+                        <select name="year">
+                            <option value="1st">1st Year</option>
+                            <option value="2nd">2nd Year</option>
+                            <option value="3rd">3rd Year</option>
+                            <option value="4th">4th Year</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col form-group">
+                        <label>Current CGPA</label>
+                        <input type="number" step="0.01" name="current_cgpa" placeholder="3.50" required>
+                    </div>
+                    <div class="col form-group">
+                        <label>Target CGPA</label>
+                        <input type="number" step="0.01" name="target_gpa" placeholder="3.80" required>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. SUBJECT PERFORMANCE -->
+            <div class="form-section">
+                <h3>2. Subject Performance (For Strength Map)</h3>
+                <p class="helper-text">Enter up to 5 key subjects and your score (0-100).</p>
+                <div class="row">
+                    <div class="col"><input type="text" name="subject_1" placeholder="Subject 1 Name"></div>
+                    <div class="col"><input type="number" name="score_1" placeholder="Score (0-100)"></div>
+                </div>
+                <br>
+                <div class="row">
+                    <div class="col"><input type="text" name="subject_2" placeholder="Subject 2 Name"></div>
+                    <div class="col"><input type="number" name="score_2" placeholder="Score (0-100)"></div>
+                </div>
+                <br>
+                <div class="row">
+                    <div class="col"><input type="text" name="subject_3" placeholder="Subject 3 Name"></div>
+                    <div class="col"><input type="number" name="score_3" placeholder="Score (0-100)"></div>
+                </div>
+            </div>
+
+            <!-- 3. CAREER INTERESTS -->
+            <div class="form-section">
+                <h3>3. Career Fit</h3>
+                <p class="helper-text">Enter roles you are interested in and how well they match your skills.</p>
+                <div class="row">
+                    <div class="col"><input type="text" name="role_1" placeholder="Role 1 (e.g. Data Scientist)"></div>
+                    <div class="col"><input type="number" name="match_1" placeholder="Match % (e.g. 85)"></div>
+                </div>
+                <br>
+                <div class="row">
+                    <div class="col"><input type="text" name="role_2" placeholder="Role 2 (e.g. Web Dev)"></div>
+                    <div class="col"><input type="number" name="match_2" placeholder="Match % (e.g. 70)"></div>
+                </div>
+            </div>
+
+            <!-- 4. SKILLS -->
+            <div class="form-section">
+                <h3>4. Skills Roadmap</h3>
+                <div class="form-group">
+                    <label>Skills You Know (Comma separated)</label>
+                    <textarea name="skills_known" rows="2" placeholder="Python, SQL, HTML, CSS"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Skills To Learn (Comma separated)</label>
+                    <textarea name="skills_todo" rows="2" placeholder="React, AWS, Docker"></textarea>
+                </div>
+            </div>
+
+            <!-- 5. STUDY HISTORY -->
+            <div class="form-section">
+                <h3>5. Weekly Study Log</h3>
+                <p class="helper-text">Enter hours studied for the past week (Mon-Sun) to populate the chart.</p>
+                <div class="row" style="gap: 10px;">
+                    <div class="col"><label>Mon</label><input type="number" name="h_mon" step="0.5" value="0"></div>
+                    <div class="col"><label>Tue</label><input type="number" name="h_tue" step="0.5" value="0"></div>
+                    <div class="col"><label>Wed</label><input type="number" name="h_wed" step="0.5" value="0"></div>
+                    <div class="col"><label>Thu</label><input type="number" name="h_thu" step="0.5" value="0"></div>
+                    <div class="col"><label>Fri</label><input type="number" name="h_fri" step="0.5" value="0"></div>
+                    <div class="col"><label>Sat</label><input type="number" name="h_sat" step="0.5" value="0"></div>
+                    <div class="col"><label>Sun</label><input type="number" name="h_sun" step="0.5" value="0"></div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-submit">Save & Update Dashboard</button>
+        </form>
+    </div>
+</body>
+
+</html>

@@ -1,0 +1,17 @@
+<style>
+    /* Critical Anti-Flicker CSS - Inline to ensure immediate application */
+    .preload * {
+        transition: none !important;
+    }
+
+    /* Ensure body starts invisible if needed, or stick to transition override */
+</style>
+<script>
+    // Critical Anti-FOUC Script
+    (function () {
+        const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+        if (isCollapsed) {
+            document.documentElement.classList.add('sidebar-is-collapsed');
+        }
+    })();
+</script>
