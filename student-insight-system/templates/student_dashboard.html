@@ -94,6 +94,32 @@
                         {% endif %}
                     </div>
                 </div>
+                <!-- Tools Section -->
+                <div class="stat-card span-6">
+                    <div class="card-header">
+                        <div class="card-title"><i class="fas fa-file-alt"></i> CV Generator</div>
+                    </div>
+                    <p style="color: #666; margin-bottom: 15px; font-size: 14px;">
+                        Create a professional, formatted CV based on your profile data and skills.
+                    </p>
+                    <a href="{{ url_for('dashboard.create_profile') }}" class="btn-action btn-save"
+                        style="text-align: center; display: block;">
+                        Create CV
+                    </a>
+                </div>
+
+                <div class="stat-card span-6">
+                    <div class="card-header">
+                        <div class="card-title"><i class="fas fa-robot"></i> AI Insight Report</div>
+                    </div>
+                    <p style="color: #666; margin-bottom: 15px; font-size: 14px;">
+                        Get personalized career guidance and academic analysis powered by AI.
+                    </p>
+                    <a href="{{ url_for('dashboard.student_insight_report') }}" class="btn-action btn-save"
+                        style="text-align: center; display: block;">
+                        Get Insights
+                    </a>
+                </div>
             </div>
 
             <!-- Upgrade Notice -->
