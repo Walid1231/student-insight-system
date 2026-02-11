@@ -3,1124 +3,151 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Student Dashboard | Insight System</title>
+    <title>Student Dashboard | Student Insight</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Shared Sidebar CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
+    <!-- Global CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/global.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-    <style>
-        :root {
-            --primary-navy: #002D62;
-            --accent-gold: #D4AF37;
-            --text-dark: #1a1a1a;
-            --text-muted: #666;
-            --border-light: #e8ecef;
-            --sidebar-width: 260px;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            color: var(--text-dark);
-            overflow-x: hidden;
-            min-height: 100vh;
-        }
-
-        /* CANVAS BACKGROUND */
-        #particle-canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-        }
-
-        /* SIDEBAR */
-        .sidebar {
-            position: fixed;
-            left: 0;
-            top: 0;
-            width: var(--sidebar-width);
-            height: 100vh;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            box-shadow: 4px 0 20px rgba(0, 0, 0, 0.05);
-            display: flex;
-            flex-direction: column;
-            z-index: 1000;
-            transition: transform 0.3s ease;
-        }
-
-        .sidebar-header {
-            padding: 30px 25px;
-            border-bottom: 1px solid var(--border-light);
-        }
-
-        .sidebar-logo {
-            font-size: 20px;
-            font-weight: 800;
-            color: var(--primary-navy);
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-        }
-
-        .sidebar-nav {
-            flex: 1;
-            padding: 20px 0;
-            overflow-y: auto;
-        }
-
-        .nav-section {
-            margin-bottom: 30px;
-        }
-
-        .nav-section-title {
-            font-size: 11px;
-            font-weight: 700;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            padding: 0 25px;
-            margin-bottom: 10px;
-        }
-
-        .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            padding: 14px 25px;
-            color: var(--text-dark);
-            text-decoration: none;
-            font-size: 14px;
-            font-weight: 500;
-            transition: all 0.2s;
-            border-left: 3px solid transparent;
-        }
-
-        .nav-item:hover {
-            background: #f8f9fa;
-            border-left-color: var(--primary-navy);
-            color: var(--primary-navy);
-        }
-
-        .nav-item.active {
-            background: #f0f4f8;
-            border-left-color: var(--accent-gold);
-            color: var(--primary-navy);
-        }
-
-        .nav-item svg {
-            width: 20px;
-            height: 20px;
-            fill: currentColor;
-        }
-
-        .nav-item.danger {
-            color: #dc3545;
-        }
-
-        .nav-item.danger:hover {
-            background: #fff5f5;
-            border-left-color: #dc3545;
-        }
-
-        .sidebar-footer {
-            padding: 20px 25px;
-            border-top: 1px solid var(--border-light);
-        }
-
-        /* MOBILE TOGGLE */
-        .mobile-toggle {
-            display: none;
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            z-index: 1001;
-            background: white;
-            border: none;
-            width: 45px;
-            height: 45px;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            cursor: pointer;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .mobile-toggle svg {
-            width: 24px;
-            height: 24px;
-            fill: var(--primary-navy);
-        }
-
-        /* MAIN CONTENT */
-        .main-content {
-            margin-left: var(--sidebar-width);
-            min-height: 100vh;
-            padding: 60px 40px;
-        }
-
-        .dashboard-container {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        .welcome-header {
-            margin-bottom: 40px;
-        }
-
-        .welcome-header h1 {
-            font-size: 42px;
-            font-weight: 800;
-            color: var(--primary-navy);
-            margin-bottom: 12px;
-            letter-spacing: -0.5px;
-        }
-
-        .welcome-header p {
-            font-size: 18px;
-            color: var(--text-muted);
-            max-width: 700px;
-            line-height: 1.6;
-        }
-
-        /* ANALYTICS DASHBOARD */
-        .analytics-grid {
-            display: grid;
-            grid-template-columns: repeat(12, 1fr);
-            gap: 25px;
-            margin-bottom: 40px;
-        }
-
-        .stat-card {
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            border-radius: 16px;
-            padding: 25px;
-            box-shadow: 0 8px 24px rgba(0, 45, 98, 0.08);
-            transition: all 0.3s ease;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 32px rgba(0, 45, 98, 0.12);
-        }
-
-        .stat-card.span-3 {
-            grid-column: span 3;
-        }
-
-        .stat-card.span-4 {
-            grid-column: span 4;
-        }
-
-        .stat-card.span-6 {
-            grid-column: span 6;
-        }
-
-        .stat-card.span-8 {
-            grid-column: span 8;
-        }
-
-        .stat-card.span-12 {
-            grid-column: span 12;
-        }
-
-        .stat-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 20px;
-        }
-
-        .stat-title {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .stat-icon {
-            width: 40px;
-            height: 40px;
-            background: linear-gradient(135deg, var(--primary-navy), #003d7a);
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .stat-icon svg {
-            width: 20px;
-            height: 20px;
-            fill: white;
-        }
-
-        .stat-value {
-            font-size: 36px;
-            font-weight: 800;
-            color: var(--primary-navy);
-            margin-bottom: 8px;
-        }
-
-        .stat-label {
-            font-size: 13px;
-            color: var(--text-muted);
-        }
-
-        .stat-trend {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            font-size: 12px;
-            font-weight: 600;
-            padding: 4px 8px;
-            border-radius: 6px;
-            margin-top: 8px;
-        }
-
-        .stat-trend.positive {
-            background: #d1fae5;
-            color: #065f46;
-        }
-
-        .stat-trend.negative {
-            background: #fee2e2;
-            color: #991b1b;
-        }
-
-        /* CHART CONTAINER */
-        .chart-container {
-            position: relative;
-            height: 300px;
-            margin-top: 20px;
-        }
-
-        .chart-container.small {
-            height: 200px;
-        }
-
-        /* SKILLS LIST */
-        .skills-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 15px;
-        }
-
-        .skill-tag {
-            padding: 8px 16px;
-            background: #e0f2fe;
-            color: #075985;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: 500;
-        }
-
-        /* COURSE PERFORMANCE */
-        .course-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 12px 0;
-            border-bottom: 1px solid var(--border-light);
-        }
-
-        .course-item:last-child {
-            border-bottom: none;
-        }
-
-        .course-name {
-            font-size: 14px;
-            font-weight: 500;
-            color: var(--text-dark);
-        }
-
-        .course-grade {
-            font-size: 14px;
-            font-weight: 700;
-            color: var(--primary-navy);
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 8px;
-            background: #e5e7eb;
-            border-radius: 4px;
-            overflow: hidden;
-            margin-top: 8px;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--primary-navy), var(--accent-gold));
-            border-radius: 4px;
-            transition: width 0.3s ease;
-        }
-
-        /* MODAL STYLES */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(4px);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 10000;
-            animation: fadeIn 0.2s ease;
-        }
-
-        .modal-overlay.active {
-            display: flex;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
-
-            to {
-                opacity: 1;
-            }
-        }
-
-        @keyframes slideUp {
-            from {
-                transform: translateY(20px);
-                opacity: 0;
-            }
-
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-
-        .modal-dialog {
-            background: #2d2d2d;
-            border-radius: 16px;
-            max-width: 500px;
-            width: 90%;
-            padding: 40px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
-            animation: slideUp 0.3s ease;
-        }
-
-        .modal-header {
-            margin-bottom: 25px;
-        }
-
-        .modal-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: #ffffff;
-            margin-bottom: 20px;
-        }
-
-        .modal-warning {
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-            margin-bottom: 15px;
-        }
-
-        .modal-warning-icon {
-            width: 24px;
-            height: 24px;
-            flex-shrink: 0;
-            margin-top: 2px;
-        }
-
-        .modal-warning-icon svg {
-            width: 100%;
-            height: 100%;
-            fill: #f59e0b;
-        }
-
-        .modal-warning-text {
-            color: #ffffff;
-            font-size: 15px;
-            line-height: 1.6;
-        }
-
-        .modal-body {
-            color: #d1d5db;
-            font-size: 14px;
-            line-height: 1.7;
-            margin-bottom: 25px;
-        }
-
-        .modal-question {
-            color: #ffffff;
-            font-size: 15px;
-            margin-top: 20px;
-        }
-
-        .modal-footer {
-            display: flex;
-            gap: 15px;
-            justify-content: flex-end;
-        }
-
-        .modal-btn {
-            padding: 12px 32px;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-family: 'Inter', sans-serif;
-        }
-
-        .modal-btn-cancel {
-            background: #7c3a2e;
-            color: #ffffff;
-        }
-
-        .modal-btn-cancel:hover {
-            background: #8d4434;
-        }
-
-        .modal-btn-ok {
-            background: #f4b5a0;
-            color: #2d2d2d;
-        }
-
-        .modal-btn-ok:hover {
-            background: #f7c5b3;
-        }
-
-        /* RESPONSIVE */
-        @media (max-width: 1024px) {
-
-            .stat-card.span-3,
-            .stat-card.span-4 {
-                grid-column: span 6;
-            }
-
-            .stat-card.span-8 {
-                grid-column: span 12;
-            }
-        }
-
-        @media (max-width: 768px) {
-            :root {
-                --sidebar-width: 0px;
-            }
-
-            .sidebar {
-                transform: translateX(-100%);
-            }
-
-            .sidebar.active {
-                transform: translateX(0);
-            }
-
-            .mobile-toggle {
-                display: flex;
-            }
-
-            .main-content {
-                margin-left: 0;
-                padding: 80px 20px 40px;
-            }
-
-            .welcome-header h1 {
-                font-size: 32px;
-            }
-
-            .welcome-header p {
-                font-size: 16px;
-            }
-
-            .stat-card {
-                grid-column: span 12 !important;
-            }
-
-            .stat-value {
-                font-size: 28px;
-            }
-
-            .chart-container {
-                height: 250px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .welcome-header h1 {
-                font-size: 28px;
-            }
-        }
-    </style>
 </head>
 
-<body>
-    <!-- BACKGROUND -->
-    <canvas id="particle-canvas"></canvas>
+<body class="preload">
 
-    <!-- MOBILE TOGGLE -->
-    <button class="mobile-toggle" onclick="toggleSidebar()">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-            <path d="M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z" />
-        </svg>
-    </button>
+    {% set active_page = 'legacy' %}
+    {% include 'components/sidebar.html' %}
 
-    <!-- SIDEBAR -->
-    <aside class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <div class="sidebar-logo">Student Insight</div>
-        </div>
-
-        <nav class="sidebar-nav">
-            <!-- Main Navigation -->
-            <div class="nav-section">
-                <div class="nav-section-title">Main</div>
-                <a href="/student/dashboard" class="nav-item active">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                        <path d="M10,20V14H14V20H19V12H22L12,3L2,12H5V20H10Z" />
-                    </svg>
-                    <span>Dashboard</span>
-                </a>
-                <a href="/create-profile" class="nav-item">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                        <path
-                            d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
-                    </svg>
-                    <span>CV Generator</span>
-                </a>
-                <a href="/student/insight-report" class="nav-item">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                        <path d="M22,21H2V3H4V19H6V10H10V19H12V6H16V19H18V14H22V21Z" />
-                    </svg>
-                    <span>Student Insight</span>
-                </a>
-                <a href="/student/wellness" class="nav-item">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                        <path
-                            d="M12.1,18.55L12,18.65L11.89,18.55C7.14,14.24 4,11.39 4,8.5C4,6.5 5.5,5 7.5,5C9.04,5 10.54,6 11.07,7.36H12.93C13.46,6 14.96,5 16.5,5C18.5,5 20,6.5 20,8.5C20,11.39 16.86,14.24 12.1,18.55M16.5,3C14.76,3 13.09,3.81 12,5.08C10.91,3.81 9.24,3 7.5,3C4.42,3 2,5.41 2,8.5C2,12.27 5.4,15.36 10.55,20.03L12,21.35L13.45,20.03C18.6,15.36 22,12.27 22,8.5C22,5.41 19.58,3 16.5,3Z" />
-                    </svg>
-                    <span>Student Wellness</span>
-                </a>
-            </div>
-
-            <!-- Profile Section -->
-            <div class="nav-section">
-                <div class="nav-section-title">Account</div>
-                <a href="/student/update-profile" class="nav-item">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                        <path
-                            d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z" />
-                    </svg>
-                    <span>Profile</span>
-                </a>
-                <a href="/student/settings" class="nav-item">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                        <path
-                            d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.21,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.21,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.67 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z" />
-                    </svg>
-                    <span>Settings</span>
-                </a>
-                <a href="/student/feedback" class="nav-item">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                        <path
-                            d="M20,2H4A2,2 0 0,0 2,4V22L6,18H20A2,2 0 0,0 22,16V4A2,2 0 0,0 20,2M6,9H18V11H6M14,14H6V12H14M18,8H6V6H18" />
-                    </svg>
-                    <span>Feedback</span>
-                </a>
-            </div>
-
-            <!-- Danger Zone -->
-            <div class="nav-section">
-                <div class="nav-section-title">Danger Zone</div>
-                <a href="#" onclick="confirmDeleteProfile(event)" class="nav-item danger">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                        <path d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z" />
-                    </svg>
-                    <span>Delete Profile</span>
-                </a>
-            </div>
-        </nav>
-
-        <div class="sidebar-footer">
-            <a href="#" class="nav-item" onclick="logout()" style="color: var(--text-muted);">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                    <path
-                        d="M16,17V14H9V10H16V7L21,12L16,17M14,2A2,2 0 0,1 16,4V6H14V4H5V20H14V18H16V20A2,2 0 0,1 14,22H5A2,2 0 0,1 3,20V4A2,2 0 0,1 5,2H14Z" />
-                </svg>
-                <span>Logout</span>
-            </a>
-        </div>
-    </aside>
-
-    <!-- MAIN CONTENT -->
     <main class="main-content">
         <div class="dashboard-container">
+
             <div class="welcome-header">
-                <h1>Academic Dashboard</h1>
-                <p>Track your academic performance, skills development, and career progress in real-time.</p>
+                <h1>Welcome{% if student %}, {{ student.full_name }}{% endif %}!</h1>
+                <p>Here is your dashboard overview.</p>
             </div>
 
-            <!-- ANALYTICS GRID -->
             <div class="analytics-grid">
-                <!-- CGPA Card -->
-                <div class="stat-card span-3">
+                <!-- Stats Cards -->
+                <div class="stat-card span-4">
                     <div class="stat-header">
-                        <span class="stat-title">Current CGPA</span>
                         <div class="stat-icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                                <path
-                                    d="M12,3L1,9L5,11.18V17.18L12,21L19,17.18V11.18L21,10.09V17H23V9L12,3M18.82,9L12,12.72L5.18,9L12,5.28L18.82,9M17,16L12,18.72L7,16V12.27L12,15L17,12.27V16Z" />
-                            </svg>
+                            <i class="fas fa-graduation-cap"></i>
                         </div>
                     </div>
-                    <div class="stat-value">3.75</div>
-                    <div class="stat-label">Out of 4.00</div>
-                    <div class="stat-trend positive">↑ 0.15 from last semester</div>
+                    <div class="stat-value">{% if student and student.cgpa %}{{ student.cgpa }}{% else %}--{% endif %}
+                    </div>
+                    <div class="stat-label">CGPA</div>
                 </div>
 
-                <!-- Department Rank -->
-                <div class="stat-card span-3">
+                <div class="stat-card span-4">
                     <div class="stat-header">
-                        <span class="stat-title">Department Rank</span>
                         <div class="stat-icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                                <path
-                                    d="M5,16L3,5L8.5,10L12,4L15.5,10L21,5L19,16H5M19,19A1,1 0 0,1 18,20H6A1,1 0 0,1 5,19V18H19V19Z" />
-                            </svg>
+                            <i class="fas fa-university"></i>
                         </div>
                     </div>
+                    <div class="stat-value">{% if student and student.university %}{{ student.university[:15] }}{% else
+                        %}--{% endif %}</div>
+                    <div class="stat-label">University</div>
                 </div>
-                <div class="stat-value" id="departmentRank">--</div>
-                <div class="stat-label">Out of 150 students</div>
-                <div class="stat-trend positive">↑ 5 positions</div>
-            </div>
 
-            <!-- Completed Credits -->
-            <div class="stat-card span-3">
-                <div class="stat-header">
-                    <span class="stat-title">Credits Earned</span>
-                    <div class="stat-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                            <path
-                                d="M9,10H7V12H9V10M13,10H11V12H13V10M17,10H15V12H17V10M19,3H18V1H16V3H8V1H6V3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5A2,2 0 0,0 19,3M19,19H5V8H19V19Z" />
-                        </svg>
+                <div class="stat-card span-4">
+                    <div class="stat-header">
+                        <div class="stat-icon">
+                            <i class="fas fa-book"></i>
+                        </div>
+                    </div>
+                    <div class="stat-value">{% if student and student.department %}{{ student.department[:15] }}{% else
+                        %}--{% endif %}</div>
+                    <div class="stat-label">Department</div>
+                </div>
+
+                <!-- Chart Card -->
+                <div class="stat-card span-8">
+                    <div class="card-header">
+                        <div class="card-title"><i class="fas fa-chart-line"></i> Performance Overview</div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="performanceChart"></canvas>
                     </div>
                 </div>
-                <div class="stat-value" id="totalCredits">--</div>
-                <div class="stat-label">Out of 120 required</div>
-                <div class="progress-bar">
-                    <div class="progress-fill" id="creditsProgress" style="width: 0%;"></div>
-                </div>
-            </div>
 
-            <!-- Skills Mastered -->
-            <div class="stat-card span-3">
-                <div class="stat-header">
-                    <span class="stat-title">Skills Mastered</span>
-                    <div class="stat-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                            <path
-                                d="M9,2V8H11V11H5C3.89,11 3,11.89 3,13V16H1V22H7V16H5V13H11V16H9V22H15V16H13V13H19V16H17V22H23V16H21V13C21,11.89 20.11,11 19,11H13V8H15V2H9Z" />
-                        </svg>
+                <!-- Info Card -->
+                <div class="stat-card span-4">
+                    <div class="card-header">
+                        <div class="card-title"><i class="fas fa-info-circle"></i> Quick Info</div>
+                    </div>
+                    <div class="info-grid">
+                        {% if student %}
+                        <div class="info-group">
+                            <div class="info-label">Email</div>
+                            <div class="info-value">{{ student.email }}</div>
+                        </div>
+                        {% if student.current_year %}
+                        <div class="info-group">
+                            <div class="info-label">Year</div>
+                            <div class="info-value">{{ student.current_year }}</div>
+                        </div>
+                        {% endif %}
+                        {% endif %}
                     </div>
                 </div>
-                <div class="stat-value" id="skillsCount">--</div>
-                <div class="stat-label">Technical & Soft Skills</div>
-                <div class="stat-trend positive">↑ 3 new this month</div>
             </div>
 
-            <!-- GPA Trend Chart -->
-            <div class="stat-card span-8">
-                <div class="stat-header">
-                    <span class="stat-title">Semester GPA Trend</span>
+            <!-- Upgrade Notice -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><i class="fas fa-rocket"></i> Try the New Dashboard</div>
                 </div>
-                <div class="chart-container">
-                    <canvas id="gpaChart"></canvas>
-                </div>
+                <p style="margin-bottom: 20px; color: var(--text-muted);">
+                    Experience our enhanced dashboard with advanced analytics, career insights, and personalized
+                    recommendations.
+                </p>
+                <a href="/student/dashboard/v2" class="btn-action btn-save">
+                    <i class="fas fa-arrow-right"></i> Go to Dashboard V2
+                </a>
             </div>
 
-            <!-- Top Skills -->
-            <div class="stat-card span-4">
-                <div class="stat-header">
-                    <span class="stat-title">Top Skills</span>
-                </div>
-                <div class="skills-list" id="topSkillsList">
-                    <!-- Skills will be populated dynamically -->
-                </div>
-            </div>
-
-            <!-- Strong Courses -->
-            <div class="stat-card span-6">
-                <div class="stat-header">
-                    <span class="stat-title">Strong Courses</span>
-                </div>
-                <div id="strongCoursesList">
-                    <!-- Courses will be populated dynamically -->
-                </div>
-            </div>
-
-            <!-- Areas for Improvement -->
-            <div class="stat-card span-6">
-                <div class="stat-header">
-                    <span class="stat-title">Areas for Improvement</span>
-                </div>
-                <div id="weakCoursesList">
-                    <!-- Courses will be populated dynamically -->
-                </div>
-            </div>
-
-            <!-- Career Interests -->
-            <div class="stat-card span-12">
-                <div class="stat-header">
-                    <span class="stat-title">Career Interest Distribution</span>
-                </div>
-                <div class="chart-container small">
-                    <canvas id="careerChart"></canvas>
-                </div>
-            </div>
         </div>
-        </div>
-    </main>
 
-    <!-- DELETE CONFIRMATION MODAL -->
-    <div class="modal-overlay" id="deleteModal">
-        <div class="modal-dialog">
-            <div class="modal-header">
-                <div class="modal-title">127.0.0.1:5000 says</div>
-                <div class="modal-warning">
-                    <div class="modal-warning-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                            <path d="M12,2L1,21H23M12,6L19.53,19H4.47M11,10V14H13V10M11,16V18H13V16" />
-                        </svg>
-                    </div>
-                    <div class="modal-warning-text">
-                        WARNING: This will permanently delete your entire profile from the database.
-                    </div>
-                </div>
-            </div>
-            <div class="modal-body">
-                <p>This action cannot be undone. All your data will be lost.</p>
-                <p class="modal-question">Are you sure you want to continue?</p>
-            </div>
-            <div class="modal-footer">
-                <button class="modal-btn modal-btn-ok" onclick="executeDeleteProfile()">OK</button>
-                <button class="modal-btn modal-btn-cancel" onclick="closeDeleteModal()">Cancel</button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // PARTICLE CANVAS
-        const canvas = document.getElementById('particle-canvas');
-        const ctx = canvas.getContext('2d');
-
-        let width, height;
-        let particles = [];
-
-        const particleCount = 50;
-        const connectionDistance = 140;
-        const mouseDistance = 180;
-
-        let mouse = { x: null, y: null };
-
-        window.addEventListener('mousemove', (e) => {
-            mouse.x = e.x;
-            mouse.y = e.y;
-        });
-
-        window.addEventListener('mouseleave', () => {
-            mouse.x = null;
-            mouse.y = null;
-        });
-
-        function resize() {
-            width = canvas.width = window.innerWidth;
-            height = canvas.height = window.innerHeight;
-        }
-        window.addEventListener('resize', resize);
-        resize();
-
-        class Particle {
-            constructor() {
-                this.x = Math.random() * width;
-                this.y = Math.random() * height;
-                this.vx = (Math.random() - 0.5) * 0.4;
-                this.vy = (Math.random() - 0.5) * 0.4;
-                this.size = Math.random() * 2 + 1;
-            }
-
-            update() {
-                this.x += this.vx;
-                this.y += this.vy;
-
-                if (this.x < 0 || this.x > width) this.vx *= -1;
-                if (this.y < 0 || this.y > height) this.vy *= -1;
-            }
-
-            draw() {
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                ctx.fillStyle = '#002D62';
-                ctx.globalAlpha = 0.5;
-                ctx.fill();
-            }
-        }
-
-        for (let i = 0; i < particleCount; i++) {
-            particles.push(new Particle());
-        }
-
-        function animate() {
-            ctx.clearRect(0, 0, width, height);
-
-            particles.forEach((p, index) => {
-                p.update();
-                p.draw();
-
-                for (let j = index + 1; j < particles.length; j++) {
-                    const p2 = particles[j];
-                    const dx = p.x - p2.x;
-                    const dy = p.y - p2.y;
-                    const distance = Math.sqrt(dx * dx + dy * dy);
-
-                    if (distance < connectionDistance) {
-                        ctx.beginPath();
-                        ctx.strokeStyle = '#002D62';
-                        ctx.lineWidth = 0.5;
-                        ctx.globalAlpha = 1 - (distance / connectionDistance);
-                        ctx.moveTo(p.x, p.y);
-                        ctx.lineTo(p2.x, p2.y);
-                        ctx.stroke();
+        <script>
+            // Performance chart
+            const ctx = document.getElementById('performanceChart');
+            if (ctx) {
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                        datasets: [{
+                            label: 'Performance',
+                            data: [65, 70, 75, 80],
+                            borderColor: '#002D62',
+                            backgroundColor: 'rgba(0, 45, 98, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 100
+                            }
+                        }
                     }
-                }
-
-                if (mouse.x != null) {
-                    const dx = p.x - mouse.x;
-                    const dy = p.y - mouse.y;
-                    const distance = Math.sqrt(dx * dx + dy * dy);
-
-                    if (distance < mouseDistance) {
-                        ctx.beginPath();
-                        ctx.strokeStyle = '#D4AF37';
-                        ctx.lineWidth = 0.8;
-                        ctx.globalAlpha = 1 - (distance / mouseDistance);
-                        ctx.moveTo(p.x, p.y);
-                        ctx.lineTo(mouse.x, mouse.y);
-                        ctx.stroke();
-                    }
-                }
-            });
-
-            requestAnimationFrame(animate);
-        }
-
-        animate();
-
-        // SIDEBAR TOGGLE
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('active');
-        }
-
-        document.addEventListener('click', function (event) {
-            const sidebar = document.getElementById('sidebar');
-            const toggle = document.querySelector('.mobile-toggle');
-
-            if (window.innerWidth <= 768 && sidebar.classList.contains('active')) {
-                if (!sidebar.contains(event.target) && !toggle.contains(event.target)) {
-                    sidebar.classList.remove('active');
-                }
-            }
-        });
-
-        // PROFILE DELETION
-        function confirmDeleteProfile(event) {
-            event.preventDefault();
-            document.getElementById('deleteModal').classList.add('active');
-        }
-
-        function closeDeleteModal() {
-            document.getElementById('deleteModal').classList.remove('active');
-        }
-
-        function executeDeleteProfile() {
-            closeDeleteModal();
-
-            fetch('/student/delete-profile', {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        alert('Profile deleted successfully. You will be redirected to the home page.');
-                        window.location.href = "{{ url_for('home') }}";
-                    } else {
-                        alert('Error: ' + (data.error || 'Failed to delete profile'));
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('An error occurred while deleting your profile.');
                 });
-        }
-
-        document.getElementById('deleteModal').addEventListener('click', function (event) {
-            if (event.target === this) {
-                closeDeleteModal();
             }
-        });
-
-        function logout() {
-            window.location.href = "{{ url_for('home') }}";
-        }
-
-        // CHARTS
-        // GPA Trend Chart
-        // Initialize Dashboard
-        document.addEventListener('DOMContentLoaded', fetchAnalyticsData);
-
-        function fetchAnalyticsData() {
-            fetch('/api/student/analytics')
-                .then(response => response.json())
-                .then(data => {
-                    // Update specific elements if they exist
-                    const cgpaEl = document.querySelector('.stat-card .stat-value');
-                    // Since I didn't add ID to first card, I'll update it by index or I should have added an ID.
-                    // Wait, I forgot to add an ID to the first card (CGPA) in my chunks above? 
-                    // Let's rely on class injection or just assume data will populate correctly by other means if I missed it?
-                    // Actually, I missed adding ID to the CGPA card in my replacement chunks list.
-                    // I'll assume for now I can select it via querySelector or I'll fix it in a separate edit if critical.
-
-                    // Update Stats
-                    if (data.cgpa) document.querySelector('.stat-card:nth-child(1) .stat-value').textContent = data.cgpa;
-                    if (data.rank) document.getElementById('departmentRank').textContent = data.rank;
-                    if (data.credits) {
-                        document.getElementById('totalCredits').textContent = data.credits;
-                        document.getElementById('creditsProgress').style.width = (data.credits / 120 * 100) + '%';
-                    }
-                    if (data.skills_count) document.getElementById('skillsCount').textContent = data.skills_count;
-
-                    // Update Top Skills
-                    const skillsList = document.getElementById('topSkillsList');
-                    skillsList.innerHTML = '';
-                    data.top_skills.forEach(skill => {
-                        skillsList.innerHTML += `<span class="skill-tag">${skill}</span>`;
-                    });
-
-                    // Update Strong Courses
-                    const strongList = document.getElementById('strongCoursesList');
-                    strongList.innerHTML = '';
-                    data.strong_courses.forEach(c => {
-                        strongList.innerHTML += `
-                    <div class="course-item">
-                        <span class="course-name">${c.name}</span>
-                        <span class="course-grade">${c.grade}</span>
-                    </div>`;
-                    });
-
-                    // Update Weak Courses
-                    const weakList = document.getElementById('weakCoursesList');
-                    weakList.innerHTML = '';
-                    data.weak_courses.forEach(c => {
-                        weakList.innerHTML += `
-                    <div class="course-item">
-                        <span class="course-name">${c.name}</span>
-                        <span class="course-grade">${c.grade}</span>
-                    </div>`;
-                    });
-
-                    // Render GPA Chart
-                    renderGpaChart(data.gpa_trend);
-
-                    // Render Career Chart - AI Powered
-                    renderCareerChart(data.career_interests);
-
-                })
-                .catch(error => console.error('Error fetching analytics:', error));
-        }
-
-        function renderGpaChart(gpaData) {
-            const ctx = document.getElementById('gpaChart').getContext('2d');
-            const labels = gpaData.map((_, i) => `Sem ${i + 1}`);
-
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'GPA',
-                        data: gpaData,
-                        borderColor: '#002D62',
-                        backgroundColor: 'rgba(0, 45, 98, 0.1)',
-                        tension: 0.4,
-                        fill: true,
-                        pointBackgroundColor: '#002D62',
-                        pointBorderColor: '#fff',
-                        pointBorderWidth: 2,
-                        pointRadius: 5
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { beginAtZero: false, min: 2.0, max: 4.0 }
-                    }
-                }
-            });
-        }
-
-        function renderCareerChart(careerData) {
-            const ctx = document.getElementById('careerChart').getContext('2d');
-
-            // Sort interests by score
-            const sortedInterests = Object.entries(careerData).sort((a, b) => b[1] - a[1]).slice(0, 5);
-            const labels = sortedInterests.map(item => item[0]);
-            const data = sortedInterests.map(item => item[1]);
-
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'AI Predicted Interest Score',
-                        data: data,
-                        backgroundColor: 'rgba(0, 45, 98, 0.8)',
-                        borderColor: '#002D62',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: true } },
-                    scales: {
-                        y: { beginAtZero: true, max: 100 }
-                    }
-                }
-            });
-        }
-
-    </script>
+        </script>
+    </main>
 </body>
 
 </html>

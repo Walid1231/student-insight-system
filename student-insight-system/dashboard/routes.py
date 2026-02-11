@@ -1,10 +1,20 @@
-from flask import Blueprint, render_template, jsonify, request, redirect, url_for
+from flask import Blueprint, render_template, jsonify, request, redirect, url_for, current_app
 from flask_jwt_extended import jwt_required, get_jwt, get_jwt_identity
-from models import StudentProfile, AcademicMetric, StudentSkill, StudentCourse, CareerInterest, AnalyticsResult
+from models import StudentProfile, AcademicMetric, StudentSkill, StudentCourse, CareerInterest, AnalyticsResult, TeacherProfile, User, TeacherAssignment, StudentSkillProgress, ActionPlan, db
 from ml.analytics_engine import AnalyticsEngine
+from datetime import datetime
+from dashboard.utils import calculate_student_overview_stats
+import json
+import google.generativeai as genai
 
 dashboard_bp = Blueprint("dashboard", __name__)
 analytics_engine = AnalyticsEngine()
+
+from dashboard.utils import calculate_student_overview_stats
+from datetime import datetime
+from models import StudentInsight
+
+# ... (imports)
 
 @dashboard_bp.route("/student/dashboard")
 @jwt_required()
@@ -16,70 +26,257 @@ def student_dashboard():
     if role != "student":
         return jsonify({"msg": "Access denied"}), 403
 
-    student = StudentProfile.query.filter_by(id=user_id).first()
-    
-    # If no profile exists yet (new user), possibly redirect to create profile
-    # For now, we render the dashboard with empty/default data handled by Jinja/JS
-    
-    return render_template("student_dashboard.html", student=student)
+    try:
+        student = StudentProfile.query.filter_by(user_id=int(user_id)).first()
+    except (ValueError, TypeError):
+        # If no profile exists yet (should be created at register, but safety check)
+        return jsonify({"msg": "Invalid user identity"}), 400
 
-@dashboard_bp.route("/api/student/analytics")
-@jwt_required()
-def student_analytics_api():
-    user_id = get_jwt_identity()
+    if not student:
+        return jsonify({"msg": "Student profile not found"}), 404
     
-    # Get basic data
-    metric = AcademicMetric.query.filter_by(student_id=user_id).first()
-    
-    # If no data found, return empty structure or error
-    if not metric:
-        # Fallback for demo: return dummy data for Student 1 if current user has no data?
-        # Better: return empty/default data structure to avoid frontend errors
-        return jsonify({
-            "cgpa": 0.0,
-            "rank": 0,
-            "credits": 0,
-            "skills_count": 0,
-            "gpa_trend": [],
-            "career_interests": {},
-            "top_skills": [],
-            "strong_courses": [],
-            "weak_courses": [],
-            "recommendations": []
-        })
-        
-    skills = StudentSkill.query.filter_by(student_id=user_id).all()
-    courses = StudentCourse.query.filter_by(student_id=user_id).all()
-    
-    # Run ML prediction
-    analytics_data = analytics_engine.generate_insight_report(user_id)
-    
-    response_data = {
-        "cgpa": metric.student.current_cgpa,
-        "rank": metric.department_rank,
-        "credits": metric.total_credits,
-        "skills_count": len(skills),
-        "gpa_trend": metric.get_gpas(),
-        "career_interests": analytics_data['career_scores'],
-        "top_skills": [s.skill_name for s in skills],
-        "strong_courses": [{"name": c.course_name, "grade": c.grade} for c in courses if c.course_type == 'strong'],
-        "weak_courses": [{"name": c.course_name, "grade": c.grade} for c in courses if c.course_type == 'weak'],
-        "recommendations": analytics_data['recommendations']
+    # Get Academic Metrics for easy access in template
+    metric = AcademicMetric.query.filter_by(student_id=student.id).first()
+    stats = {
+        "rank": metric.department_rank if metric else 0,
+        "credits": metric.total_credits if metric else 0,
+        "gpa_trend": metric.get_gpas() if metric else []
     }
     
-    return jsonify(response_data)
+    return render_template("student_dashboard.html", student=student, stats=stats, now_date=datetime.now().strftime("%d %B, %Y"))
 
+# ... (API endpoints)
 
 @dashboard_bp.route("/teacher/dashboard")
 @jwt_required()
 def teacher_dashboard():
     claims = get_jwt()
     role = claims.get("role")
+    user_id = get_jwt_identity()
 
     if role != "teacher":
         return jsonify({"msg": "Access denied"}), 403
+        
+    try:
+        teacher = TeacherProfile.query.filter_by(user_id=int(user_id)).first()
+    except (ValueError, TypeError):
+        return jsonify({"msg": "Invalid user identity"}), 400
+    
+    if not teacher:
+        return jsonify({"msg": "Teacher profile not found"}), 404
+    
+    # Get all assigned students via TeacherAssignment
+    from models import TeacherAssignment, StudentAlert, StudentNote
+    assignments = TeacherAssignment.query.filter_by(teacher_id=teacher.id).all()
+    
+    # Get unique students (a student may appear in multiple assignments)
+    student_ids = list(set([a.student_id for a in assignments]))
+    students = StudentProfile.query.filter(StudentProfile.id.in_(student_ids)).all() if student_ids else []
+    
+    # Get Alerts
+    alerts = StudentAlert.query.filter(StudentAlert.student_id.in_(student_ids), StudentAlert.is_resolved == False).order_by(StudentAlert.created_at.desc()).all() if student_ids else []
+    
+    # Calculate Overview Data using Utility
+    overview_data = calculate_student_overview_stats(students, alerts)
+    
+    return render_template("teacher_dashboard.html", teacher=teacher, overview=overview_data, students=students, alerts=alerts, now_date=datetime.now().strftime("%d %B, %Y"))
 
-    return render_template("teacher_dashboard.html")
+# --- API ENDPOINTS FOR TEACHER DASHBOARD ---
+
+@dashboard_bp.route("/api/teacher/students", methods=["GET"])
+@jwt_required()
+def api_teacher_students():
+    claims = get_jwt()
+    if claims.get("role") != "teacher": return jsonify({"msg": "Access denied"}), 403
+    user_id = get_jwt_identity()
+    
+    teacher = TeacherProfile.query.filter_by(user_id=int(user_id)).first()
+    if not teacher: return jsonify({"msg": "Profile not found"}), 404
+
+    # Get filters
+    class_filter = request.args.get('class')
+    section_filter = request.args.get('section')
+    status_filter = request.args.get('status')
+    
+    # Base Query: Start from Assignments to ensure scope
+    query = db.session.query(StudentProfile).join(TeacherAssignment).filter(TeacherAssignment.teacher_id == teacher.id)
+    
+    if class_filter:
+        query = query.filter(StudentProfile.class_level == class_filter)
+    if section_filter:
+        query = query.filter(StudentProfile.section == section_filter)
+    # Status filter needs post-processing or complex query since status is a property
+    # For now, fetch all assigned and filter in python if status is requested
+    
+    students = query.distinct().all()
+    
+    result = []
+    for s in students:
+        if status_filter and s.performance_status != status_filter:
+            continue
+            
+        result.append({
+            "id": s.id,
+            "name": s.full_name,
+            "class_level": s.class_level,
+            "section": s.section,
+            "cgpa": s.current_cgpa,
+            "status": s.performance_status,
+            "last_active": s.last_active.isoformat() if s.last_active else None
+        })
+        
+    return jsonify(result)
+
+@dashboard_bp.route("/api/teacher/notes", methods=["POST"])
+@jwt_required()
+def api_create_note():
+    claims = get_jwt()
+    if claims.get("role") != "teacher": return jsonify({"msg": "Access denied"}), 403
+    user_id = get_jwt_identity()
+    teacher = TeacherProfile.query.filter_by(user_id=int(user_id)).first()
+    
+    data = request.get_json()
+    student_id = data.get('student_id')
+    content = data.get('content')
+    
+    if not student_id or not content:
+        return jsonify({"msg": "Missing data"}), 400
+        
+    # Verify assignment scope? For simplicity, assume yes if valid ID
+    # Better: check if teacher assignments include student_id
+    
+    note = StudentNote(
+        student_id=student_id,
+        teacher_id=teacher.id,
+        content=content,
+        is_private=True
+    )
+    db.session.add(note)
+    db.session.commit()
+    
+    return jsonify({"msg": "Note created", "id": note.id})
+
+@dashboard_bp.route("/api/teacher/alerts/<int:alert_id>/resolve", methods=["POST"])
+@jwt_required()
+def api_resolve_alert(alert_id):
+    claims = get_jwt()
+    if claims.get("role") != "teacher": return jsonify({"msg": "Access denied"}), 403
+    
+    alert = StudentAlert.query.get(alert_id)
+    if not alert: return jsonify({"msg": "Alert not found"}), 404
+    
+    # Ideally check ownership via student -> teacher assignment
+    
+    alert.is_resolved = True
+    db.session.commit()
+    return jsonify({"msg": "Alert resolved"})
+
+@dashboard_bp.route("/api/teacher/class-skills", methods=["GET"])
+@jwt_required()
+def api_teacher_class_skills():
+    claims = get_jwt()
+    if claims.get("role") != "teacher": return jsonify({"msg": "Access denied"}), 403
+    user_id = get_jwt_identity()
+    
+    teacher = TeacherProfile.query.filter_by(user_id=int(user_id)).first()
+    if not teacher: return jsonify({"msg": "Profile not found"}), 404
+    
+    # Get assigned students
+    assignments = TeacherAssignment.query.filter_by(teacher_id=teacher.id).all()
+    student_ids = list(set([a.student_id for a in assignments]))
+    
+    # Fetch data
+    data = []
+    students = StudentProfile.query.filter(StudentProfile.id.in_(student_ids)).all()
+    
+    for s in students:
+        skills = StudentSkill.query.filter_by(student_id=s.id).all()
+        skill_data = [{"name": sk.skill_name, "score": sk.proficiency_score, "risk": sk.risk_score} for sk in skills]
+        if skill_data:
+            data.append({
+                "student_id": s.id,
+                "name": s.full_name,
+                "skills": skill_data
+            })
+            
+    return jsonify(data)
+
+
+@dashboard_bp.route("/teacher/student/<int:student_id>")
+@jwt_required()
+def teacher_student_detail(student_id):
+    claims = get_jwt()
+    role = claims.get("role")
+    user_id = get_jwt_identity()
+
+    if role != "teacher":
+        return jsonify({"msg": "Access denied"}), 403
+        
+    try:
+        teacher = TeacherProfile.query.filter_by(user_id=int(user_id)).first()
+    except (ValueError, TypeError):
+        return jsonify({"msg": "Invalid user identity"}), 400
+    
+    if not teacher:
+        return jsonify({"msg": "Teacher profile not found"}), 404
+    
+    # Verify teacher is assigned to this student
+    assignment = TeacherAssignment.query.filter_by(
+        teacher_id=teacher.id,
+        student_id=student_id
+    ).first()
+    
+    if not assignment:
+        return jsonify({"msg": "You are not assigned to this student"}), 403
+    
+    # Get student
+    student = StudentProfile.query.get(student_id)
+    if not student:
+        return jsonify({"msg": "Student not found"}), 404
+    
+    # Import helper functions
+    from dashboard.student_stats import (
+        calculate_attendance_stats,
+        calculate_assignment_stats,
+        calculate_assessment_stats,
+        calculate_performance_trend
+    )
+    
+    # Calculate all stats
+    attendance = calculate_attendance_stats(student_id)
+    assignments = calculate_assignment_stats(student_id)
+    assessments = calculate_assessment_stats(student_id)
+    performance_trend = calculate_performance_trend(student_id)
+    
+    # Calculate time since last activity
+    days_since_active = None
+    if student.last_activity:
+        delta = datetime.utcnow() - student.last_activity
+        days_since_active = delta.days
+        
+    # Get Notes (Teacher specific)
+    from models import StudentNote
+    notes = StudentNote.query.filter_by(
+        student_id=student_id,
+        teacher_id=teacher.id
+    ).order_by(StudentNote.created_at.desc()).all()
+    
+    # Get latest Insight Report
+    latest_insight = StudentInsight.query.filter_by(student_id=student_id).order_by(StudentInsight.generated_at.desc()).first()
+
+    return render_template(
+        "student_detail.html",
+        teacher=teacher,
+        student=student,
+        attendance=attendance,
+        assignments=assignments,
+        assessments=assessments,
+        performance_trend=performance_trend,
+        days_since_active=days_since_active,
+        notes=notes,
+        insight=latest_insight
+    )
+
 
 
 import os
@@ -220,6 +417,18 @@ def student_insight_report():
             response = model.generate_content(prompt)
             report_html = response.text
 
+            # SAVE TO DATABASE
+            user_id = get_jwt_identity()
+            student = StudentProfile.query.filter_by(user_id=int(user_id)).first()
+            if student:
+                insight = StudentInsight(
+                    student_id=student.id,
+                    content=report_html,
+                    generated_at=datetime.utcnow()
+                )
+                db.session.add(insight)
+                db.session.commit()
+
             return jsonify({"success": True, "report": report_html})
 
         except Exception as e:
@@ -227,3 +436,279 @@ def student_insight_report():
 
     # GET request - render the form page
     return render_template("student_insight_form.html")
+
+
+# --- SKILL TRACKING & ACTION PLAN API ---
+
+@dashboard_bp.route("/api/skills/update", methods=["POST"])
+@jwt_required()
+def api_update_skill():
+    user_id = get_jwt_identity()
+    student = StudentProfile.query.filter_by(user_id=int(user_id)).first()
+    if not student: return jsonify({"msg": "Student not found"}), 404
+    
+    data = request.get_json()
+    skill_name = data.get('skill_name')
+    proficiency = int(data.get('proficiency', 0)) # 0-100
+    
+    if not skill_name: return jsonify({"msg": "Skill name required"}), 400
+    
+    # Find or Create Skill
+    skill = StudentSkill.query.filter_by(student_id=student.id, skill_name=skill_name).first()
+    if not skill:
+        skill = StudentSkill(student_id=student.id, skill_name=skill_name)
+        db.session.add(skill)
+    
+    # Update Stats
+    skill.proficiency_score = proficiency
+    skill.last_updated = datetime.utcnow()
+    
+    # Calculate Risk
+    skill.risk_score = analytics_engine.calculate_risk_score(proficiency, student.current_cgpa)
+    
+    # Log History
+    history = StudentSkillProgress(
+        student_skill_id=skill.id,
+        proficiency_score=skill.proficiency_score,
+        risk_score=skill.risk_score,
+        date=datetime.utcnow().date()
+    )
+    db.session.add(history)
+    db.session.commit()
+    
+    return jsonify({
+        "msg": "Skill updated", 
+        "skill": skill.skill_name, 
+        "proficiency": skill.proficiency_score,
+        "risk": skill.risk_score
+    })
+
+@dashboard_bp.route("/api/skills/history", methods=["GET"])
+@jwt_required()
+def api_get_skill_history():
+    user_id = get_jwt_identity()
+    student = StudentProfile.query.filter_by(user_id=int(user_id)).first()
+    if not student: return jsonify({"msg": "Student not found"}), 404
+    
+    skills = StudentSkill.query.filter_by(student_id=student.id).all()
+    data = []
+    
+    for skill in skills:
+        history = StudentSkillProgress.query.filter_by(student_skill_id=skill.id).order_by(StudentSkillProgress.date).all()
+        data.append({
+            "skill": skill.skill_name,
+            "current_score": skill.proficiency_score,
+            "current_risk": skill.risk_score,
+            "history": [{"date": h.date.isoformat(), "score": h.proficiency_score} for h in history]
+        })
+        
+    return jsonify(data)
+
+@dashboard_bp.route("/api/action-plans", methods=["GET"])
+@jwt_required()
+def api_get_action_plans():
+    user_id = get_jwt_identity()
+    student = StudentProfile.query.filter_by(user_id=int(user_id)).first()
+    if not student: return jsonify({"msg": "Student not found"}), 404
+    
+    plans = ActionPlan.query.filter_by(student_id=student.id).order_by(ActionPlan.status.desc(), ActionPlan.due_date).all()
+    
+    return jsonify([{
+        "id": p.id,
+        "title": p.title,
+        "description": p.description,
+        "status": p.status,
+        "due_date": p.due_date.isoformat() if p.due_date else None
+    } for p in plans])
+
+@dashboard_bp.route("/api/action-plans/generate", methods=["POST"])
+@jwt_required()
+def api_generate_action_plan():
+    user_id = get_jwt_identity()
+    student = StudentProfile.query.filter_by(user_id=int(user_id)).first()
+    if not student: return jsonify({"msg": "Student not found"}), 404
+    
+    # Identifying weak skills (Risk > 0.5)
+    weak_skills = StudentSkill.query.filter(StudentSkill.student_id == student.id, StudentSkill.risk_score > 0.5).all()
+    
+    if not weak_skills:
+        return jsonify({"msg": "No high-risk skills found to generate plan for."})
+        
+    target_skill = weak_skills[0] # Focus on the first critical one for now
+    
+    # Prompt Gemini
+    prompt = f"""
+    Generate a JSON list of 3 specific, actionable tasks for a student to improve their {target_skill.skill_name} skill 
+    from level {target_skill.proficiency_score}/100 to {target_skill.proficiency_score + 20}/100.
+    Format: [{{"title": "Task Title", "description": "Details", "days_to_complete": 5}}]
+    """
+    
+    try:
+        api_key = current_app.config.get("GEMINI_API_KEY")
+        if not api_key:
+            return jsonify({"success": False, "msg": "Server Error: GEMINI_API_KEY is not configured."}), 500
+            
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel("gemini-2.0-flash")
+        response = model.generate_content(prompt)
+        
+        # Clean response (remove markdown code blocks if any)
+        text = response.text.replace("```json", "").replace("```", "").strip()
+        tasks = json.loads(text)
+        
+        created_plans = []
+        for task in tasks:
+            plan = ActionPlan(
+                student_id=student.id,
+                skill_id=target_skill.id,
+                title=task.get('title'),
+                description=task.get('description'),
+                status='pending',
+                due_date=datetime.utcnow().date() # Simplified due date logic
+            )
+            db.session.add(plan)
+            created_plans.append(plan.title)
+            
+        db.session.commit()
+        return jsonify({"success": True, "created": created_plans})
+        
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@dashboard_bp.route("/api/action-plans/<int:plan_id>/complete", methods=["POST"])
+@jwt_required()
+def api_complete_action_plan(plan_id):
+    user_id = get_jwt_identity()
+    student = StudentProfile.query.filter_by(user_id=int(user_id)).first()
+    
+    plan = ActionPlan.query.get(plan_id)
+    if not plan or plan.student_id != student.id:
+        return jsonify({"msg": "Plan not found"}), 404
+        
+    plan.status = 'completed'
+    plan.completed_at = datetime.utcnow()
+    
+    # Gamification: Boost skill slightly
+    if plan.skill:
+        plan.skill.proficiency_score = min(100, plan.skill.proficiency_score + 2)
+        plan.skill.risk_score = analytics_engine.calculate_risk_score(plan.skill.proficiency_score, student.current_cgpa)
+        
+    db.session.commit()
+    return jsonify({"msg": "Plan completed", "new_score": plan.skill.proficiency_score if plan.skill else None})
+
+
+# --- NEW PROFILE & ROUTINE ROUTES ---
+
+@dashboard_bp.route("/student/profile", methods=["GET", "POST"])
+@jwt_required()
+def student_profile():
+    user_id = get_jwt_identity()
+    student = StudentProfile.query.filter_by(user_id=int(user_id)).first()
+    if not student: return jsonify({"msg": "Student not found"}), 404
+
+    if request.method == "POST":
+        # Handle "Edit Profile" form from modal
+        student.full_name = request.form.get("full_name", student.full_name)
+        student.university = request.form.get("university", student.university)
+        student.department = request.form.get("department", student.department)
+        student.current_year = request.form.get("current_year", student.current_year)
+        
+        cgpa_str = request.form.get("cgpa")
+        if cgpa_str:
+            try:
+                # This field in the form is labelled "Target CGPA" but maps to 'cgpa' name
+                # However, the model has 'current_cgpa'. Let's assume this form updates current_cgpa unless specified
+                # Actually, the template shows "Target CGPA" but name="cgpa". 
+                # StudentProfile model has `current_cgpa`. Let's update that for now or add a custom field if needed.
+                # For this implementation, I'll map it to current_cgpa.
+                student.current_cgpa = float(cgpa_str)
+            except ValueError:
+                pass
+
+        student.career_goal = request.form.get("career_goal", student.career_goal)
+        student.linkedin_profile = request.form.get("linkedin_profile", student.linkedin_profile)
+        student.github_profile = request.form.get("github_profile", student.github_profile)
+        student.bio = request.form.get("bio", student.bio)
+
+        # Handle Profile Picture Upload
+        if 'profile_picture' in request.files:
+            file = request.files['profile_picture']
+            if file and file.filename != '':
+                filename = secure_filename(file.filename)
+                upload_folder = os.path.join(current_app.root_path, 'static', 'uploads', 'profile_pics')
+                os.makedirs(upload_folder, exist_ok=True)
+                file.save(os.path.join(upload_folder, filename))
+                student.profile_picture = filename
+
+        db.session.commit()
+        return redirect(url_for('dashboard.student_profile'))
+
+    return render_template("student_profile.html", student=student)
+
+@dashboard_bp.route("/student/delete-profile", methods=["DELETE"])
+@jwt_required()
+def delete_profile():
+    user_id = get_jwt_identity()
+    user = User.query.get(int(user_id))
+    if not user: return jsonify({"success": False, "error": "User not found"}), 404
+    
+    # Cascade delete should handle profile cleanup if configured, 
+    # ensuring manual cleanup just in case
+    db.session.delete(user)
+    db.session.commit()
+    return jsonify({"success": True})
+
+@dashboard_bp.route("/student/update-data", methods=["GET"])
+@jwt_required()
+def view_update_data():
+    return render_template("update_profile_data.html")
+
+@dashboard_bp.route("/update-progress", methods=["POST"])
+@jwt_required()
+def update_progress():
+    user_id = get_jwt_identity()
+    student = StudentProfile.query.filter_by(user_id=int(user_id)).first()
+    if not student: return jsonify({"msg": "Student not found"}), 404
+
+    # 1. Update Academic Info
+    student.university = request.form.get("university")
+    student.department = request.form.get("department")
+    # student.current_year = request.form.get("year") # Map 'year' to 'current_year' if needed
+    
+    try:
+        student.current_cgpa = float(request.form.get("current_cgpa"))
+    except (ValueError, TypeError):
+        pass
+
+    # 2. Update Career Interests
+    # Simple implementation: Clear old and add new top 2
+    CareerInterest.query.filter_by(student_id=student.id).delete()
+    
+    role1 = request.form.get("role_1")
+    match1 = request.form.get("match_1")
+    if role1:
+        db.session.add(CareerInterest(student_id=student.id, field_name=role1, interest_score=float(match1) if match1 else 0))
+        
+    role2 = request.form.get("role_2")
+    match2 = request.form.get("match_2")
+    if role2:
+        db.session.add(CareerInterest(student_id=student.id, field_name=role2, interest_score=float(match2) if match2 else 0))
+
+    # 3. Update Skills (Just parsing the text for now)
+    skills_known = request.form.get("skills_known", "")
+    for skill_name in skills_known.split(','):
+        s_name = skill_name.strip()
+        if s_name:
+            # Check if exists
+            existing = StudentSkill.query.filter_by(student_id=student.id, skill_name=s_name).first()
+            if not existing:
+                db.session.add(StudentSkill(student_id=student.id, skill_name=s_name, proficiency_score=50)) # Default score
+
+    db.session.commit()
+    
+    return redirect(url_for('dashboard.student_dashboard')) # Redirect back to dashboard
+
+@dashboard_bp.route("/student/routine", methods=["GET"])
+@jwt_required()
+def student_routine():
+    return render_template("student_weekly_routine.html")

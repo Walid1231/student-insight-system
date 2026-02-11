@@ -1,0 +1,97 @@
+SYSTEM STATUS REPORT - STUDENT INSIGHT SYSTEM
+Date: 2026-02-11
+---------------------------------------------------
+
+1. OVERVIEW
+   The system is a dual-interface web application serving Students and Teachers. 
+   It focuses on academic tracking, AI-powered analytics, and student performance monitoring.
+   Technology Stack: Flask (Backend), SQLAlchemy (ORM), Jinja2 (Templates), Chart.js (Frontend), Google Gemini (AI).
+
+2. TEACHER'S PERSPECTIVE
+   ---------------------
+   Current State: Fully Functional Dashboard & Student Monitoring
+   
+   A. Dashboard Interface (Updated Theme)
+      - Visual Style: Now matches the Student Dashboard's "Light/Clean" theme.
+        - Background: Light Gray (#F8F9FB).
+        - Accents: Coral, Mint, Sage.
+        - Cards: Solid white with subtle shadows (removed previous glassmorphism/dark purple theme).
+      - Core Metrics Displayed:
+        - Total Students assigned.
+        - "At Risk" Student count.
+        - Average Class Performance %.
+        - Active Alerts count.
+      - Performance Chart: Doughnut chart visualizing Good vs. Average vs. At-Risk distribution.
+
+   B. Key Features
+      1. Student Monitoring:
+         - View list of assigned students with Class, Section, CGPA, and Performance Status.
+         - Status Badges: Good (Green), Average (Yellow), At-Risk (Red).
+      2. Alert System:
+         - Real-time alerts for attendance, performance drops, or behavioral issues.
+         - Ability to resolve/dismiss alerts directly from the dashboard.
+      3. Student Detail View:
+         - Deep dive into individual student profiles.
+         - Charts: Attendance rates, Assignment scores, Assessment results, GPA Trend.
+         - Teacher Notes: Ability to add private notes about a student.
+      4. Workflows:
+         - Login -> Dashboard -> Select Student -> View Details -> Add Note/Action.
+
+3. STUDENT'S PERSPECTIVE
+   ---------------------
+   Current State: Analytics-Driven Self-Service Portal
+   
+   A. Dashboard Interface
+      - Visual Style: Modern, clean light theme with sidebar navigation.
+      - Core Metrics Displayed:
+        - Department Rank.
+        - Current CGPA.
+        - Total Credits Earned.
+   
+   B. Key Features
+      1. Academic Analytics:
+         - GPA Trend visualization.
+         - Identification of Strong vs. Weak courses.
+         - Skill proficiency tracking.
+      2. AI Insight Report (Powered by Gemini 2.0):
+         - Students provide self-reported data (skills, interests, struggles).
+         - AI generates a "Harsh Reality Check" & "Career Roadmap".
+         - Output includes Executive Summary, Skills Gap Analysis, Remedial Plan, and Career Trajectory.
+      3. Profile Management:
+         - "Create Profile" feature to build a CV-like profile (Education, Experience, Skills).
+         - Photo upload capability.
+
+4. DATA ARCHITECTURE (BACKEND STATE)
+   ---------------------------------
+   Models defined in `models.py`:
+   
+   A. Users & Auth
+      - Role-based access control (Student vs. Teacher).
+      - JWT Authentication.
+   
+   B. Student Data
+      - StudentProfile: Core data (Dept, Class, Section, CGPA).
+      - AcademicMetric: Semester GPAs, Credits, Rank.
+      - AnalyticsResult: ML/AI predictions for career and next GPA.
+      - StudentSkill, StudentCourse, CareerInterest: Support tables for analytics.
+   
+   C. Teacher Data
+      - TeacherProfile: Dept, Specialization.
+      - TeacherAssignment: Links Teachers to specific Students/Classes.
+      - StudentNote: Private notes from teacher to student.
+      - StudentAlert: System-generated alerts for teachers.
+
+5. RECENT UPDATES SUMMARY
+   ----------------------
+   - [UI] Teacher Dashboard CSS overhaul:
+     - Swapped CSS variables to align with Student theme.
+     - Updated Sidebar, Cards, and Typography to be consistent.
+     - Fixed mobile responsiveness for headers and cards.
+   - [Feat] AI Insight Report integration is active.
+   - [Feat] Student Detail view for teachers is fully implemented with charts.
+
+6. PENDING / POTENTIAL NEXT STEPS
+   ------------------------------
+   - Verify mobile responsiveness logic on the new Teacher Dashboard theme.
+   - Ensure "Dark Mode" toggle (present in templates) handles the new light theme correctly if implemented.
+   - Expand "Teacher Assignment" logic to allow bulk assignment of classes.

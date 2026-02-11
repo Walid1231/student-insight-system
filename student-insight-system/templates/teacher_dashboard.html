@@ -1,18 +1,337 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
-    <title>Teacher Dashboard</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Dashboard | Student Insight</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="{{ url_for('static', filename='css/dashboard.css') }}" rel="stylesheet">
+
 </head>
+
 <body>
-    <h2>Teacher Dashboard</h2>
+    <!-- Sidebar Toggle Button -->
+    <button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle Sidebar">
+        <i data-lucide="menu"></i>
+    </button>
 
-    <p>This dashboard allows teachers to:</p>
-    <ul>
-        <li>View student academic insights</li>
-        <li>Identify hidden strong performers</li>
-        <li>Detect burnout & risk trends</li>
-    </ul>
+    <nav class="sidebar">
+        <div class="logo">Teacher Dashboard</div>
+        <div class="nav-links">
+            <a href="#" class="nav-item active">
+                <span class="nav-icon"><i data-lucide="layout-dashboard"></i></span> Dashboard
+            </a>
+            <a href="#" class="nav-item">
+                <span class="nav-icon"><i data-lucide="users"></i></span> Students
+            </a>
+            <a href="#" class="nav-item">
+                <span class="nav-icon"><i data-lucide="bell"></i></span> Alerts
+                {% if overview.alerts_count > 0 %}
+                <span
+                    style="margin-left:auto; background:var(--danger); color:white; padding:2px 6px; border-radius:10px; font-size:10px;">{{
+                    overview.alerts_count }}</span>
+                {% endif %}
+            </a>
+            <a href="#" class="nav-item">
+                <span class="nav-icon"><i data-lucide="file-text"></i></span> My Notes
+            </a>
+        </div>
+        <div class="sidebar-footer">
+            <a href="/logout" class="nav-item" style="color: var(--danger);">
+                <span class="nav-icon"><i data-lucide="log-out"></i></span> Logout
+            </a>
+        </div>
+    </nav>
 
-    <p>(Student analytics will appear here later)</p>
+    <div class="main-content">
+        <div class="header">
+            <div>
+                <h1>Hello, {{ teacher.full_name }}</h1>
+                <p style="color:var(--gray-500)">Here's what's happening in your classes today.</p>
+            </div>
+            <div style="font-size:14px; color:var(--gray-500)">
+                {{ now_date }}
+            </div>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="grid">
+            <div class="card stat-card">
+                <div class="stat-info">
+                    <div class="value">{{ overview.total_students }}</div>
+                    <div class="label">Total Students</div>
+                </div>
+                <div class="stat-icon orange"><i data-lucide="users"></i></div>
+            </div>
+
+            <div class="card stat-card">
+                <div class="stat-info">
+                    <div class="value">{{ overview.at_risk_count }}</div>
+                    <div class="label">At Risk</div>
+                </div>
+                <div class="stat-icon" style="background:#fee2e2;"><i data-lucide="alert-triangle"
+                        style="color:var(--danger);"></i></div>
+            </div>
+
+            <div class="card stat-card">
+                <div class="stat-info">
+                    <div class="value">{{ overview.average_percent }}%</div>
+                    <div class="label">Avg Performance</div>
+                </div>
+                <div class="stat-icon" style="background:#d1fae5;"><i data-lucide="trending-up"
+                        style="color:var(--success);"></i></div>
+            </div>
+
+            <div class="card stat-card">
+                <div class="stat-info">
+                    <div class="value">{{ overview.alerts_count }}</div>
+                    <div class="label">Active Alerts</div>
+                </div>
+                <div class="stat-icon" style="background:#fef3c7;"><i data-lucide="bell"
+                        style="color:var(--warning);"></i></div>
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <!-- Functional Performance Chart -->
+            <div class="card">
+                <h3>Performance Distribution</h3>
+                <div class="chart-container">
+                    <canvas id="performanceChart"></canvas>
+                </div>
+            </div>
+
+            <!-- RISK HEATMAP -->
+            <div class="card">
+                <h3>Class Skill Risk Heatmap</h3>
+                <div id="heatmapContainer" style="overflow-x:auto; margin-top:15px; max-height: 300px;">
+                    <div style="text-align:center; color:var(--text-secondary);">Loading Risk Data...</div>
+                </div>
+            </div>
+
+            <!-- Alerts Panel -->
+            <div class="card">
+                <div style="display:flex; justify-content:space-between; margin-bottom:16px;">
+                    <h3>Recent Alerts</h3>
+                    <a href="#" style="font-size:12px; color:var(--primary);">View All</a>
+                </div>
+
+                <div class="alerts-list">
+                    {% for alert in alerts[:5] %}
+                    <div class="alert-item" id="alert-{{ alert.id }}">
+                        <div>
+                            <div style="font-size:14px; font-weight:600;">{{ alert.message }}</div>
+                            <div style="font-size:12px; color:var(--gray-500);">
+                                {{ alert.student.full_name }} • {{ alert.created_at.strftime('%Y-%m-%d') }}
+                            </div>
+                        </div>
+                        <div>
+                            <span class="alert-badge {{ alert.severity }}">{{ alert.severity }}</span>
+                            <button class="btn-sm" onclick="resolveAlert({{ alert.id }})"><i data-lucide="check"
+                                    style="width:14px; height:14px;"></i></button>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div style="color:var(--gray-500); text-align:center; padding:20px;">No active alerts</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Student List -->
+        <div class="card">
+            <h3>Assigned Students</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Student Name</th>
+                            <th>Class</th>
+                            <th>CGPA</th>
+                            <th>Status</th>
+                            <th>Last Active</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for student in students %}
+                        <tr>
+                            <td>
+                                <div style="font-weight:600">{{ student.full_name }}</div>
+                            </td>
+                            <td>{{ student.class_level }}-{{ student.section }}</td>
+                            <td>{{ "%.2f"|format(student.current_cgpa) if student.current_cgpa else '--' }}</td>
+                            <td>
+                                <span class="status-badge status-{{ student.performance_status }}">
+                                    {{ student.performance_status }}
+                                </span>
+                            </td>
+                            <td>
+                                {{ student.last_activity.strftime('%b %d') if student.last_activity else '--' }}
+                            </td>
+                            <td>
+                                <a href="/teacher/student/{{ student.id }}" class="btn-sm"
+                                    style="text-decoration:none; color:inherit;">View Profile</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sidebar Toggle Function
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            const mainContent = document.querySelector('.main-content');
+
+            sidebar.classList.toggle('collapsed');
+            mainContent.classList.toggle('expanded');
+
+            // Save state to localStorage
+            const isCollapsed = sidebar.classList.contains('collapsed');
+            localStorage.setItem('sidebarCollapsed', isCollapsed);
+        }
+
+        // Restore sidebar state on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+            if (isCollapsed) {
+                document.querySelector('.sidebar').classList.add('collapsed');
+                document.querySelector('.main-content').classList.add('expanded');
+            }
+        });
+
+        // Initialize Chart with glassmorphism styling
+        const ctx = document.getElementById('performanceChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Good', 'Average', 'At Risk'],
+                datasets: [{
+                    data: [{{ overview.good_count }}, {{ overview.average_count }}, {{ overview.at_risk_count }}],
+            backgroundColor: [
+            'rgba(16, 185, 129, 0.8)',
+            'rgba(245, 158, 11, 0.8)',
+            'rgba(239, 68, 68, 0.8)'
+        ],
+            borderColor: [
+            'rgba(16, 185, 129, 1)',
+            'rgba(245, 158, 11, 1)',
+            'rgba(239, 68, 68, 1)'
+        ],
+            borderWidth: 2
+                }]
+            },
+            options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '70%',
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        color: 'rgba(255, 255, 255, 0.9)',
+                        font: {
+                            size: 13,
+                            weight: '600'
+                        },
+                        padding: 15
+                    }
+                }
+            }
+        }
+        });
+
+        // Resolve Alert Function
+        async function resolveAlert(alertId) {
+            if (!confirm("Mark this alert as resolved?")) return;
+
+            try {
+                const response = await fetch(`/api/teacher/alerts/${alertId}/resolve`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                if (response.ok) {
+                    const el = document.getElementById(`alert-${alertId}`);
+                    if (el) el.remove();
+                } else {
+                    alert("Failed to resolve alert.");
+                }
+            } catch (error) {
+                console.error("Error:", error);
+            }
+        }
+
+        // LOAD HEATMAP
+        async function loadHeatmap() {
+            try {
+                const res = await fetch('/api/teacher/class-skills');
+                const data = await res.json();
+
+                if (data.length === 0) {
+                    document.getElementById('heatmapContainer').innerHTML = "No skill data available.";
+                    return;
+                }
+
+                // 1. Collect all unique skills
+                const allSkills = new Set();
+                data.forEach(s => s.skills.forEach(sk => allSkills.add(sk.name)));
+                const skillList = Array.from(allSkills);
+
+                // 2. Build Table
+                let html = `<table style="width:100%; border-collapse:collapse; font-size:12px;">`;
+
+                // Header
+                html += `<thead><tr><th style="text-align:left; padding:8px;">Student</th>`;
+                skillList.forEach(sk => html += `<th style="padding:8px; text-align:center;">${sk}</th>`);
+                html += `</tr></thead><tbody>`;
+
+                // Rows
+                data.forEach(s => {
+                    html += `<tr><td style="padding:8px; border-bottom:1px solid #eee; font-weight:600;">${s.name}</td>`;
+
+                    skillList.forEach(headerskill => {
+                        const studentSkill = s.skills.find(sk => sk.name === headerskill);
+                        if (studentSkill) {
+                            // Color based on risk (0.0 - 1.0)
+                            // Low Risk (Green) -> High Risk (Red)
+                            // Risk > 0.7 = Red, > 0.4 = Yellow, Else Green
+                            let color = '#d1fae5'; // Green
+                            if (studentSkill.risk > 0.7) color = '#fee2e2'; // Red
+                            else if (studentSkill.risk > 0.4) color = '#fef3c7'; // Yellow
+
+                            html += `<td style="padding:8px; border-bottom:1px solid #eee; text-align:center; background:${color}; color:#333;">
+                                ${studentSkill.score}%
+                                </td>`;
+                        } else {
+                            html += `<td style="padding:8px; border-bottom:1px solid #eee; text-align:center; color:#ccc;">--</td>`;
+                        }
+                    });
+
+                    html += `</tr>`;
+                });
+
+                html += `</tbody></table>`;
+                document.getElementById('heatmapContainer').innerHTML = html;
+
+            } catch (e) {
+                console.error("Heatmap Error:", e);
+                document.getElementById('heatmapContainer').innerHTML = "Error loading data.";
+            }
+        }
+
+        loadHeatmap();
+
+        // Initialize Lucide icons
+        lucide.createIcons();
+    </script>
 </body>
+
 </html>

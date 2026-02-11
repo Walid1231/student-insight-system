@@ -113,29 +113,37 @@
         </div>
 
         <script>
-      p            rmance chart
-            const            ocument.getElementById('performanceChart');
+            // Performance chart
+            const ctx = document.getElementById('performanceChart');
             if (ctx) {
                 new Chart(ctx, {
-                        type: 'line',
-                        data: {
+                    type: 'line',
+                    data: {
                         labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
-                        dataset                                          label: 'Performance',
-                                data: [65, 70, 75, 80],
-                                         lor: '#002D62',
-                                         dColor: 'rgba(0, 45, 98,                                            tension: 0.4
-                                                   },
-                                 {
-                                responsive: true,
-                              intainAspectRatio: false,
+                        datasets: [{
+                            label: 'Performance',
+                            data: [65, 70, 75, 80],
+                            borderColor: '#002D62',
+                            backgroundColor: 'rgba(0, 45, 98, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
                         plugins: {
-                                legend: {
-                                di                
-                                                                                                      
-                                                                                Zero: true,
-                                    max: 100
-                                }
-                                                  }
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 100
+                            }
+                        }
+                    }
                 });
             }
         </script>

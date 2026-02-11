@@ -26,5 +26,7 @@ def home():
 
 if __name__ == "__main__":
     with app.app_context():
-        db.create_all()  # Ensure tables exist
+        from models import db
+        db.create_all()
+        print("Database tables created.")  # Ensure tables exist
     app.run(debug=True)
