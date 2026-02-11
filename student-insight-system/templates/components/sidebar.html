@@ -1,0 +1,139 @@
+<!-- MOBILE TOGGLE -->
+<!-- MOBILE TOGGLE -->
+<button class="mobile-toggle" onclick="toggleSidebar()">
+    <i class="fas fa-bars"></i>
+</button>
+
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <div class="sidebar-logo">Student Insight</div>
+        <button class="sidebar-toggle-btn" id="sidebarToggle" title="Toggle Sidebar">
+            <i class="fas fa-bars"></i>
+        </button>
+    </div>
+
+    <div class="nav-items">
+        <a href="/student/profile" class="nav-link {{ 'active' if active_page == 'profile' }}">
+            <i class="fas fa-user"></i> <span>Profile</span>
+        </a>
+        <a href="/student/dashboard/v2" class="nav-link {{ 'active' if active_page == 'dashboard' }}">
+            <i class="fas fa-chart-line"></i> <span>Dashboard</span>
+        </a>
+        <a href="/student/dashboard" class="nav-link {{ 'active' if active_page == 'legacy' }}">
+            <i class="fas fa-columns"></i> <span>Legacy Board</span>
+        </a>
+        <a href="/student/weekly-routine" class="nav-link {{ 'active' if active_page == 'routine' }}">
+            <i class="fas fa-calendar-alt"></i> <span>Weekly Routine</span>
+        </a>
+        <a href="/student/profile" class="nav-link {{ 'active' if active_page == 'settings' }}">
+            <i class="fas fa-cog"></i> <span>Settings</span>
+        </a>
+        <!-- Logout should always be a full reload to clear state properly -->
+        <a href="#" onclick="logout()" class="nav-link logout-link" hx-boost="false">
+            <i class="fas fa-sign-out-alt"></i> <span>Log Out</span>
+        </a>
+    </div>
+</aside>
+
+<script>
+    // Sidebar Toggle Logic
+    const toggleBtn = document.getElementById('sidebarToggle');
+
+    // Check if event listener is already attached to avoid duplicates if re-included
+    if (toggleBtn && !toggleBtn.dataset.hasListener) {
+        toggleBtn.addEventListener('click', () => {
+            const isCollapsed = document.documentElement.classList.toggle('sidebar-is-collapsed');
+            // Set Cookie for Server-Side Rendering (Path=/ ensures it works everywhere)
+            document.cookie = `sidebar_collapsed=${isCollapsed}; path=/; max-age=31536000`;
+            // Keep localStorage as backup/sync if needed, though cookie is primary now
+            localStorage.setItem('sidebarCollapsed', isCollapsed);
+        });
+        toggleBtn.dataset.hasListener = 'true';
+    }
+
+    // ANTI-JUMP: Immediately disable transitions on load, then enable them
+    document.body.classList.add('preload');
+    window.addEventListener('load', () => {
+        setTimeout(() => {
+            document.body.classList.remove('preload');
+        }, 100);
+    });
+
+    // Toggle on mobile
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('active');
+    }
+
+    // Close mobile sidebar when clicking outside
+    document.addEventListener('click', function (event) {
+        const sidebar = document.getElementById('sidebar');
+        const toggle = document.querySelector('.mobile-toggle');
+        const desktopToggle = document.getElementById('sidebarToggle');
+
+        if (window.innerWidth <= 768 && sidebar.classList.contains('active')) {
+            // Ignore clicks on the sidebar itself or the toggle buttons
+            if (!sidebar.contains(event.target) && !toggle.contains(event.target) && (!desktopToggle || !desktopToggle.contains(event.target))) {
+                sidebar.classList.remove('active');
+            }
+        }
+    });
+
+    // CLIENT-SIDE NAVIGATION (Prevent Page Blink)
+    document.addEventListener('click', function (e) {
+        const link = e.target.closest('a.nav-link');
+        if (!link || link.classList.contains('logout-link')) return;
+
+        e.preventDefault();
+        const url = link.href;
+
+        // Update active state immediately for instant feedback
+        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+        link.classList.add('active');
+
+        // Fetch and swap content
+        fetch(url)
+            .then(res => res.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const newContent = doc.querySelector('.main-content');
+                const oldContent = document.querySelector('.main-content');
+
+                if (newContent && oldContent) {
+                    oldContent.innerHTML = newContent.innerHTML;
+
+                    // Re-execute scripts in the new content
+                    oldContent.querySelectorAll('script').forEach(oldScript => {
+                        const newScript = document.createElement('script');
+                        Array.from(oldScript.attributes).forEach(attr =>
+                            newScript.setAttribute(attr.name, attr.value)
+                        );
+                        newScript.textContent = oldScript.textContent;
+                        oldScript.parentNode.replaceChild(newScript, oldScript);
+                    });
+
+                    // Update URL
+                    history.pushState({}, '', url);
+
+                    // Scroll to top
+                    window.scrollTo(0, 0);
+                }
+            })
+            .catch(err => {
+                console.error('Navigation failed:', err);
+                window.location.href = url; // Fallback to full reload
+            });
+    });
+
+    // Handle browser back/forward buttons
+    window.addEventListener('popstate', function () {
+        location.reload();
+    });
+
+    function logout() {
+        document.cookie = "access_token_cookie=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+        window.location.href = "{{ url_for('auth.logout') }}"; // Use Flask route if available, or /login
+        // Fallback if url_for not rendered in JS context (though it is in HTML)
+
+    }
+</script>

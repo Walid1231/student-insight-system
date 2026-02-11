@@ -4,9 +4,8 @@ class Config:
     JWT_TOKEN_LOCATION = ["cookies"]
     JWT_COOKIE_SECURE = False  # Set to True in production with HTTPS
     JWT_COOKIE_CSRF_PROTECT = False  # Disable for simpler form handling
-    GEMINI_API_KEY = ""
+    GEMINI_API_KEY = "AIzaSyCOF5Zibr5i-TLHJsJO9O2YYPKEGcX4IqA"
     
-    # Database Configuration
     # Database Configuration
     import os
     BASE_DIR = os.path.abspath(os.path.dirname(__file__))
