@@ -45,6 +45,104 @@ def student_dashboard():
     
     return render_template("student_dashboard.html", student=student, stats=stats, now_date=datetime.now().strftime("%d %B, %Y"))
 
+@dashboard_bp.route("/student/dashboard-v2")
+@jwt_required()
+def student_dashboard_v2():
+    """Enhanced student dashboard with comprehensive visualizations"""
+    claims = get_jwt()
+    role = claims.get("role")
+    user_id = get_jwt_identity()
+
+    if role != "student":
+        return jsonify({"msg": "Access denied"}), 403
+
+    try:
+        student = StudentProfile.query.filter_by(user_id=int(user_id)).first()
+    except (ValueError, TypeError):
+        return jsonify({"msg": "Invalid user identity"}), 400
+
+    if not student:
+        return jsonify({"msg": "Student profile not found"}), 404
+    
+    # Get the student's courses and calculate performance
+    courses = StudentCourse.query.filter_by(student_id=student.id).all()
+    subjects = []
+    for course in courses:
+        # Convert grade to score (simplified mapping)
+        grade_map = {'A': 95, 'A-': 90, 'B+': 87, 'B': 83, 'B-': 80, 'C+': 77, 'C': 73, 'D': 65, 'F': 50}
+        score = grade_map.get(course.grade, 70)
+        subjects.append({
+            "name": course.course_name,
+            "score": score,
+            "grade": course.grade
+        })
+    
+    # If no real data, use mock data
+    if not subjects:
+        subjects = [
+            {"name": "Programming", "score": 88, "grade": "B+"},
+            {"name": "Database Systems", "score": 75, "grade": "C+"},
+            {"name": "Web Development", "score": 92, "grade": "A-"},
+            {"name": "Mathematics", "score": 68, "grade": "C"},
+            {"name": "Data Structures", "score": 85, "grade": "B"}
+        ]
+    
+    # Get career interests
+    career_interests = CareerInterest.query.filter_by(student_id=student.id).all()
+    careers = []
+    for interest in career_interests:
+        careers.append({
+            "role": interest.field_name,
+            "match": int(interest.interest_score) if interest.interest_score else 75
+        })
+    
+    # If no real data, use mock
+    if not careers:
+        careers = [
+            {"role": "Full Stack Developer", "match": 85},
+            {"role": "Data Analyst", "match": 72},
+            {"role": "Software Engineer", "match": 68}
+        ]
+    
+    # Get skills
+    skills = StudentSkill.query.filter_by(student_id=student.id).all()
+    skills_known = [skill.skill_name for skill in skills] if skills else ["Python", "HTML", "CSS", "JavaScript"]
+    skills_todo = ["React", "Node.js", "MongoDB", "Docker"] # This would be calculated based on career requirements
+    
+    # Mock weekly hours (in a real app, this would come from StudySession model)
+    weekly_hours = [3, 5, 4, 6, 2, 7, 4]
+    
+    # Calculate goal probability (mock for now)
+    goal_prob = 75
+    target_gpa = student.current_cgpa + 0.3 if student.current_cgpa else 3.5
+    
+    # AI Guidance (mock for now - in real app, this would use Gemini)
+    guidance_msg = "Your progress in Web Development is excellent! However, Database Systems needs attention."
+    guidance_tip = "Practice SQL queries daily using platforms like HackerRank or LeetCode."
+    
+    # Prepare comprehensive data object
+    data = {
+        "name": student.full_name,
+        "department": student.department or "Computer Science",
+        "year": student.class_level or "3",
+        "university_name": "Your University",  # Add this field to StudentProfile if needed
+        "status": "On Track" if student.current_cgpa and student.current_cgpa >= 3.0 else "At Risk",
+        "cgpa": student.current_cgpa or 3.0,
+        "credits_completed": student.completed_credits or 90,
+        "subjects": subjects,
+        "careers": careers,
+        "skills_known": skills_known,
+        "skills_todo": skills_todo,
+        "weekly_hours": weekly_hours,
+        "goal_prob": goal_prob,
+        "target_gpa": round(target_gpa, 2),
+        "time_to_goal": "3 months",
+        "guidance_msg": guidance_msg,
+        "guidance_tip": guidance_tip
+    }
+    
+    return render_template("student_dashboard_v2.html", data=data)
+
 # ... (API endpoints)
 
 @dashboard_bp.route("/teacher/dashboard")
