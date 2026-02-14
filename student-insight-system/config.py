@@ -4,6 +4,8 @@ class Config:
     JWT_TOKEN_LOCATION = ["cookies"]
     JWT_COOKIE_SECURE = False  # Set to True in production with HTTPS
     JWT_COOKIE_CSRF_PROTECT = False  # Disable for simpler form handling
+    from datetime import timedelta
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(days=7) # Long expiration for development
     GEMINI_API_KEY = "AIzaSyCOF5Zibr5i-TLHJsJO9O2YYPKEGcX4IqA"
     
     # -------------------------

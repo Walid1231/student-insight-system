@@ -12,13 +12,13 @@ import random
 
 with app.app_context():
     # RESET DB
-    print("🗑️  Dropping all tables...")
+    print(" Dropping all tables...")
     db.drop_all()
-    print("✨ Creating all tables...")
+    print(" Creating all tables...")
     db.create_all()
 
     # --- TEACHERS ---
-    print("👨‍🏫 Creating Teachers...")
+    print(" Creating Teachers...")
     t1_user = User(email="teacher@test.com", password_hash=generate_password_hash("password"), role="teacher")
     db.session.add(t1_user)
     db.session.commit()
@@ -33,7 +33,7 @@ with app.app_context():
     db.session.commit()
 
     # --- STUDENTS ---
-    print("🎓 Creating Students...")
+    print(" Creating Students...")
     students_data = [
         # Class 10-A (Math)
         {"name": "Alice Smith", "class": "10", "section": "A", "cgpa": 3.8, "status": "good"},
@@ -100,7 +100,7 @@ with app.app_context():
         db.session.add(metric)
         
         # Skills & Career (dummy)
-        skill = StudentSkill(student_id=p.id, skill_name="Python", proficiency_level="Intermediate")
+        skill = StudentSkill(student_id=p.id, skill_name="Python", proficiency_score=60)
         db.session.add(skill)
         interest = CareerInterest(student_id=p.id, field_name="Data Science", interest_score=85.0)
         db.session.add(interest)
@@ -117,7 +117,7 @@ with app.app_context():
     db.session.commit()
 
     # --- ATTENDANCE ---
-    print("📅 Generating Attendance...")
+    print(" Generating Attendance...")
     for s_obj in student_objs:
         # Generate last 30 days
         for i in range(30):
@@ -131,7 +131,7 @@ with app.app_context():
     db.session.commit()
 
     # --- ASSIGNMENTS ---
-    print("📝 Creating Assignments...")
+    print(" Creating Assignments...")
     # Teacher 1 creates assignments
     assignments_list = [
         {"title": "Algebra Quiz 1", "points": 20, "days_ago": 15},
@@ -177,7 +177,7 @@ with app.app_context():
     db.session.commit()
 
     # --- NOTES & ALERTS ---
-    print("🔔 Creating Notes & Alerts...")
+    print(" Creating Notes & Alerts...")
     
     # Add notes for at-risk students
     # Filter by checking CGPA directly from object
@@ -220,5 +220,5 @@ with app.app_context():
         ))
 
     db.session.commit()
-    print("✅ Teacher Dashboard Data Populated Successfully!")
+    print(" Teacher Dashboard Data Populated Successfully!")
     print("Login: teacher@test.com / password")
