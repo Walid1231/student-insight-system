@@ -290,7 +290,6 @@ class Skill(db.Model):
     
     # Relationships
     required_for_careers = db.relationship('CareerRequiredSkill', backref='skill', lazy=True)
-    study_sessions = db.relationship('StudySession', backref='skill', lazy=True)
 
 class CareerPath(db.Model):
     """
@@ -338,8 +337,8 @@ class StudySession(db.Model):
     duration_minutes = db.Column(db.Integer, nullable=False)  # Store in minutes for precision
     topic_studied = db.Column(db.String(255))                 # Specific topic text
     
-    # Link to a specific skill to track skill growth
-    related_skill_id = db.Column(db.Integer, db.ForeignKey('skills.id'), nullable=True)
+    # Link to a specific skill by name (no longer using foreign key)
+    related_skill = db.Column(db.String(255), nullable=True)
 
 class WeeklyUpdate(db.Model):
     """

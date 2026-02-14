@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, jsonify, request, redirect, url_for, current_app
 from flask_jwt_extended import jwt_required, get_jwt, get_jwt_identity
-from models import StudentProfile, AcademicMetric, StudentSkill, StudentCourse, CareerInterest, AnalyticsResult, TeacherProfile, User, TeacherAssignment, StudentSkillProgress, ActionPlan, db
+from models import StudentProfile, AcademicMetric, StudentSkill, StudentCourse, CareerInterest, AnalyticsResult, TeacherProfile, User, TeacherAssignment, StudentSkillProgress, ActionPlan, StudySession, db
 from ml.analytics_engine import AnalyticsEngine
 from datetime import datetime
 from dashboard.utils import calculate_student_overview_stats
@@ -806,7 +806,148 @@ def update_progress():
     
     return redirect(url_for('dashboard.student_dashboard')) # Redirect back to dashboard
 
-@dashboard_bp.route("/student/routine", methods=["GET"])
+@dashboard_bp.route("/student/weekly-routine", methods=["GET"])
 @jwt_required()
 def student_routine():
-    return render_template("student_weekly_routine.html")
+    from datetime import datetime, timedelta
+    from sqlalchemy import func
+    from collections import defaultdict
+    
+    user_id = get_jwt_identity()
+    student = StudentProfile.query.filter_by(user_id=int(user_id)).first()
+    
+    if not student:
+        return jsonify({"msg": "Student not found"}), 404
+    
+    # Calculate this week's date range
+    today = datetime.now().date()
+    week_start = today - timedelta(days=today.weekday())  # Monday
+    week_end = week_start + timedelta(days=6)  # Sunday
+    
+    # Fetch ALL study sessions for this student (for calendar view)
+    all_sessions = StudySession.query.filter_by(student_id=student.id).order_by(StudySession.date.desc()).all()
+    
+    # Group sessions by ISO date for calendar
+    sessions_by_date = defaultdict(list)
+    for s in all_sessions:
+        date_key = s.date.strftime('%Y-%m-%d')
+        sessions_by_date[date_key].append({
+            'id': s.id,
+            'topic': s.topic_studied,
+            'duration': s.duration_minutes,
+            'skill': s.related_skill or ''
+        })
+    
+    # Calculate weekly stats
+    weekly_sessions = StudySession.query.filter(
+        StudySession.student_id == student.id,
+        StudySession.date >= week_start,
+        StudySession.date <= week_end
+    ).all()
+    
+    total_hours = sum(s.duration_minutes for s in weekly_sessions) / 60.0 if weekly_sessions else 0
+    session_count = len(weekly_sessions)
+    
+    # Find top topic
+    topic_counts = {}
+    for session in weekly_sessions:
+        topic = session.topic_studied
+        topic_counts[topic] = topic_counts.get(topic, 0) + 1
+    
+    top_topic = max(topic_counts.items(), key=lambda x: x[1]) if topic_counts else None
+    
+    return render_template(
+        "student_weekly_routine.html",
+        sessions=all_sessions,
+        sessions_by_date=dict(sessions_by_date),
+        total_hours=round(total_hours, 1),
+        session_count=session_count,
+        top_topic=top_topic[0] if top_topic else None,
+        top_topic_count=top_topic[1] if top_topic else 0,
+        current_year=today.year,
+        current_month=today.month
+    )
+
+@dashboard_bp.route("/student/add-study-session", methods=["POST"])
+@jwt_required()
+def add_study_session():
+    user_id = get_jwt_identity()
+    student = StudentProfile.query.filter_by(user_id=int(user_id)).first()
+    if not student: return jsonify({"msg": "Student not found"}), 404
+
+    date_str = request.form.get("date")
+    duration = request.form.get("duration_minutes")
+    topic = request.form.get("topic_studied")
+    related_skill = request.form.get("related_skill")  # Now a string, not ID
+    
+    if not date_str or not duration or not topic:
+         return jsonify({"msg": "Missing required fields"}), 400
+
+    try:
+        date_obj = datetime.strptime(date_str, "%Y-%m-%d").date()
+        duration_int = int(duration)
+    except ValueError:
+        return jsonify({"msg": "Invalid data format"}), 400
+
+    session = StudySession(
+        student_id=student.id,
+        date=date_obj,
+        duration_minutes=duration_int,
+        topic_studied=topic,
+        related_skill=related_skill if related_skill else None  # Store as string
+    )
+    
+    db.session.add(session)
+    db.session.commit()
+
+    return redirect(url_for('dashboard.student_routine'))
+
+@dashboard_bp.route("/student/update-study-session/<int:session_id>", methods=["POST"])
+@jwt_required()
+def update_study_session(session_id):
+    user_id = get_jwt_identity()
+    student = StudentProfile.query.filter_by(user_id=int(user_id)).first()
+    if not student:
+        return jsonify({"success": False, "error": "Student not found"}), 404
+
+    session = StudySession.query.get(session_id)
+    if not session or session.student_id != student.id:
+        return jsonify({"success": False, "error": "Session not found"}), 404
+
+    data = request.get_json()
+    if not data:
+        return jsonify({"success": False, "error": "No data provided"}), 400
+
+    if data.get("topic"):
+        session.topic_studied = data["topic"]
+    if data.get("duration"):
+        try:
+            session.duration_minutes = int(data["duration"])
+        except (ValueError, TypeError):
+            pass
+    if "skill" in data:
+        session.related_skill = data["skill"] if data["skill"] else None
+
+    db.session.commit()
+    return jsonify({
+        "success": True,
+        "session": {
+            "id": session.id,
+            "topic": session.topic_studied,
+            "duration": session.duration_minutes,
+            "skill": session.related_skill or ""
+        }
+    })
+
+@dashboard_bp.route("/student/settings", methods=["GET"])
+@jwt_required()
+def student_settings():
+    user_id = get_jwt_identity()
+    user = User.query.get(int(user_id))
+    student = StudentProfile.query.filter_by(user_id=int(user_id)).first()
+    
+    if not student or not user:
+        return jsonify({"msg": "User not found"}), 404
+    
+    return render_template("student_settings.html", user=user, profile=student)
+
