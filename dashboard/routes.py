@@ -27,7 +27,61 @@ def student_dashboard():
     # If no profile exists yet (new user), possibly redirect to create profile
     # For now, we render the dashboard with empty/default data handled by Jinja/JS
     
-    return render_template("student_dashboard.html", student=student)
+    # --- DATA PREPARATION FOR DASHBOARD ---
+    
+    # 1. GPA Trend
+    # Mock data if not available in metric
+    metric = AcademicMetric.query.filter_by(student_id=student.id).first()
+    gpa_trend = metric.get_gpas() if metric and metric.get_gpas() else [3.2, 3.4, 3.1, 3.5]
+    
+    # 2. Core vs GED (Mock calculation)
+    # in real app, filter courses by type
+    avg_core = 85
+    avg_ged = 78
+    courses = StudentCourse.query.filter_by(student_id=student.id).all()
+    if courses:
+        # Mock logic to split courses
+        core_scores = [c.score for c in courses if 'Math' in c.course_name or 'Program' in c.course_name]
+        ged_scores = [c.score for c in courses if 'Math' not in c.course_name and 'Program' not in c.course_name]
+        if core_scores: avg_core = sum(core_scores) / len(core_scores)
+        if ged_scores: avg_ged = sum(ged_scores) / len(ged_scores)
+
+    # 3. Weekly Hours (Total per day)
+    # Mock data
+    weekly_hours = {"Mon": 4, "Tue": 5, "Wed": 3, "Thu": 6, "Fri": 4, "Sat": 7, "Sun": 2}
+
+    # 4. Skill Effort (Mock)
+    skill_hours = {"Python": 10, "SQL": 5, "Communication": 2}
+    
+    # 5. Career Compatibility
+    career_interests = CareerInterest.query.filter_by(student_id=student.id).all()
+    career_scores = [{"career": c.role_name, "score": c.match_score} for c in career_interests]
+    if not career_scores:
+        career_scores = [{"career": "Software Engineer", "score": 85}, {"career": "Data Scientist", "score": 75}]
+
+    # 6. Strong & Weak Subjects
+    strong_subjects = [c.course_name for c in courses if c.grade in ['A', 'A-']]
+    weak_subjects = [c.course_name for c in courses if c.grade in ['C', 'D', 'F']]
+    if not strong_subjects and not weak_subjects:
+         strong_subjects = ["Programming", "Algorithms"]
+         weak_subjects = ["Calculus"]
+
+    # 7. Burnout & Goal
+    burnout_risk = 45 # Mock %
+    goal_probability = 80 # Mock %
+    
+    return render_template("student_dashboard.html", 
+                           student=student,
+                           gpa_trend=gpa_trend,
+                           avg_core=avg_core,
+                           avg_ged=avg_ged,
+                           weekly_hours=weekly_hours,
+                           skill_hours=skill_hours,
+                           career_scores=career_scores,
+                           strong_subjects=strong_subjects,
+                           weak_subjects=weak_subjects,
+                           burnout_risk=burnout_risk,
+                           goal_probability=goal_probability)
 
 @dashboard_bp.route("/student/profile", methods=["GET", "POST"])
 @jwt_required()

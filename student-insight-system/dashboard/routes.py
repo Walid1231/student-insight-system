@@ -35,35 +35,6 @@ def student_dashboard():
     if not student:
         return jsonify({"msg": "Student profile not found"}), 404
     
-    # Get Academic Metrics for easy access in template
-    metric = AcademicMetric.query.filter_by(student_id=student.id).first()
-    stats = {
-        "rank": metric.department_rank if metric else 0,
-        "credits": metric.total_credits if metric else 0,
-        "gpa_trend": metric.get_gpas() if metric else []
-    }
-    
-    return render_template("student_dashboard.html", student=student, stats=stats, now_date=datetime.now().strftime("%d %B, %Y"))
-
-@dashboard_bp.route("/student/dashboard-v2")
-@jwt_required()
-def student_dashboard_v2():
-    """Enhanced student dashboard with comprehensive visualizations"""
-    claims = get_jwt()
-    role = claims.get("role")
-    user_id = get_jwt_identity()
-
-    if role != "student":
-        return jsonify({"msg": "Access denied"}), 403
-
-    try:
-        student = StudentProfile.query.filter_by(user_id=int(user_id)).first()
-    except (ValueError, TypeError):
-        return jsonify({"msg": "Invalid user identity"}), 400
-
-    if not student:
-        return jsonify({"msg": "Student profile not found"}), 404
-    
     # Get the student's courses and calculate performance
     courses = StudentCourse.query.filter_by(student_id=student.id).all()
     subjects = []
@@ -141,7 +112,9 @@ def student_dashboard_v2():
         "guidance_tip": guidance_tip
     }
     
-    return render_template("student_dashboard_v2.html", data=data)
+    return render_template("student_dashboard.html", data=data)
+
+
 
 # ... (API endpoints)
 

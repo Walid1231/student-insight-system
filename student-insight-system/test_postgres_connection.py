@@ -11,7 +11,7 @@ def test_connection():
     """Test the PostgreSQL connection"""
     
     print("=" * 70)
-    print("🔍 TESTING POSTGRESQL CONNECTION")
+    print(" TESTING POSTGRESQL CONNECTION")
     print("=" * 70)
     
     # Get connection string from config
@@ -28,16 +28,16 @@ def test_connection():
             host_port = host_port_db[0]
             database = host_port_db[1] if len(host_port_db) > 1 else 'unknown'
             
-            print(f"\n📌 Connection Details:")
+            print(f"\n Connection Details:")
             print(f"   Username: {username}")
             print(f"   Host:Port: {host_port}")
             print(f"   Database: {database}")
     else:
-        print(f"\n⚠️  Not using PostgreSQL!")
+        print(f"\n Warning: Not using PostgreSQL!")
         print(f"   Current URI: {db_uri}")
         return False
     
-    print("\n🔌 Attempting connection...")
+    print("\n Attempting connection...")
     
     try:
         # Create engine and test connection
@@ -48,8 +48,8 @@ def test_connection():
             result = connection.execute(text("SELECT version();"))
             version = result.fetchone()[0]
             
-            print("\n✅ CONNECTION SUCCESSFUL!")
-            print(f"\n📊 PostgreSQL Version:")
+            print("\n CONNECTION SUCCESSFUL!")
+            print(f"\n PostgreSQL Version:")
             print(f"   {version.split(',')[0]}")
             
             # Test if database has tables
@@ -60,46 +60,46 @@ def test_connection():
             """))
             table_count = result.fetchone()[0]
             
-            print(f"\n📋 Database Status:")
+            print(f"\n Database Status:")
             print(f"   Tables found: {table_count}")
             
             if table_count == 0:
-                print("\n⚠️  No tables found. Run migrations:")
+                print("\n Warning: No tables found. Run migrations:")
                 print("   1. python -m flask db init")
                 print("   2. python -m flask db migrate -m 'Initial migration'")
                 print("   3. python -m flask db upgrade")
             else:
-                print("   ✓ Database is ready!")
+                print("   - Database is ready!")
             
         print("\n" + "=" * 70)
-        print("✅ ALL TESTS PASSED!")
+        print(" ALL TESTS PASSED!")
         print("=" * 70)
         return True
         
     except Exception as e:
-        print("\n❌ CONNECTION FAILED!")
-        print(f"\n🔴 Error Details:")
+        print("\n CONNECTION FAILED!")
+        print(f"\n Error Details:")
         print(f"   {type(e).__name__}: {e}")
         
         print("\n" + "=" * 70)
-        print("💡 TROUBLESHOOTING CHECKLIST:")
+        print(" TROUBLESHOOTING CHECKLIST:")
         print("=" * 70)
-        print("\n1️⃣  Is PostgreSQL running?")
-        print("   → Check Windows Services for 'postgresql'")
+        print("\n1. Is PostgreSQL running?")
+        print("   -> Check Windows Services for 'postgresql'")
         
-        print("\n2️⃣  Is the password correct?")
-        print("   → Update password in config.py")
-        print("   → Test with: psql -U postgres")
+        print("\n2. Is the password correct?")
+        print("   -> Update password in config.py")
+        print("   -> Test with: psql -U postgres")
         
-        print("\n3️⃣  Does the database exist?")
-        print("   → Check with: psql -U postgres -c \"\\l\"")
-        print("   → Create with: psql -U postgres -c \"CREATE DATABASE student_insight_system;\"")
+        print("\n3. Does the database exist?")
+        print("   -> Check with: psql -U postgres -c \"\\l\"")
+        print("   -> Create with: psql -U postgres -c \"CREATE DATABASE student_insight_system;\"")
         
-        print("\n4️⃣  Is PostgreSQL listening on port 5432?")
-        print("   → Check with: netstat -an | findstr 5432")
+        print("\n4. Is PostgreSQL listening on port 5432?")
+        print("   -> Check with: netstat -an | findstr 5432")
         
-        print("\n5️⃣  Firewall blocking connection?")
-        print("   → Temporarily disable to test")
+        print("\n5. Firewall blocking connection?")
+        print("   -> Temporarily disable to test")
         
         print("\n" + "=" * 70)
         return False

@@ -3,151 +3,207 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Student Dashboard | Student Insight</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
-        rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Student Dashboard</title>
 
-    <!-- Shared Sidebar CSS -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
-    <!-- Global CSS -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/global.css') }}">
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body {
+            background-color: #f4f6f9;
+        }
+
+        .card {
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .progress {
+            height: 20px;
+        }
+    </style>
 </head>
 
-<body class="preload">
+<body>
 
-    {% set active_page = 'legacy' %}
-    {% include 'components/sidebar.html' %}
+    <div class="container mt-4">
 
-    <main class="main-content">
-        <div class="dashboard-container">
-
-            <div class="welcome-header">
-                <h1>Welcome{% if student %}, {{ student.full_name }}{% endif %}!</h1>
-                <p>Here is your dashboard overview.</p>
-            </div>
-
-            <div class="analytics-grid">
-                <!-- Stats Cards -->
-                <div class="stat-card span-4">
-                    <div class="stat-header">
-                        <div class="stat-icon">
-                            <i class="fas fa-graduation-cap"></i>
-                        </div>
-                    </div>
-                    <div class="stat-value">{% if student and student.cgpa %}{{ student.cgpa }}{% else %}--{% endif %}
-                    </div>
-                    <div class="stat-label">CGPA</div>
-                </div>
-
-                <div class="stat-card span-4">
-                    <div class="stat-header">
-                        <div class="stat-icon">
-                            <i class="fas fa-university"></i>
-                        </div>
-                    </div>
-                    <div class="stat-value">{% if student and student.university %}{{ student.university[:15] }}{% else
-                        %}--{% endif %}</div>
-                    <div class="stat-label">University</div>
-                </div>
-
-                <div class="stat-card span-4">
-                    <div class="stat-header">
-                        <div class="stat-icon">
-                            <i class="fas fa-book"></i>
-                        </div>
-                    </div>
-                    <div class="stat-value">{% if student and student.department %}{{ student.department[:15] }}{% else
-                        %}--{% endif %}</div>
-                    <div class="stat-label">Department</div>
-                </div>
-
-                <!-- Chart Card -->
-                <div class="stat-card span-8">
-                    <div class="card-header">
-                        <div class="card-title"><i class="fas fa-chart-line"></i> Performance Overview</div>
-                    </div>
-                    <div class="chart-container">
-                        <canvas id="performanceChart"></canvas>
-                    </div>
-                </div>
-
-                <!-- Info Card -->
-                <div class="stat-card span-4">
-                    <div class="card-header">
-                        <div class="card-title"><i class="fas fa-info-circle"></i> Quick Info</div>
-                    </div>
-                    <div class="info-grid">
-                        {% if student %}
-                        <div class="info-group">
-                            <div class="info-label">Email</div>
-                            <div class="info-value">{{ student.email }}</div>
-                        </div>
-                        {% if student.current_year %}
-                        <div class="info-group">
-                            <div class="info-label">Year</div>
-                            <div class="info-value">{{ student.current_year }}</div>
-                        </div>
-                        {% endif %}
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-
-            <!-- Upgrade Notice -->
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title"><i class="fas fa-rocket"></i> Try the New Dashboard</div>
-                </div>
-                <p style="margin-bottom: 20px; color: var(--text-muted);">
-                    Experience our enhanced dashboard with advanced analytics, career insights, and personalized
-                    recommendations.
-                </p>
-                <a href="/student/dashboard/v2" class="btn-action btn-save">
-                    <i class="fas fa-arrow-right"></i> Go to Dashboard V2
-                </a>
-            </div>
-
+        <!-- Header -->
+        <div class="mb-4">
+            <h2>Welcome, {{ student.full_name }}</h2>
+            <p>Department: {{ student.department }}</p>
+            <p>Current CGPA: <strong>{{ student.current_cgpa }}</strong></p>
         </div>
 
-        <script>
-            // Performance chart
-            const ctx = document.getElementById('performanceChart');
-            if (ctx) {
-                new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
-                        datasets: [{
-                            label: 'Performance',
-                            data: [65, 70, 75, 80],
-                            borderColor: '#002D62',
-                            backgroundColor: 'rgba(0, 45, 98, 0.1)',
-                            tension: 0.4,
-                            fill: true
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                display: false
-                            }
-                        },
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                max: 100
-                            }
-                        }
-                    }
-                });
+        <!-- Row 1 -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card p-3">
+                    <h5>CGPA & SGPA Trend</h5>
+                    <canvas id="gpaChart"></canvas>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card p-3">
+                    <h5>Core vs GED Performance</h5>
+                    <canvas id="coreGedChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Row 2 -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card p-3">
+                    <h5>Weekly Study Hours</h5>
+                    <canvas id="weeklyChart"></canvas>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card p-3">
+                    <h5>Skill Effort Distribution</h5>
+                    <canvas id="skillChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Row 3 -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card p-3">
+                    <h5>Career Compatibility</h5>
+                    <canvas id="careerChart"></canvas>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card p-3">
+                    <h5>Strength & Weakness</h5>
+
+                    <p><strong>Strong Subjects:</strong></p>
+                    <ul>
+                        {% for sub in strong_subjects %}
+                        <li>{{ sub }}</li>
+                        {% else %}
+                        <li>No strong subjects detected</li>
+                        {% endfor %}
+                    </ul>
+
+                    <p><strong>Weak Subjects:</strong></p>
+                    <ul>
+                        {% for sub in weak_subjects %}
+                        <li>{{ sub }}</li>
+                        {% else %}
+                        <li>No weak subjects detected</li>
+                        {% endfor %}
+                    </ul>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Row 4 -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card p-3">
+                    <h5>Burnout Risk</h5>
+                    <div class="progress">
+                        <div class="progress-bar bg-danger" role="progressbar" style="width: {{ burnout_risk }}%">
+                            {{ burnout_risk }}%
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card p-3">
+                    <h5>Goal Achievability Probability</h5>
+                    <div class="progress">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: {{ goal_probability }}%">
+                            {{ goal_probability }}%
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ============================= -->
+    <!-- Chart Scripts -->
+    <!-- ============================= -->
+
+    <script>
+        /* 1️⃣ GPA Trend */
+        let gpaData = {{ gpa_trend| safe }};
+        new Chart(document.getElementById('gpaChart'), {
+            type: 'line',
+            data: {
+                labels: gpaData.map((_, i) => "Sem " + (i + 1)),
+                datasets: [{
+                    label: 'SGPA',
+                    data: gpaData,
+                    borderWidth: 2
+                }]
             }
-        </script>
-    </main>
+        });
+
+        /* 2️⃣ Core vs GED */
+        new Chart(document.getElementById('coreGedChart'), {
+            type: 'pie',
+            data: {
+                labels: ['Core', 'GED'],
+                datasets: [{
+                    data: [{{ avg_core }}, {{ avg_ged }}]
+        }]
+    }
+});
+
+        /* 3️⃣ Weekly Study Hours */
+        let weeklyData = {{ weekly_hours| tojson }};
+        new Chart(document.getElementById('weeklyChart'), {
+            type: 'bar',
+            data: {
+                labels: Object.keys(weeklyData),
+                datasets: [{
+                    label: "Hours",
+                    data: Object.values(weeklyData)
+                }]
+            }
+        });
+
+        /* 4️⃣ Skill Effort */
+        let skillData = {{ skill_hours| tojson }};
+        new Chart(document.getElementById('skillChart'), {
+            type: 'bar',
+            data: {
+                labels: Object.keys(skillData),
+                datasets: [{
+                    label: "Hours",
+                    data: Object.values(skillData)
+                }]
+            }
+        });
+
+        /* 5️⃣ Career Compatibility */
+        let careers = {{ career_scores| tojson }};
+        new Chart(document.getElementById('careerChart'), {
+            type: 'bar',
+            data: {
+                labels: careers.map(c => c.career),
+                datasets: [{
+                    label: "Compatibility %",
+                    data: careers.map(c => c.score)
+                }]
+            }
+        });
+    </script>
+
 </body>
 
 </html>

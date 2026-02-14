@@ -1,637 +1,208 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
-    <title>Student Insight | Access</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <title>Student Dashboard</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
-        :root {
-            --primary-navy: #002D62;
-            --accent-gold: #D4AF37;
-            --text-dark: #1e293b;
-            --bg-white: #ffffff;
-            --input-bg: #f8fafc;
-        }
-
-        * {
-            box-sizing: border-box;
-        }
-
         body {
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
-            background: #f1f5f9;
-            height: 100vh;
-            margin: 0;
-            overflow: hidden;
+            background-color: #f4f6f9;
         }
-
-        /* --- VIEWS --- */
-        #landing-view {
-            width: 100vw;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            position: absolute;
-            top: 0;
-            left: 0;
-            transition: opacity 0.5s ease;
+        .card {
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
         }
-
-        #auth-view {
-            width: 100vw;
-            height: 100vh;
-            display: none;
-            /* Hidden Initially */
-            justify-content: center;
-            align-items: center;
-            opacity: 0;
-            transition: opacity 0.5s ease;
+        .progress {
+            height: 20px;
         }
-
-        /* --- LANDING HERO --- */
-        .hero-content {
-            text-align: center;
-            z-index: 10;
-            max-width: 800px;
-            padding: 40px;
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(20px);
-            border-radius: 30px;
-            border: 1px solid rgba(255, 255, 255, 0.8);
-            box-shadow: 0 20px 50px rgba(0, 45, 98, 0.1);
-            animation: floatUp 0.8s ease-out;
-        }
-
-        @keyframes floatUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .tag {
-            color: var(--accent-gold);
-            font-weight: 700;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            font-size: 14px;
-            display: block;
-            margin-bottom: 20px;
-        }
-
-        .hero-title {
-            font-size: 56px;
-            font-weight: 800;
-            color: var(--primary-navy);
-            margin: 0 0 20px;
-            line-height: 1.1;
-        }
-
-        .hero-title span {
-            color: var(--accent-gold);
-        }
-
-        .hero-desc {
-            font-size: 18px;
-            color: #555;
-            margin-bottom: 40px;
-            line-height: 1.6;
-        }
-
-        .btn-hero {
-            background: var(--primary-navy);
-            color: white;
-            padding: 18px 45px;
-            border-radius: 50px;
-            font-weight: 700;
-            font-size: 16px;
-            border: none;
-            cursor: pointer;
-            transition: 0.3s;
-            box-shadow: 0 10px 25px rgba(0, 45, 98, 0.2);
-        }
-
-        .btn-hero:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 15px 35px rgba(0, 45, 98, 0.3);
-            background: #004080;
-        }
-
-
-        /* --- AUTH CONTAINER (SLIDING LOGIC) --- */
-        .container {
-            background-color: #fff;
-            border-radius: 20px;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
-            position: relative;
-            overflow: hidden;
-            width: 1000px;
-            max-width: 100%;
-            min-height: 600px;
-        }
-
-        .form-container {
-            position: absolute;
-            top: 0;
-            height: 100%;
-            transition: all 0.6s ease-in-out;
-        }
-
-        .sign-in-container {
-            left: 0;
-            width: 50%;
-            z-index: 2;
-        }
-
-        .container.right-panel-active .sign-in-container {
-            transform: translateX(100%);
-        }
-
-        .sign-up-container {
-            left: 0;
-            width: 50%;
-            opacity: 0;
-            z-index: 1;
-        }
-
-        .container.right-panel-active .sign-up-container {
-            transform: translateX(100%);
-            opacity: 1;
-            z-index: 5;
-            animation: show 0.6s;
-        }
-
-        @keyframes show {
-
-            0%,
-            49.99% {
-                opacity: 0;
-                z-index: 1;
-            }
-
-            50%,
-            100% {
-                opacity: 1;
-                z-index: 5;
-            }
-        }
-
-        /* FORMS */
-        form {
-            background: #fff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            padding: 0 50px;
-            height: 100%;
-            text-align: center;
-        }
-
-        form h1 {
-            font-weight: 700;
-            margin: 0;
-            color: var(--primary-navy);
-            font-size: 32px;
-        }
-
-        .subtitle {
-            font-size: 14px;
-            color: #64748b;
-            margin: 15px 0 30px;
-        }
-
-        input,
-        select {
-            background-color: var(--input-bg);
-            border: none;
-            padding: 14px 18px;
-            margin: 8px 0;
-            width: 100%;
-            border-radius: 8px;
-            font-family: 'Inter', sans-serif;
-            font-size: 14px;
-        }
-
-        input:focus {
-            outline: 2px solid var(--primary-navy);
-            background: white;
-        }
-
-        button.btn-auth {
-            border-radius: 50px;
-            border: 1px solid var(--primary-navy);
-            background-color: var(--primary-navy);
-            color: #ffffff;
-            font-size: 14px;
-            font-weight: 600;
-            padding: 14px 45px;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            transition: transform 0.1s;
-            margin-top: 20px;
-            cursor: pointer;
-        }
-
-        button.btn-auth:active {
-            transform: scale(0.95);
-        }
-
-        /* OVERLAY */
-        .overlay-container {
-            position: absolute;
-            top: 0;
-            left: 50%;
-            width: 50%;
-            height: 100%;
-            overflow: hidden;
-            transition: transform 0.6s ease-in-out;
-            z-index: 100;
-        }
-
-        .container.right-panel-active .overlay-container {
-            transform: translateX(-100%);
-        }
-
-        .overlay {
-            background: var(--primary-navy);
-            background: linear-gradient(to right, #002D62, #001f44);
-            background-repeat: no-repeat;
-            background-size: cover;
-            background-position: 0 0;
-            color: #ffffff;
-            position: relative;
-            left: -100%;
-            height: 100%;
-            width: 200%;
-            transform: translateX(0);
-            transition: transform 0.6s ease-in-out;
-        }
-
-        .container.right-panel-active .overlay {
-            transform: translateX(50%);
-        }
-
-        .overlay-panel {
-            position: absolute;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            padding: 0 40px;
-            text-align: center;
-            top: 0;
-            height: 100%;
-            width: 50%;
-            transform: translateX(0);
-            transition: transform 0.6s ease-in-out;
-            z-index: 10;
-        }
-
-        .overlay-left {
-            transform: translateX(-20%);
-        }
-
-        .container.right-panel-active .overlay-left {
-            transform: translateX(0);
-        }
-
-        .overlay-right {
-            right: 0;
-            transform: translateX(0);
-        }
-
-        .container.right-panel-active .overlay-right {
-            transform: translateX(20%);
-        }
-
-        .overlay-panel h1 {
-            font-size: 36px;
-            font-weight: 800;
-            margin-bottom: 20px;
-            line-height: 1.2;
-        }
-
-        .overlay-panel p {
-            font-size: 16px;
-            margin-bottom: 30px;
-            line-height: 1.5;
-            max-width: 300px;
-            opacity: 0.9;
-        }
-
-        .brand-label {
-            color: var(--accent-gold);
-            font-size: 12px;
-            font-weight: 700;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            margin-bottom: 20px;
-            display: block;
-        }
-
-        button.ghost {
-            background-color: transparent;
-            border-color: #ffffff;
-            border-width: 2px;
-            border-radius: 50px;
-            padding: 12px 40px;
-            color: white;
-            font-weight: 600;
-            cursor: pointer;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        button.ghost:hover {
-            background: white;
-            color: var(--primary-navy);
-        }
-
-        /* CANVAS */
-        #particle-canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-        }
-
-        /* Canvas inside overlay needs specific handling? No, let's keep one global canvas for smooth effect across views. */
-
-        /* Correction: The overlay needs its own style or transparency to show particles? 
-           The user wants "Particles inside overlay". 
-           But if I have a global canvas, it shows everywhere.
-           Ideally: Canvas is Global Background for Hero. 
-           And the Overlay is Opaque Navy? Or Glass?
-           Let's make Overlay Opaque Navy (Gradient) as per "Sliding" standard, but maybe with subtle transparency?
-           Actually, the previous "Particle inside overlay" was cool. Let's replicate that.
-           So Global Canvas for Hero. And a SECOND canvas inside overlay? Or just Overlay is solid.
-           Let's keep Global Canvas for Hero.
-           And Overlay has its own background.
-        */
     </style>
 </head>
-
 <body>
 
-    <!-- GLOBAL BACKGROUND CANVAS (For Hero) -->
-    <canvas id="particle-canvas"></canvas>
+<div class="container mt-4">
 
-    <!-- 1. LANDING VIEW -->
-    <div id="landing-view">
-        <div class="hero-content">
-            <span class="tag">Student Insight Platform</span>
-            <div class="hero-title">Unlock Your <br><span>Academic Potential</span></div>
-            <div class="hero-desc">Advanced analytics, burnout prediction, and professional tools designed to elevate
-                your university experience.</div>
-            <button class="btn-hero" onclick="enterAuth('register')">Get Started</button>
-            <div style="margin-top: 20px; font-size: 14px;">
-                <a href="javascript:void(0)" onclick="enterAuth('login')"
-                    style="color: var(--primary-navy); font-weight: 600; text-decoration: none;">Already have an
-                    account? Login</a>
+    <!-- Header -->
+    <div class="mb-4">
+        <h2>Welcome, {{ student.full_name }}</h2>
+        <p>Department: {{ student.department }}</p>
+        <p>Current CGPA: <strong>{{ student.current_cgpa }}</strong></p>
+    </div>
+
+    <!-- Row 1 -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card p-3">
+                <h5>CGPA & SGPA Trend</h5>
+                <canvas id="gpaChart"></canvas>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card p-3">
+                <h5>Core vs GED Performance</h5>
+                <canvas id="coreGedChart"></canvas>
             </div>
         </div>
     </div>
 
-
-    <!-- 2. AUTH VIEW (Hidden) -->
-    <div id="auth-view">
-        <div class="back-btn" onclick="goBack()">← Back to Home</div>
-        <div class="container" id="container">
-
-            <!-- REGISTER -->
-            <div class="form-container sign-up-container">
-                <form id="form-register">
-                    <h1>Create Account</h1>
-                    <div class="subtitle">Join the academic revolution</div>
-                    <input type="text" id="r-name" placeholder="Name" required />
-                    <input type="email" id="r-email" placeholder="Email" required />
-                    <input type="password" id="r-pass" placeholder="Password" required />
-                    <select id="r-role">
-                        <option value="student">Student</option>
-                        <option value="teacher">Teacher</option>
-                    </select>
-                    <button type="submit" class="btn-auth">Sign Up</button>
-                    <div style="color:red; margin-top:10px; display:none; font-size:12px;" id="reg-error"></div>
-                </form>
+    <!-- Row 2 -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card p-3">
+                <h5>Weekly Study Hours</h5>
+                <canvas id="weeklyChart"></canvas>
             </div>
+        </div>
 
-            <!-- LOGIN -->
-            <div class="form-container sign-in-container">
-                <form id="form-login">
-                    <h1>Sign In</h1>
-                    <div class="subtitle">Welcome back to Student Insight</div>
-                    <input type="email" id="l-email" placeholder="Email" required />
-                    <input type="password" id="l-pass" placeholder="Password" required />
-                    <select id="l-role">
-                        <option value="student">Student</option>
-                        <option value="teacher">Teacher</option>
-                    </select>
-                    <button type="submit" class="btn-auth">Sign In</button>
-                    <div style="color:red; margin-top:10px; display:none; font-size:12px;" id="login-error"></div>
-                </form>
+        <div class="col-md-6">
+            <div class="card p-3">
+                <h5>Skill Effort Distribution</h5>
+                <canvas id="skillChart"></canvas>
             </div>
+        </div>
+    </div>
 
-            <!-- OVERLAY -->
-            <div class="overlay-container">
-                <div class="overlay">
-                    <div class="overlay-panel overlay-left">
-                        <span class="brand-label">Student Insight</span>
-                        <h1>Welcome Back!</h1>
-                        <p>To keep connected with us please login with your personal info</p>
-                        <button class="ghost" id="signIn">Sign In</button>
+    <!-- Row 3 -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card p-3">
+                <h5>Career Compatibility</h5>
+                <canvas id="careerChart"></canvas>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card p-3">
+                <h5>Strength & Weakness</h5>
+
+                <p><strong>Strong Subjects:</strong></p>
+                <ul>
+                    {% for sub in strong_subjects %}
+                        <li>{{ sub }}</li>
+                    {% else %}
+                        <li>No strong subjects detected</li>
+                    {% endfor %}
+                </ul>
+
+                <p><strong>Weak Subjects:</strong></p>
+                <ul>
+                    {% for sub in weak_subjects %}
+                        <li>{{ sub }}</li>
+                    {% else %}
+                        <li>No weak subjects detected</li>
+                    {% endfor %}
+                </ul>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Row 4 -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card p-3">
+                <h5>Burnout Risk</h5>
+                <div class="progress">
+                    <div class="progress-bar bg-danger"
+                         role="progressbar"
+                         style="width: {{ burnout_risk }}%">
+                        {{ burnout_risk }}%
                     </div>
-                    <div class="overlay-panel overlay-right">
-                        <span class="brand-label">Student Insight</span>
-                        <h1>Unlock Your <br>Academic Potential</h1>
-                        <p>Enter your personal details and start your journey with us.</p>
-                        <button class="ghost" id="signUp">Sign Up</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card p-3">
+                <h5>Goal Achievability Probability</h5>
+                <div class="progress">
+                    <div class="progress-bar bg-success"
+                         role="progressbar"
+                         style="width: {{ goal_probability }}%">
+                        {{ goal_probability }}%
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- SCRIPT -->
-    <script>
-        const landingView = document.getElementById('landing-view');
-        const authView = document.getElementById('auth-view');
+</div>
 
-        // Manage History State
-        function enterAuth(mode = 'login') {
-            history.pushState({ view: 'auth' }, '', '#auth');
-            if (mode === 'register') {
-                container.classList.add("right-panel-active");
-            } else {
-                container.classList.remove("right-panel-active");
-            }
-            showAuth();
-        }
+<!-- ============================= -->
+<!-- Chart Scripts -->
+<!-- ============================= -->
 
-        function showAuth() {
-            landingView.style.opacity = '0';
-            setTimeout(() => {
-                landingView.style.display = 'none';
-                authView.style.display = 'flex';
-                void authView.offsetWidth;
-                authView.style.opacity = '1';
-            }, 500);
-        }
+<script>
+/* 1️⃣ GPA Trend */
+let gpaData = {{ gpa_trend|safe }};
+new Chart(document.getElementById('gpaChart'), {
+    type: 'line',
+    data: {
+        labels: gpaData.map((_, i) => "Sem " + (i+1)),
+        datasets: [{
+            label: 'SGPA',
+            data: gpaData,
+            borderWidth: 2
+        }]
+    }
+});
 
-        function showLanding() {
-            authView.style.opacity = '0';
-            setTimeout(() => {
-                authView.style.display = 'none';
-                landingView.style.display = 'flex';
-                void landingView.offsetWidth;
-                landingView.style.opacity = '1';
-            }, 500);
-        }
+/* 2️⃣ Core vs GED */
+new Chart(document.getElementById('coreGedChart'), {
+    type: 'pie',
+    data: {
+        labels: ['Core', 'GED'],
+        datasets: [{
+            data: [{{ avg_core }}, {{ avg_ged }}]
+        }]
+    }
+});
 
-        window.addEventListener('popstate', (event) => {
-            if (event.state && event.state.view === 'auth') {
-                showAuth();
-            } else {
-                showLanding();
-            }
-        });
+/* 3️⃣ Weekly Study Hours */
+let weeklyData = {{ weekly_hours|tojson }};
+new Chart(document.getElementById('weeklyChart'), {
+    type: 'bar',
+    data: {
+        labels: Object.keys(weeklyData),
+        datasets: [{
+            label: "Hours",
+            data: Object.values(weeklyData)
+        }]
+    }
+});
 
-        function goBack() {
-            history.back();
-        }
+/* 4️⃣ Skill Effort */
+let skillData = {{ skill_hours|tojson }};
+new Chart(document.getElementById('skillChart'), {
+    type: 'bar',
+    data: {
+        labels: Object.keys(skillData),
+        datasets: [{
+            label: "Hours",
+            data: Object.values(skillData)
+        }]
+    }
+});
 
-        if (window.location.hash === '#auth') {
-            history.replaceState({ view: 'auth' }, '', '#auth');
-            landingView.style.display = 'none';
-            authView.style.display = 'flex';
-            authView.style.opacity = '1';
-        }
+/* 5️⃣ Career Compatibility */
+let careers = {{ career_scores|tojson }};
+new Chart(document.getElementById('careerChart'), {
+    type: 'bar',
+    data: {
+        labels: careers.map(c => c.career),
+        datasets: [{
+            label: "Compatibility %",
+            data: careers.map(c => c.score)
+        }]
+    }
+});
+</script>
 
-        const signUpButton = document.getElementById('signUp');
-        const signInButton = document.getElementById('signIn');
-        const container = document.getElementById('container');
-
-        signUpButton.addEventListener('click', () => container.classList.add("right-panel-active"));
-        signInButton.addEventListener('click', () => container.classList.remove("right-panel-active"));
-
-        // --- UPDATED LOGIN LOGIC (JSON) ---
-        document.getElementById('form-login').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const err = document.getElementById('login-error');
-            
-            // Construct JSON Payload
-            const payload = {
-                email: document.getElementById('l-email').value,
-                password: document.getElementById('l-pass').value,
-                role: document.getElementById('l-role').value
-            };
-
-            try {
-                const res = await fetch('/login', { 
-                    method: 'POST', 
-                    headers: { 'Content-Type': 'application/json' }, // Must specify JSON
-                    body: JSON.stringify(payload) 
-                });
-                
-                const json = await res.json();
-                if (res.ok) {
-                    window.location.href = json.role === 'student' ? '/student/dashboard' : '/teacher/dashboard';
-                } else { 
-                    err.innerText = json.msg || 'Login failed'; 
-                    err.style.display = 'block'; 
-                }
-            } catch (e) { console.error(e); }
-        });
-
-        // --- UPDATED REGISTER LOGIC (JSON) ---
-        document.getElementById('form-register').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const err = document.getElementById('reg-error');
-            
-            // Construct JSON Payload
-            const payload = {
-                name: document.getElementById('r-name').value,
-                email: document.getElementById('r-email').value,
-                password: document.getElementById('r-pass').value,
-                role: document.getElementById('r-role').value
-            };
-
-            try {
-                const res = await fetch('/register', { 
-                    method: 'POST', 
-                    headers: { 'Content-Type': 'application/json' }, // Must specify JSON
-                    body: JSON.stringify(payload)
-                });
-                
-                const data = await res.json(); // Usually returns { msg: "..." }
-
-                if (res.ok) {
-                    alert('Account created! Please Sign In.');
-                    container.classList.remove("right-panel-active");
-                    document.getElementById('l-email').value = payload.email;
-                } else { 
-                    err.innerText = data.msg || 'Registration failed'; 
-                    err.style.display = 'block'; 
-                }
-            } catch (e) { console.error(e); }
-        });
-
-        // PARTICLES (Keep as is)
-        const canvas = document.getElementById('particle-canvas');
-        const ctx = canvas.getContext('2d');
-
-        function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
-        window.addEventListener('resize', resize);
-        resize();
-
-        let particles = [];
-        class Particle {
-            constructor() {
-                this.x = Math.random() * canvas.width; this.y = Math.random() * canvas.height;
-                this.vx = (Math.random() - 0.5) * 0.5; this.vy = (Math.random() - 0.5) * 0.5;
-                this.size = Math.random() * 2; this.color = '#002D62';
-            }
-            update() {
-                this.x += this.vx; this.y += this.vy;
-                if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
-                if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
-            }
-            draw() {
-                ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                ctx.fillStyle = this.color; ctx.globalAlpha = 0.3; ctx.fill();
-            }
-        }
-        for (let i = 0; i < 50; i++) particles.push(new Particle());
-
-        function animate() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            particles.forEach((p, i) => {
-                p.update(); p.draw();
-                for (let j = i; j < particles.length; j++) {
-                    const p2 = particles[j];
-                    const d = Math.hypot(p.x - p2.x, p.y - p2.y);
-                    if (d < 150) {
-                        ctx.beginPath(); ctx.strokeStyle = '#002D62'; ctx.lineWidth = 0.5; ctx.globalAlpha = 1 - (d / 150);
-                        ctx.moveTo(p.x, p.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
-                    }
-                }
-            });
-            requestAnimationFrame(animate);
-        }
-        animate();
-    </script>
 </body>
-
 </html>
