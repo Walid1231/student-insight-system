@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en" class="preload">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Settings | Student Insight</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Preconnect to CDN domains for faster loading -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+
+    <!-- PRODUCTION FOUC PREVENTION -->
+    <!-- 1. Critical State Hider (Must be inline) -->
+    <style>
+        /* CRITICAL: Hide body until resources are ready */
+        html.preload body {
+            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+
+        /* Smooth entry transition */
+        body {
+            opacity: 1;
+            visibility: visible;
+            transition: opacity 0.3s ease-in;
+        }
+    </style>
+
+    <!-- 2. Unified Styles (External & Cached) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/unified_styles.css') }}?v=2">
+
+    <!-- Font Optimization & Resources -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Anti-FOUC & Font Load Detection (Production Grade) -->
+    <script>
+        (function () {
+            // Safety timeout (3s max)
+            const safetyTimer = setTimeout(function () {
+                document.documentElement.classList.remove('preload');
+            }, 3000);
+
+            // Wait for Fonts and DOM
+            Promise.all([
+                document.fonts.ready,
+                new Promise(resolve => {
+                    if (document.readyState === 'loading') {
+                        document.addEventListener('DOMContentLoaded', resolve);
+                    } else {
+                        resolve();
+                    }
+                })
+            ]).then(() => {
+                clearTimeout(safetyTimer);
+                // Slight delay to ensure paint
+                requestAnimationFrame(() => {
+                    document.documentElement.classList.remove('preload');
+                });
+            });
+        })();
+    </script>
+</head>
+
+<body>
+    {% set active_page = 'settings' %}
+    {% include "components/sidebar.html" %}
+
+    <main class="main-content">
+        <div class="page-header">
+            <div class="container">
+                <h1>
+                    <i class="fa-solid fa-cog" style="color: var(--primary-navy);"></i>
+                    Settings & Preferences
+                </h1>
+                <p class="page-subtitle">Manage your account, notifications, and application preferences.</p>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="settings-layout">
+                <!-- Sidebar Navigation -->
+                <aside class="settings-nav">
+                    <div class="nav-group-title">Account</div>
+                    <a href="#profile" class="settings-nav-link active" onclick="switchSection('profile')">
+                        <i class="fa-regular fa-user"></i> Profile
+                    </a>
+                    <a href="#security" class="settings-nav-link" onclick="switchSection('security')">
+                        <i class="fa-solid fa-shield-halved"></i> Security
+                    </a>
+
+                    <div class="nav-group-title" style="margin-top: 20px;">Preferences</div>
+                    <a href="#notifications" class="settings-nav-link" onclick="switchSection('notifications')">
+                        <i class="fa-regular fa-bell"></i> Notifications
+                    </a>
+                    <a href="#appearance" class="settings-nav-link" onclick="switchSection('appearance')">
+                        <i class="fa-solid fa-paintbrush"></i> Appearance
+                    </a>
+                    <a href="#privacy" class="settings-nav-link" onclick="switchSection('privacy')">
+                        <i class="fa-solid fa-lock"></i> Privacy
+                    </a>
+                </aside>
+
+                <!-- Content Area -->
+                <div class="settings-content">
+
+                    <!-- 1. PROFILE SECTION -->
+                    <div id="profile" class="settings-section active">
+                        <div class="content-header">
+                            <h2>Profile Information</h2>
+                            <p>Update your personal details and public profile.</p>
+                        </div>
+
+                        <div class="settings-group">
+                            <div class="settings-group-header">
+                                <span class="settings-group-title">Personal Details</span>
+                                <button class="btn btn-outline btn-sm">Edit</button>
+                            </div>
+                            <div class="setting-item">
+                                <form style="width: 100%;">
+                                    <div class="form-group">
+                                        <label class="form-label">Full Name</label>
+                                        <input type="text" class="form-input" value="{{ user.username }}" readonly>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Email Address</label>
+                                        <input type="email" class="form-input" value="{{ user.email }}" readonly>
+                                        <div class="form-hint">Contact admin to change email.</div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <div class="settings-group">
+                            <div class="settings-group-header">
+                                <span class="settings-group-title">Academic Profile</span>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <span class="setting-label">Major/Field of Study</span>
+                                    <span class="setting-desc">{{ profile.major }}</span>
+                                </div>
+                                <span class="badge badge-success">Verified</span>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <span class="setting-label">Current Year</span>
+                                    <span class="setting-desc">{{ profile.current_year }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. SECURITY SECTION -->
+                    <div id="security" class="settings-section">
+                        <div class="content-header">
+                            <h2>Security Settings</h2>
+                            <p>Manage your password and account security.</p>
+                        </div>
+                        <div class="settings-group">
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <span class="setting-label">Change Password</span>
+                                    <span class="setting-desc">Last changed 3 months ago</span>
+                                </div>
+                                <button class="btn btn-outline btn-sm">Update</button>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <span class="setting-label">Two-Factor Authentication</span>
+                                    <span class="setting-desc">Add an extra layer of security to your account.</span>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3. NOTIFICATIONS SECTION -->
+                    <div id="notifications" class="settings-section">
+                        <div class="content-header">
+                            <h2>Notifications</h2>
+                            <p>Choose what updates you want to receive.</p>
+                        </div>
+                        <div class="settings-group">
+                            <div class="settings-group-header">
+                                <span class="settings-group-title">Email Notifications</span>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <span class="setting-label">Weekly Report</span>
+                                    <span class="setting-desc">Get a summary of your weekly progress.</span>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <span class="setting-label">New Assignments</span>
+                                    <span class="setting-desc">When a teacher adds a new task.</span>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 4. APPEARANCE SECTION -->
+                    <div id="appearance" class="settings-section">
+                        <div class="content-header">
+                            <h2>Appearance</h2>
+                            <p>Customize how the dashboard looks.</p>
+                        </div>
+                        <div class="settings-group">
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <span class="setting-label">Theme Preference</span>
+                                    <span class="setting-desc">Switch between light and dark modes.</span>
+                                </div>
+                                <select id="themeSelect" class="form-select" style="width: auto;"
+                                    onchange="ThemeManager.setTheme(this.value)">
+                                    <option value="light">Light (Default)</option>
+                                    <option value="dark">Dark</option>
+                                    <option value="system">System Preference</option>
+                                </select>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <span class="setting-label">Compact Sidebar</span>
+                                    <span class="setting-desc">Make the navigation sidebar smaller.</span>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 5. PRIVACY SECTION -->
+                    <div id="privacy" class="settings-section">
+                        <div class="content-header">
+                            <h2>Privacy & Data</h2>
+                            <p>Manage your personal data and visibility.</p>
+                        </div>
+                        <div class="settings-group">
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <span class="setting-label">Profile Visibility</span>
+                                    <span class="setting-desc">Who can see your academic stats?</span>
+                                </div>
+                                <select class="form-select" style="width: auto;">
+                                    <option>Teachers Only (Default)</option>
+                                    <option>Private</option>
+                                </select>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <span class="setting-label text-red">Danger Zone</span>
+                                    <span class="setting-desc">Permanently delete your account and all data.</span>
+                                </div>
+                                <button class="btn btn-danger btn-sm">Delete Account</button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function switchSection(sectionId) {
+            // Hide all sections
+            document.querySelectorAll('.settings-section').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.settings-nav-link').forEach(el => el.classList.remove('active'));
+
+            // Show selected
+            document.getElementById(sectionId).classList.add('active');
+
+            // Highlight nav
+            const navLink = document.querySelector(`a[href="#${sectionId}"]`);
+            if (navLink) navLink.classList.add('active');
+        }
+
+        // Handle URL hash on load + sync theme select
+        document.addEventListener('DOMContentLoaded', () => {
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById(hash)) {
+                switchSection(hash);
+            }
+
+            // Sync theme select to stored preference
+            const sel = document.getElementById('themeSelect');
+            if (sel && typeof ThemeManager !== 'undefined') {
+                sel.value = ThemeManager.getCurrent();
+            }
+        });
+    </script>
+</body>
+
+</html>

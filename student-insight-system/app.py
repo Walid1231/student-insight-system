@@ -7,9 +7,13 @@ from flask_migrate import Migrate
 from auth.routes import auth_bp
 from dashboard.routes import dashboard_bp
 import os
+import time
 
 app = Flask(__name__)
 app.config.from_object(Config)
+
+# Disable caching for static files during development
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 
 # Initialize Extensions
 db.init_app(app)
@@ -20,6 +24,22 @@ CORS(app)
 # Register Blueprints
 app.register_blueprint(auth_bp)
 app.register_blueprint(dashboard_bp)
+
+# Add cache-busting version to all templates
+@app.context_processor
+def inject_css_version():
+    """Inject a timestamp-based version for cache busting"""
+    return {'css_version': int(time.time())}
+
+# Add cache control headers to all responses
+@app.after_request
+def add_header(response):
+    """Add headers to prevent caching during development"""
+    if 'Cache-Control' not in response.headers:
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+    return response
 
 # Landing Page
 @app.route("/")

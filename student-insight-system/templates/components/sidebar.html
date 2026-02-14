@@ -16,16 +16,14 @@
         <a href="/student/profile" class="nav-link {{ 'active' if active_page == 'profile' }}">
             <i class="fas fa-user"></i> <span>Profile</span>
         </a>
-        <a href="/student/dashboard/v2" class="nav-link {{ 'active' if active_page == 'dashboard' }}">
+        <a href="/student/dashboard"
+            class="nav-link {{ 'active' if active_page == 'dashboard' or active_page == 'legacy' }}">
             <i class="fas fa-chart-line"></i> <span>Dashboard</span>
-        </a>
-        <a href="/student/dashboard" class="nav-link {{ 'active' if active_page == 'legacy' }}">
-            <i class="fas fa-columns"></i> <span>Legacy Board</span>
         </a>
         <a href="/student/weekly-routine" class="nav-link {{ 'active' if active_page == 'routine' }}">
             <i class="fas fa-calendar-alt"></i> <span>Weekly Routine</span>
         </a>
-        <a href="/student/profile" class="nav-link {{ 'active' if active_page == 'settings' }}">
+        <a href="/student/settings" class="nav-link {{ 'active' if active_page == 'settings' }}">
             <i class="fas fa-cog"></i> <span>Settings</span>
         </a>
         <!-- Logout should always be a full reload to clear state properly -->
@@ -36,6 +34,58 @@
 </aside>
 
 <script>
+    // ============================================
+    // THEME MANAGER (runs on every page via sidebar include)
+    // ============================================
+    const ThemeManager = {
+        STORAGE_KEY: 'theme_preference',
+
+        init() {
+            const stored = localStorage.getItem(this.STORAGE_KEY) || 'light';
+            this.apply(stored);
+
+            // Listen for system preference changes (for "system" mode)
+            if (window.matchMedia) {
+                window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+                    if (localStorage.getItem(this.STORAGE_KEY) === 'system') {
+                        this.apply('system');
+                    }
+                });
+            }
+        },
+
+        setTheme(value) {
+            localStorage.setItem(this.STORAGE_KEY, value);
+            this.apply(value);
+        },
+
+        apply(preference) {
+            let theme;
+            if (preference === 'system') {
+                theme = window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            } else {
+                theme = preference;
+            }
+
+            if (theme === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            } else {
+                document.documentElement.removeAttribute('data-theme');
+            }
+
+            // Sync the theme select on settings page if present
+            const sel = document.getElementById('themeSelect');
+            if (sel) sel.value = preference;
+        },
+
+        getCurrent() {
+            return localStorage.getItem(this.STORAGE_KEY) || 'light';
+        }
+    };
+
+    // Initialize immediately
+    ThemeManager.init();
+
     // Sidebar Toggle Logic
     const toggleBtn = document.getElementById('sidebarToggle');
 
@@ -79,6 +129,24 @@
     });
 
     // CLIENT-SIDE NAVIGATION (Prevent Page Blink)
+    // Helper: Sync stylesheets from fetched page into current <head>
+    function syncStylesheets(newDoc) {
+        const currentLinks = new Set(
+            Array.from(document.querySelectorAll('link[rel="stylesheet"]'))
+                .map(l => l.getAttribute('href')?.split('?')[0]) // Ignore cache-busting params
+        );
+        newDoc.querySelectorAll('link[rel="stylesheet"]').forEach(newLink => {
+            const href = newLink.getAttribute('href');
+            const baseHref = href?.split('?')[0];
+            if (baseHref && !currentLinks.has(baseHref)) {
+                const link = document.createElement('link');
+                link.rel = 'stylesheet';
+                link.href = href;
+                document.head.appendChild(link);
+            }
+        });
+    }
+
     document.addEventListener('click', function (e) {
         const link = e.target.closest('a.nav-link');
         if (!link || link.classList.contains('logout-link')) return;
@@ -100,6 +168,9 @@
                 const oldContent = document.querySelector('.main-content');
 
                 if (newContent && oldContent) {
+                    // Sync any missing stylesheets from the new page
+                    syncStylesheets(doc);
+
                     oldContent.innerHTML = newContent.innerHTML;
 
                     // Re-execute scripts in the new content
@@ -111,6 +182,13 @@
                         newScript.textContent = oldScript.textContent;
                         oldScript.parentNode.replaceChild(newScript, oldScript);
                     });
+
+                    // Remove anti-FOUC preload class if present
+                    document.documentElement.classList.remove('preload');
+
+                    // Update page title
+                    const newTitle = doc.querySelector('title');
+                    if (newTitle) document.title = newTitle.textContent;
 
                     // Update URL
                     history.pushState({}, '', url);

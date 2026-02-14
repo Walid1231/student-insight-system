@@ -1,62 +1,1184 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="preload">
 
 <head>
     <meta charset="UTF-8">
     <title>Weekly Routine | Student Insight</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Preconnect to CDN domains for faster loading -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+
+    <!-- PRODUCTION FOUC PREVENTION -->
+    <!-- 1. Critical State Hider (Must be inline) -->
+    <style>
+        /* CRITICAL: Hide body until resources are ready */
+        html.preload body {
+            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+
+        /* Smooth entry transition */
+        body {
+            opacity: 1;
+            visibility: visible;
+            transition: opacity 0.3s ease-in;
+        }
+    </style>
+
+    <!-- 2. Unified Styles (External & Cached) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/unified_styles.css') }}?v=2">
+
+    <!-- Font Optimization & Resources -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <!-- Shared Sidebar CSS -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
-    <!-- Global CSS -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/global.css') }}">
+    <!-- Anti-FOUC & Font Load Detection (Production Grade) -->
+    <script>
+        (function () {
+            // Safety timeout (3s max)
+            const safetyTimer = setTimeout(function () {
+                document.documentElement.classList.remove('preload');
+            }, 3000);
+
+            // Wait for Fonts and DOM
+            Promise.all([
+                document.fonts.ready,
+                new Promise(resolve => {
+                    if (document.readyState === 'loading') {
+                        document.addEventListener('DOMContentLoaded', resolve);
+                    } else {
+                        resolve();
+                    }
+                })
+            ]).then(() => {
+                clearTimeout(safetyTimer);
+                // Slight delay to ensure paint
+                requestAnimationFrame(() => {
+                    document.documentElement.classList.remove('preload');
+                });
+            });
+        })();
+    </script>
 </head>
 
-<body class="preload">
-
+<body>
     {% set active_page = 'routine' %}
     {% include 'components/sidebar.html' %}
 
     <main class="main-content">
         <div class="dashboard-container">
 
+            <!-- Page Header -->
             <div class="welcome-header">
                 <h1><i class="fas fa-calendar-alt"></i> Weekly Routine</h1>
-                <p>Plan and organize your weekly schedule.</p>
+                <p>Track your study sessions and monitor your learning progress.</p>
             </div>
 
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title"><i class="fas fa-clock"></i> Coming Soon</div>
+            <!-- Main Grid Layout -->
+            <div class="routine-page-grid">
+
+                <!-- Left Column: Form -->
+                <div class="saas-card">
+                    <div class="saas-card-header">
+                        <h2>
+                            <i class="fas fa-plus-circle"></i>
+                            Log Study Session
+                        </h2>
+                        <p>Record your study activity and track your progress</p>
+                    </div>
+
+                    <div class="saas-card-body">
+                        <form method="POST" action="{{ url_for('dashboard.add_study_session') }}"
+                            onsubmit="handleFormSubmit(event)">
+
+                            <!-- Date & Duration -->
+                            <div class="form-row">
+                                <div class="form-field">
+                                    <label class="form-label">Date</label>
+                                    <input type="date" name="date" required class="form-input">
+                                </div>
+
+                                <div class="form-field">
+                                    <label class="form-label">Duration (min)</label>
+                                    <input type="number" name="duration_minutes" placeholder="90" required
+                                        class="form-input" min="1" max="600">
+                                </div>
+                            </div>
+
+                            <!-- Topic -->
+                            <div class="form-row full">
+                                <div class="form-field">
+                                    <label class="form-label">Topic Studied</label>
+                                    <input type="text" name="topic_studied"
+                                        placeholder="e.g., Neural Networks & Deep Learning" required class="form-input">
+                                    <span class="form-hint">What did you focus on?</span>
+                                </div>
+                            </div>
+
+                            <!-- Skill ID -->
+                            <div class="form-row full">
+                                <div class="form-field">
+                                    <label class="form-label">
+                                        Related Skill
+                                        <span class="badge-optional">optional</span>
+                                    </label>
+                                    <input type="text" name="related_skill"
+                                        placeholder="e.g., Machine Learning, Web Development" class="form-input">
+                                </div>
+                            </div>
+
+                            <!-- Actions -->
+                            <div class="form-actions">
+                                <button type="button" class="btn btn-secondary" onclick="resetForm()">
+                                    <i class="fas fa-undo"></i>
+                                    Reset
+                                </button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i>
+                                    Save Session
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
-                <div style="padding: 40px; text-align: center;">
-                    <i class="fas fa-calendar-week"
-                        style="font-size: 64px; color: var(--primary); opacity: 0.3; margin-bottom: 20px;"></i>
-                    <h3 style="margin-bottom: 10px; color: var(--text-primary);">Weekly Routine Planner</h3>
-                    <p style="color: var(--text-muted);">
-                        This feature is under development. Soon you'll be able to:
-                    </p>
-                    <ul style="text-align: left; max-width: 400px; margin: 20px auto; color: var(--text-muted);">
-                        <li>Create your weekly class schedule</li>
-                        <li>Set study time blocks</li>
-                        <li>Track assignments and deadlines</li>
-                        <li>Receive reminders and notifications</li>
-                    </ul>
+
+                <!-- Right Column: Stats -->
+                <div class="stats-grid">
+                    <!-- Total Hours -->
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <span class="stat-label">Total Hours</span>
+                            <div class="stat-icon purple">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                        </div>
+                        <div class="stat-value">{{ total_hours }}</div>
+                        <div class="stat-subtitle">This week</div>
+                    </div>
+
+                    <!-- Sessions -->
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <span class="stat-label">Sessions</span>
+                            <div class="stat-icon green">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                        </div>
+                        <div class="stat-value">{{ session_count }}</div>
+                        <div class="stat-subtitle">Completed</div>
+                    </div>
+
+                    <!-- Top Topic -->
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <span class="stat-label">Top Topic</span>
+                            <div class="stat-icon blue">
+                                <i class="fas fa-star"></i>
+                            </div>
+                        </div>
+                        {% if top_topic %}
+                        <div class="stat-value" style="font-size: 16px; margin-top: 8px;">{{ top_topic }}</div>
+                        <div class="stat-subtitle">{{ top_topic_count }} sessions</div>
+                        {% else %}
+                        <div class="stat-value" style="font-size: 16px; margin-top: 8px;">—</div>
+                        <div class="stat-subtitle">No data yet</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Monthly Calendar View -->
+            <div class="cal-container">
+                <div class="cal-header">
+                    <h3 class="cal-title">
+                        <i class="fas fa-calendar"></i>
+                        <span id="calMonthLabel"></span>
+                    </h3>
+                    <div class="cal-nav">
+                        <button class="cal-nav-btn" id="calPrev" title="Previous month">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <button class="cal-nav-btn cal-today-btn" id="calToday">Today</button>
+                        <button class="cal-nav-btn" id="calNext" title="Next month">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Day-of-week headers -->
+                <div class="cal-weekdays">
+                    <div class="cal-weekday">Sun</div>
+                    <div class="cal-weekday">Mon</div>
+                    <div class="cal-weekday">Tue</div>
+                    <div class="cal-weekday">Wed</div>
+                    <div class="cal-weekday">Thu</div>
+                    <div class="cal-weekday">Fri</div>
+                    <div class="cal-weekday">Sat</div>
+                </div>
+
+                <!-- Calendar grid (rendered via JS) -->
+                <div class="cal-grid" id="calGrid"></div>
+
+                {% if not sessions %}
+                <div class="empty-state" id="calEmpty">
+                    <i class="fas fa-inbox"></i>
+                    <p>No study sessions logged yet. Start tracking your progress!</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Day Detail Modal -->
+            <div class="cal-modal-overlay" id="calModal">
+                <div class="cal-modal">
+                    <div class="cal-modal-header">
+                        <h3 id="calModalTitle">Sessions</h3>
+                        <button class="cal-modal-close" id="calModalClose">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="cal-modal-body" id="calModalBody"></div>
                 </div>
             </div>
 
         </div>
 
+        <!-- Success Toast -->
+        <div class="toast" id="successToast">
+            <i class="fas fa-check-circle"></i>
+            <span>Session logged successfully!</span>
+        </div>
+
+        <!-- Tooltip element -->
+        <div class="cal-tooltip" id="calTooltip"></div>
+
+        <!-- Calendar Scoped Styles -->
+        <style>
+            /* ===== CALENDAR CONTAINER ===== */
+            .cal-container {
+                background: var(--bg-surface, #ffffff);
+                border: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.06));
+                border-radius: 14px;
+                overflow: hidden;
+                box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+                margin-top: 8px;
+            }
+
+            .cal-header {
+                padding: 20px 24px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                border-bottom: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.06));
+            }
+
+            .cal-title {
+                font-size: 17px;
+                font-weight: 600;
+                color: var(--text-main, #111827);
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin: 0;
+            }
+
+            .cal-title i {
+                color: var(--primary, #6366f1);
+                font-size: 15px;
+            }
+
+            .cal-nav {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            }
+
+            .cal-nav-btn {
+                background: var(--bg-surface, #ffffff);
+                border: 1px solid var(--border-subtle, #e5e7eb);
+                border-radius: 8px;
+                padding: 7px 12px;
+                cursor: pointer;
+                color: var(--text-main, #374151);
+                font-size: 13px;
+                font-weight: 500;
+                transition: all 0.15s ease;
+                font-family: 'Inter', sans-serif;
+            }
+
+            .cal-nav-btn:hover {
+                background: var(--primary, #6366f1);
+                color: #fff;
+                border-color: var(--primary, #6366f1);
+            }
+
+            .cal-today-btn {
+                font-weight: 600;
+            }
+
+            /* ===== WEEKDAY HEADERS ===== */
+            .cal-weekdays {
+                display: grid;
+                grid-template-columns: repeat(7, 1fr);
+                background: var(--bg-body, #f9fafb);
+                border-bottom: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.06));
+            }
+
+            .cal-weekday {
+                padding: 10px 0;
+                text-align: center;
+                font-size: 11px;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+                color: var(--text-tertiary, #9ca3af);
+            }
+
+            /* ===== CALENDAR GRID ===== */
+            .cal-grid {
+                display: grid;
+                grid-template-columns: repeat(7, 1fr);
+            }
+
+            .cal-day {
+                min-height: 100px;
+                border-right: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.04));
+                border-bottom: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.04));
+                padding: 6px 8px;
+                position: relative;
+                cursor: default;
+                transition: all 0.25s ease-in-out;
+                transform-origin: center center;
+            }
+
+            .cal-day:nth-child(7n) {
+                border-right: none;
+            }
+
+            .cal-day.cal-day--other {
+                background: var(--bg-body, #f9fafb);
+                opacity: 0.4;
+            }
+
+            .cal-day.cal-day--today {
+                background: rgba(99, 102, 241, 0.04);
+            }
+
+            /* Green background for days with sessions */
+            .cal-day.cal-day--has-sessions {
+                cursor: pointer;
+                background: rgba(34, 197, 94, 0.06);
+                border-color: rgba(34, 197, 94, 0.12);
+            }
+
+            .cal-day.cal-day--has-sessions.cal-day--today {
+                background: linear-gradient(135deg, rgba(34, 197, 94, 0.06), rgba(99, 102, 241, 0.04));
+            }
+
+            /* Hover: scale + green glow */
+            .cal-day.cal-day--has-sessions:hover {
+                background: rgba(34, 197, 94, 0.1);
+                transform: scale(1.03);
+                box-shadow: 0 0 18px rgba(34, 197, 94, 0.18), 0 4px 12px rgba(0, 0, 0, 0.06);
+                z-index: 2;
+                border-color: rgba(34, 197, 94, 0.25);
+            }
+
+            /* Session count badge */
+            .cal-session-count {
+                position: absolute;
+                top: 6px;
+                right: 8px;
+                background: rgba(34, 197, 94, 0.15);
+                color: #16a34a;
+                font-size: 10px;
+                font-weight: 700;
+                padding: 2px 6px;
+                border-radius: 10px;
+                line-height: 1.3;
+            }
+
+            .cal-day-num {
+                font-size: 13px;
+                font-weight: 600;
+                color: var(--text-secondary, #6b7280);
+                margin-bottom: 4px;
+                display: inline-block;
+            }
+
+            .cal-day--today .cal-day-num {
+                background: var(--primary, #6366f1);
+                color: #fff;
+                width: 26px;
+                height: 26px;
+                border-radius: 50%;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 12px;
+            }
+
+            /* ===== SESSION PILLS ===== */
+            .cal-sessions {
+                display: flex;
+                flex-direction: column;
+                gap: 3px;
+            }
+
+            .cal-pill {
+                font-size: 11px;
+                font-weight: 500;
+                padding: 3px 7px;
+                border-radius: 5px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                line-height: 1.4;
+                cursor: pointer;
+                transition: opacity 0.15s ease, transform 0.15s ease;
+            }
+
+            .cal-pill:hover {
+                opacity: 0.85;
+                transform: translateX(2px);
+            }
+
+            .cal-more {
+                font-size: 10px;
+                color: var(--text-tertiary, #9ca3af);
+                font-weight: 600;
+                padding: 2px 4px;
+                cursor: pointer;
+            }
+
+            .cal-more:hover {
+                color: var(--primary, #6366f1);
+            }
+
+            /* ===== TOOLTIP ===== */
+            .cal-tooltip {
+                position: fixed;
+                z-index: 9999;
+                background: #1a1d27;
+                color: #e5e7eb;
+                border-radius: 10px;
+                padding: 12px 16px;
+                font-size: 13px;
+                line-height: 1.6;
+                box-shadow: 0 12px 36px rgba(0, 0, 0, 0.35);
+                pointer-events: none;
+                opacity: 0;
+                transform: translateY(6px);
+                transition: opacity 0.2s ease, transform 0.2s ease;
+                max-width: 240px;
+                border: 1px solid #2d3241;
+            }
+
+            .cal-tooltip.visible {
+                opacity: 1;
+                transform: translateY(0);
+            }
+
+            .cal-tooltip-topic {
+                font-weight: 600;
+                color: #f3f4f6;
+                margin-bottom: 4px;
+            }
+
+            .cal-tooltip-meta {
+                color: #9ca3af;
+                font-size: 12px;
+            }
+
+            .cal-tooltip-meta i {
+                width: 14px;
+                text-align: center;
+                margin-right: 4px;
+            }
+
+            /* ===== DAY DETAIL MODAL ===== */
+            .cal-modal-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.55);
+                backdrop-filter: blur(6px);
+                z-index: 10000;
+                display: none;
+                align-items: center;
+                justify-content: center;
+                animation: calFadeIn 0.2s ease;
+            }
+
+            .cal-modal-overlay.active {
+                display: flex;
+            }
+
+            @keyframes calFadeIn {
+                from {
+                    opacity: 0;
+                }
+
+                to {
+                    opacity: 1;
+                }
+            }
+
+            @keyframes calSlideUp {
+                from {
+                    transform: translateY(20px);
+                    opacity: 0;
+                }
+
+                to {
+                    transform: translateY(0);
+                    opacity: 1;
+                }
+            }
+
+            .cal-modal {
+                background: #1a1d27;
+                border: 1px solid #2d3241;
+                border-radius: 16px;
+                max-width: 480px;
+                width: 92%;
+                max-height: 75vh;
+                overflow: hidden;
+                display: flex;
+                flex-direction: column;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+                animation: calSlideUp 0.25s ease;
+            }
+
+            .cal-modal-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 20px 24px;
+                border-bottom: 1px solid #2d3241;
+            }
+
+            .cal-modal-header h3 {
+                color: #f3f4f6;
+                font-size: 16px;
+                font-weight: 600;
+                margin: 0;
+            }
+
+            .cal-modal-close {
+                background: #2d3241;
+                border: none;
+                color: #9ca3af;
+                width: 32px;
+                height: 32px;
+                border-radius: 8px;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.15s ease;
+            }
+
+            .cal-modal-close:hover {
+                background: #3d4255;
+                color: #f3f4f6;
+            }
+
+            .cal-modal-body {
+                padding: 16px 24px 24px;
+                overflow-y: auto;
+            }
+
+            .cal-modal-row {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 14px 16px;
+                background: #141720;
+                border: 1px solid #2d3241;
+                border-radius: 10px;
+                margin-bottom: 10px;
+                transition: border-color 0.15s ease;
+            }
+
+            .cal-modal-row:hover {
+                border-color: #3d4255;
+            }
+
+            .cal-modal-dot {
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                flex-shrink: 0;
+            }
+
+            .cal-modal-info {
+                flex: 1;
+                min-width: 0;
+            }
+
+            .cal-modal-topic {
+                font-size: 14px;
+                font-weight: 600;
+                color: #f3f4f6;
+                margin-bottom: 2px;
+            }
+
+            .cal-modal-detail {
+                font-size: 12px;
+                color: #6b7280;
+            }
+
+            .cal-modal-dur {
+                font-size: 13px;
+                font-weight: 600;
+                color: #818cf8;
+                white-space: nowrap;
+            }
+
+            /* ===== EDIT BUTTON IN MODAL ===== */
+            .cal-modal-edit {
+                background: #2d3241;
+                border: none;
+                color: #9ca3af;
+                width: 30px;
+                height: 30px;
+                border-radius: 7px;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.15s ease;
+                flex-shrink: 0;
+                font-size: 12px;
+            }
+
+            .cal-modal-edit:hover {
+                background: #3d4255;
+                color: #818cf8;
+            }
+
+            /* Inline edit form */
+            .cal-edit-form {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+                padding: 14px 16px;
+                background: #141720;
+                border: 1px solid #818cf8;
+                border-radius: 10px;
+                margin-bottom: 10px;
+                animation: calSlideUp 0.15s ease;
+            }
+
+            .cal-edit-row {
+                display: flex;
+                gap: 8px;
+                align-items: center;
+            }
+
+            .cal-edit-input {
+                background: #1a1d27;
+                border: 1px solid #2d3241;
+                border-radius: 7px;
+                color: #f3f4f6;
+                font-size: 13px;
+                padding: 8px 12px;
+                font-family: 'Inter', sans-serif;
+                flex: 1;
+                outline: none;
+                transition: border-color 0.15s ease;
+            }
+
+            .cal-edit-input:focus {
+                border-color: #818cf8;
+            }
+
+            .cal-edit-input::placeholder {
+                color: #4b5563;
+            }
+
+            .cal-edit-input--sm {
+                width: 80px;
+                flex: none;
+            }
+
+            .cal-edit-actions {
+                display: flex;
+                gap: 6px;
+                justify-content: flex-end;
+                margin-top: 2px;
+            }
+
+            .cal-edit-btn {
+                border: none;
+                border-radius: 7px;
+                padding: 7px 14px;
+                font-size: 12px;
+                font-weight: 600;
+                font-family: 'Inter', sans-serif;
+                cursor: pointer;
+                transition: all 0.15s ease;
+            }
+
+            .cal-edit-btn--save {
+                background: #22c55e;
+                color: #fff;
+            }
+
+            .cal-edit-btn--save:hover {
+                background: #16a34a;
+            }
+
+            .cal-edit-btn--cancel {
+                background: #2d3241;
+                color: #9ca3af;
+            }
+
+            .cal-edit-btn--cancel:hover {
+                background: #3d4255;
+                color: #f3f4f6;
+            }
+
+            /* ===== DARK THEME OVERRIDES ===== */
+            html[data-theme="dark"] .cal-container {
+                background: #1a1d27;
+                border-color: #2d3241;
+            }
+
+            html[data-theme="dark"] .cal-header {
+                border-bottom-color: #2d3241;
+            }
+
+            html[data-theme="dark"] .cal-title {
+                color: #f3f4f6;
+            }
+
+            html[data-theme="dark"] .cal-nav-btn {
+                background: #141720;
+                border-color: #2d3241;
+                color: #d1d5db;
+            }
+
+            html[data-theme="dark"] .cal-nav-btn:hover {
+                background: #818cf8;
+                color: #fff;
+                border-color: #818cf8;
+            }
+
+            html[data-theme="dark"] .cal-weekdays {
+                background: #141720;
+                border-bottom-color: #2d3241;
+            }
+
+            html[data-theme="dark"] .cal-weekday {
+                color: #6b7280;
+            }
+
+            html[data-theme="dark"] .cal-day {
+                border-color: #1e2231;
+            }
+
+            html[data-theme="dark"] .cal-day.cal-day--other {
+                background: #0f1117;
+            }
+
+            html[data-theme="dark"] .cal-day.cal-day--today {
+                background: rgba(129, 140, 248, 0.06);
+            }
+
+            /* Dark: green background for session days */
+            html[data-theme="dark"] .cal-day.cal-day--has-sessions {
+                background: rgba(34, 197, 94, 0.07);
+                border-color: rgba(34, 197, 94, 0.12);
+            }
+
+            html[data-theme="dark"] .cal-day.cal-day--has-sessions:hover {
+                background: rgba(34, 197, 94, 0.13);
+                box-shadow: 0 0 22px rgba(34, 197, 94, 0.15), 0 4px 12px rgba(0, 0, 0, 0.3);
+                border-color: rgba(34, 197, 94, 0.3);
+            }
+
+            html[data-theme="dark"] .cal-session-count {
+                background: rgba(34, 197, 94, 0.15);
+                color: #4ade80;
+            }
+
+            html[data-theme="dark"] .cal-day-num {
+                color: #9ca3af;
+            }
+
+            html[data-theme="dark"] .cal-day--today .cal-day-num {
+                background: #818cf8;
+            }
+
+            html[data-theme="dark"] .cal-more {
+                color: #6b7280;
+            }
+
+            html[data-theme="dark"] .cal-more:hover {
+                color: #818cf8;
+            }
+
+            /* ===== RESPONSIVE ===== */
+            @media (max-width: 768px) {
+                .cal-day {
+                    min-height: 72px;
+                    padding: 4px 5px;
+                }
+
+                .cal-pill {
+                    font-size: 10px;
+                    padding: 2px 5px;
+                }
+
+                .cal-day-num {
+                    font-size: 11px;
+                }
+
+                .cal-weekday {
+                    font-size: 10px;
+                }
+
+                .cal-header {
+                    flex-direction: column;
+                    gap: 12px;
+                    align-items: flex-start;
+                }
+            }
+        </style>
+
         <script>
-            document.body.classList.add('preload');
-            window.addEventListener('load', () => {
+            // ===== FORM HANDLERS =====
+            function handleFormSubmit(event) {
+                showToast();
+            }
+
+            function showToast() {
+                const toast = document.getElementById('successToast');
+                toast.classList.add('show');
                 setTimeout(() => {
-                    document.body.classList.remove('preload');
-                }, 100);
+                    toast.classList.remove('show');
+                }, 3000);
+            }
+
+            function resetForm() {
+                document.querySelector('form').reset();
+                const dateInput = document.querySelector('input[name="date"]');
+                if (dateInput) {
+                    dateInput.value = new Date().toISOString().split('T')[0];
+                }
+            }
+
+            // ===== CALENDAR ENGINE =====
+            (function () {
+                const sessionsData = {{ sessions_by_date | tojson
+            }};
+            const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June',
+                'July', 'August', 'September', 'October', 'November', 'December'];
+
+            let viewYear = {{ current_year }};
+            let viewMonth = {{ current_month }} - 1; // JS months are 0-indexed
+
+            const grid = document.getElementById('calGrid');
+            const label = document.getElementById('calMonthLabel');
+            const tooltip = document.getElementById('calTooltip');
+            const modal = document.getElementById('calModal');
+            const modalTitle = document.getElementById('calModalTitle');
+            const modalBody = document.getElementById('calModalBody');
+
+            // Generate a deterministic color from a topic string
+            function topicColor(topic) {
+                let hash = 0;
+                for (let i = 0; i < topic.length; i++) {
+                    hash = topic.charCodeAt(i) + ((hash << 5) - hash);
+                }
+                const h = Math.abs(hash) % 360;
+                return {
+                    bg: `hsla(${h}, 55%, 52%, 0.15)`,
+                    text: `hsl(${h}, 65%, 42%)`,
+                    dot: `hsl(${h}, 60%, 50%)`,
+                    bgDark: `hsla(${h}, 50%, 40%, 0.2)`,
+                    textDark: `hsl(${h}, 60%, 68%)`
+                };
+            }
+
+            function isDark() {
+                return document.documentElement.getAttribute('data-theme') === 'dark';
+            }
+
+            function pad(n) { return n < 10 ? '0' + n : '' + n; }
+
+            function renderCalendar() {
+                const firstDay = new Date(viewYear, viewMonth, 1);
+                const lastDay = new Date(viewYear, viewMonth + 1, 0);
+                const startDow = firstDay.getDay(); // 0 = Sun
+                const daysInMonth = lastDay.getDate();
+
+                const today = new Date();
+                const todayStr = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
+
+                label.textContent = `${MONTH_NAMES[viewMonth]} ${viewYear}`;
+
+                let html = '';
+
+                // Leading empty cells (previous month)
+                const prevMonthLast = new Date(viewYear, viewMonth, 0).getDate();
+                for (let i = startDow - 1; i >= 0; i--) {
+                    const d = prevMonthLast - i;
+                    html += `<div class="cal-day cal-day--other"><span class="cal-day-num">${d}</span></div>`;
+                }
+
+                // Current month days
+                for (let d = 1; d <= daysInMonth; d++) {
+                    const dateStr = `${viewYear}-${pad(viewMonth + 1)}-${pad(d)}`;
+                    const daySessions = sessionsData[dateStr] || [];
+                    const isToday = dateStr === todayStr;
+                    const hasSessions = daySessions.length > 0;
+
+                    let cls = 'cal-day';
+                    if (isToday) cls += ' cal-day--today';
+                    if (hasSessions) cls += ' cal-day--has-sessions';
+
+                    html += `<div class="${cls}" data-date="${dateStr}">`;
+                    html += `<span class="cal-day-num">${d}</span>`;
+
+                    // Session count badge
+                    if (hasSessions) {
+                        html += `<span class="cal-session-count">${daySessions.length}</span>`;
+                    }
+
+                    if (hasSessions) {
+                        html += `<div class="cal-sessions">`;
+                        const maxShow = 3;
+                        for (let i = 0; i < Math.min(daySessions.length, maxShow); i++) {
+                            const s = daySessions[i];
+                            const c = topicColor(s.topic);
+                            const dark = isDark();
+                            const bg = dark ? c.bgDark : c.bg;
+                            const fg = dark ? c.textDark : c.text;
+                            html += `<div class="cal-pill" style="background:${bg};color:${fg};"
+                                    data-topic="${s.topic.replace(/"/g, '&quot;')}"
+                                    data-duration="${s.duration}"
+                                    data-skill="${(s.skill || '').replace(/"/g, '&quot;')}"
+                                    >${s.duration}m · ${s.topic}</div>`;
+                        }
+                        if (daySessions.length > maxShow) {
+                            html += `<div class="cal-more">+${daySessions.length - maxShow} more</div>`;
+                        }
+                        html += `</div>`;
+                    }
+                    html += `</div>`;
+                }
+
+                // Trailing empty cells
+                const totalCells = startDow + daysInMonth;
+                const remainder = totalCells % 7;
+                if (remainder > 0) {
+                    for (let i = 1; i <= 7 - remainder; i++) {
+                        html += `<div class="cal-day cal-day--other"><span class="cal-day-num">${i}</span></div>`;
+                    }
+                }
+
+                grid.innerHTML = html;
+                attachEvents();
+            }
+
+            // Shared modal opener
+            function openDayModal(dateStr) {
+                const daySessions = sessionsData[dateStr] || [];
+                if (!daySessions.length) return;
+
+                const dt = new Date(dateStr + 'T00:00:00');
+                const opts = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                modalTitle.textContent = dt.toLocaleDateString('en-US', opts);
+
+                let body = '';
+                for (const s of daySessions) {
+                    const c = topicColor(s.topic);
+                    const esc = str => str.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+                    body += `
+                        <div class="cal-modal-row" id="session-row-${s.id}">
+                            <div class="cal-modal-dot" style="background:${c.dot}"></div>
+                            <div class="cal-modal-info">
+                                <div class="cal-modal-topic">${s.topic}</div>
+                                <div class="cal-modal-detail">
+                                    ${s.skill ? '<i class="fas fa-bolt"></i> ' + s.skill : 'No skill tagged'}
+                                </div>
+                            </div>
+                            <div class="cal-modal-dur">${s.duration} min</div>
+                            <button class="cal-modal-edit" title="Edit session" onclick="showEditForm(${s.id}, '${esc(dateStr)}', '${esc(s.topic)}', ${s.duration}, '${esc(s.skill)}')">
+                                <i class="fas fa-pencil-alt"></i>
+                            </button>
+                        </div>`;
+                }
+                modalBody.innerHTML = body;
+                modal.classList.add('active');
+            }
+
+            // Show inline edit form
+            function showEditForm(sessionId, dateStr, topic, duration, skill) {
+                const row = document.getElementById('session-row-' + sessionId);
+                if (!row) return;
+                row.outerHTML = `
+                    <div class="cal-edit-form" id="session-edit-${sessionId}">
+                        <div class="cal-edit-row">
+                            <input class="cal-edit-input" id="edit-topic-${sessionId}" value="${topic.replace(/"/g, '&quot;')}" placeholder="Topic">
+                            <input class="cal-edit-input cal-edit-input--sm" id="edit-dur-${sessionId}" type="number" value="${duration}" placeholder="Min" min="1" max="600">
+                        </div>
+                        <div class="cal-edit-row">
+                            <input class="cal-edit-input" id="edit-skill-${sessionId}" value="${skill.replace(/"/g, '&quot;')}" placeholder="Related skill (optional)">
+                        </div>
+                        <div class="cal-edit-actions">
+                            <button class="cal-edit-btn cal-edit-btn--cancel" onclick="openDayModal('${dateStr}')">Cancel</button>
+                            <button class="cal-edit-btn cal-edit-btn--save" id="edit-save-${sessionId}" onclick="saveSession(${sessionId}, '${dateStr}')">
+                                <i class="fas fa-check"></i> Save
+                            </button>
+                        </div>
+                    </div>`;
+            }
+
+            // Save edited session via API
+            function saveSession(sessionId, dateStr) {
+                const topic = document.getElementById('edit-topic-' + sessionId).value.trim();
+                const duration = document.getElementById('edit-dur-' + sessionId).value;
+                const skill = document.getElementById('edit-skill-' + sessionId).value.trim();
+
+                if (!topic) { alert('Topic is required'); return; }
+
+                const btn = document.getElementById('edit-save-' + sessionId);
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+                fetch('/student/update-study-session/' + sessionId, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ topic, duration: parseInt(duration), skill })
+                })
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Update local data in memory
+                            const dayArr = sessionsData[dateStr];
+                            if (dayArr) {
+                                const idx = dayArr.findIndex(s => s.id === sessionId);
+                                if (idx !== -1) {
+                                    dayArr[idx].topic = data.session.topic;
+                                    dayArr[idx].duration = data.session.duration;
+                                    dayArr[idx].skill = data.session.skill;
+                                }
+                            }
+                            // Re-render both modal and calendar grid
+                            openDayModal(dateStr);
+                            renderCalendar();
+                            showToast();
+                        } else {
+                            alert(data.error || 'Update failed');
+                            btn.disabled = false;
+                            btn.innerHTML = '<i class="fas fa-check"></i> Save';
+                        }
+                    })
+                    .catch(() => {
+                        alert('Network error');
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fas fa-check"></i> Save';
+                    });
+            }
+
+            function attachEvents() {
+                // Pill hover → tooltip
+                grid.querySelectorAll('.cal-pill').forEach(pill => {
+                    pill.addEventListener('mouseenter', (e) => {
+                        const topic = pill.dataset.topic;
+                        const duration = pill.dataset.duration;
+                        const skill = pill.dataset.skill;
+
+                        let html = `<div class="cal-tooltip-topic">${topic}</div>`;
+                        html += `<div class="cal-tooltip-meta"><i class="fas fa-clock"></i>${duration} min</div>`;
+                        if (skill) {
+                            html += `<div class="cal-tooltip-meta"><i class="fas fa-bolt"></i>${skill}</div>`;
+                        }
+                        tooltip.innerHTML = html;
+
+                        const rect = pill.getBoundingClientRect();
+                        tooltip.style.left = rect.left + 'px';
+                        tooltip.style.top = (rect.top - 8) + 'px';
+                        tooltip.style.transform = 'translateY(-100%)';
+                        tooltip.classList.add('visible');
+                    });
+
+                    pill.addEventListener('mouseleave', () => {
+                        tooltip.classList.remove('visible');
+                    });
+
+                    // Pill click → also opens modal for that day
+                    pill.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        tooltip.classList.remove('visible');
+                        const dayEl = pill.closest('.cal-day');
+                        if (dayEl && dayEl.dataset.date) {
+                            openDayModal(dayEl.dataset.date);
+                        }
+                    });
+                });
+
+                // Day click → modal
+                grid.querySelectorAll('.cal-day--has-sessions').forEach(day => {
+                    day.addEventListener('click', () => {
+                        openDayModal(day.dataset.date);
+                    });
+                });
+            }
+
+            // Close modal
+            document.getElementById('calModalClose').addEventListener('click', () => modal.classList.remove('active'));
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) modal.classList.remove('active');
             });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') modal.classList.remove('active');
+            });
+
+            // Navigation buttons
+            document.getElementById('calPrev').addEventListener('click', () => {
+                viewMonth--;
+                if (viewMonth < 0) { viewMonth = 11; viewYear--; }
+                renderCalendar();
+            });
+            document.getElementById('calNext').addEventListener('click', () => {
+                viewMonth++;
+                if (viewMonth > 11) { viewMonth = 0; viewYear++; }
+                renderCalendar();
+            });
+            document.getElementById('calToday').addEventListener('click', () => {
+                const now = new Date();
+                viewYear = now.getFullYear();
+                viewMonth = now.getMonth();
+                renderCalendar();
+            });
+
+            // Auto-fill date
+            document.addEventListener('DOMContentLoaded', function () {
+                const dateInput = document.querySelector('input[name="date"]');
+                if (dateInput && !dateInput.value) {
+                    dateInput.value = new Date().toISOString().split('T')[0];
+                }
+            });
+
+            // Initial render
+            renderCalendar();
+
+            // Expose for inline onclick handlers
+            window.showEditForm = showEditForm;
+            window.saveSession = saveSession;
+            window.openDayModal = openDayModal;
+            }) ();
         </script>
     </main>
 </body>
