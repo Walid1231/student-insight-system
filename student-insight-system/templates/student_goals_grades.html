@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Goals & Grades | Student Insight</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/unified_styles.css') }}?v=3">
+    <style>
+        .gg-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 24px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .gg-card {
+            background: var(--bg-surface, #fff);
+            border: 1px solid var(--border-light, #e5e7eb);
+            border-radius: 14px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, .04);
+        }
+
+        .gg-card-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-dark, #111827);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid var(--border-light, #e5e7eb);
+        }
+
+        .gg-card-title i {
+            color: var(--primary-navy, #3b82f6);
+            font-size: 18px;
+        }
+
+        /* Skill chips */
+        .skill-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .skill-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border: 2px solid var(--border-light, #e5e7eb);
+            border-radius: 8px;
+            background: var(--bg-surface, #fff);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+            color: var(--text-dark, #374151);
+            font-family: 'Inter', sans-serif;
+        }
+
+        .skill-chip:hover {
+            border-color: #3b82f6;
+        }
+
+        .skill-chip.selected {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.08);
+            color: #3b82f6;
+        }
+
+        .skill-chip input {
+            display: none;
+        }
+
+        /* Career match list */
+        .career-match-list {
+            margin-top: 16px;
+        }
+
+        .career-match-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--bg-body, #f9fafb);
+            border: 1px solid var(--border-light, #e5e7eb);
+            border-radius: 10px;
+            padding: 14px 18px;
+            margin-bottom: 10px;
+            transition: border-color 0.15s;
+        }
+
+        .career-match-item:hover {
+            border-color: #3b82f6;
+        }
+
+        .career-match-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .career-match-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-dark, #111827);
+        }
+
+        .career-match-score {
+            font-size: 12px;
+            color: var(--text-muted, #6b7280);
+        }
+
+        .career-match-score strong {
+            color: #3b82f6;
+        }
+
+        .career-select-btn {
+            padding: 7px 16px;
+            border-radius: 8px;
+            border: 1px solid #3b82f6;
+            background: transparent;
+            color: #3b82f6;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .career-select-btn:hover,
+        .career-select-btn.selected {
+            background: #3b82f6;
+            color: #fff;
+        }
+
+        /* Goal setting */
+        .goal-form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr auto;
+            gap: 12px;
+            align-items: end;
+            margin-top: 16px;
+        }
+
+        @media(max-width:800px) {
+            .goal-form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Existing goals/grades table */
+        .records-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+        }
+
+        .records-table th {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted, #9ca3af);
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 2px solid var(--border-light, #e5e7eb);
+        }
+
+        .records-table td {
+            font-size: 13px;
+            padding: 12px;
+            color: var(--text-dark, #374151);
+            border-bottom: 1px solid var(--border-light, #f3f4f6);
+        }
+
+        .records-table tr:hover td {
+            background: rgba(59, 130, 246, 0.03);
+        }
+
+        .delete-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted, #9ca3af);
+            cursor: pointer;
+            font-size: 14px;
+            transition: color 0.15s;
+            padding: 4px 8px;
+        }
+
+        .delete-btn:hover {
+            color: #ef4444;
+        }
+
+        /* Grade form */
+        .grade-form-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr auto;
+            gap: 12px;
+            align-items: end;
+            margin-top: 16px;
+        }
+
+        @media(max-width:800px) {
+            .grade-form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .target-cgpa-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            padding: 14px 18px;
+            background: var(--bg-body, #f9fafb);
+            border-radius: 10px;
+            border: 1px solid var(--border-light, #e5e7eb);
+        }
+
+        .target-cgpa-row label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-dark, #374151);
+            white-space: nowrap;
+        }
+
+        .target-cgpa-row input {
+            width: 80px;
+        }
+
+        .section-divider {
+            border: none;
+            border-top: 1px solid var(--border-light, #e5e7eb);
+            margin: 24px 0;
+        }
+
+        .no-data-msg {
+            text-align: center;
+            color: var(--text-muted, #9ca3af);
+            font-size: 13px;
+            padding: 20px;
+        }
+
+        /* Primary badge */
+        .primary-badge {
+            display: inline-block;
+            font-size: 10px;
+            font-weight: 700;
+            background: #dbeafe;
+            color: #2563eb;
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-left: 8px;
+        }
+
+        /* Dark theme */
+        html[data-theme="dark"] .gg-card {
+            background: #1a1d27;
+            border-color: #2d3241;
+        }
+
+        html[data-theme="dark"] .gg-card-title {
+            color: #e5e7eb;
+            border-bottom-color: #2d3241;
+        }
+
+        html[data-theme="dark"] .skill-chip {
+            border-color: #2d3241;
+            background: #141720;
+            color: #d1d5db;
+        }
+
+        html[data-theme="dark"] .career-match-item {
+            background: #141720;
+            border-color: #2d3241;
+        }
+
+        html[data-theme="dark"] .career-match-title {
+            color: #e5e7eb;
+        }
+
+        html[data-theme="dark"] .records-table th {
+            color: #6b7280;
+            border-bottom-color: #2d3241;
+        }
+
+        html[data-theme="dark"] .records-table td {
+            color: #d1d5db;
+            border-bottom-color: #2d3241;
+        }
+
+        html[data-theme="dark"] .target-cgpa-row {
+            background: #141720;
+            border-color: #2d3241;
+        }
+
+        html[data-theme="dark"] .target-cgpa-row label {
+            color: #d1d5db;
+        }
+
+        html[data-theme="dark"] .primary-badge {
+            background: #1e3a5f;
+            color: #60a5fa;
+        }
+    </style>
+</head>
+
+<body class="preload">
+    {% set active_page = 'goals' %}
+    {% include 'components/sidebar.html' %}
+
+    <main class="main-content">
+        <div class="dashboard-container">
+
+            <div class="welcome-header">
+                <h1><i class="fas fa-bullseye"></i> Goals & Grades</h1>
+                <p>Set career goals based on your skills, and track your academic grades.</p>
+            </div>
+
+            <div class="gg-grid">
+
+                <!-- ===== SECTION 1: SKILL-DRIVEN GOAL SETTING ===== -->
+                <div class="gg-card">
+                    <div class="gg-card-title">
+                        <i class="fas fa-star"></i>
+                        Your Skills & Career Goals
+                    </div>
+
+                    <!-- Target CGPA -->
+                    <form method="POST" action="{{ url_for('dashboard.save_target_cgpa') }}" style="margin-bottom:0;">
+                        <div class="target-cgpa-row">
+                            <label><i class="fas fa-trophy"></i> Target CGPA:</label>
+                            <input type="number" name="target_cgpa" class="form-input" step="0.01" min="0" max="4.0"
+                                value="{{ student.target_cgpa or '' }}" placeholder="e.g. 3.50">
+                            <button type="submit" class="btn btn-primary" style="padding:8px 16px;font-size:12px;">
+                                <i class="fas fa-save"></i> Save
+                            </button>
+                            <span style="color:var(--text-muted);font-size:12px;">
+                                Current: {{ student.current_cgpa or 'N/A' }}
+                            </span>
+                        </div>
+                    </form>
+
+                    <!-- Step 1: Select Skills -->
+                    <div class="field-label" style="margin-bottom:10px;">1. Select Your Current Skills</div>
+                    <form id="skillForm" method="POST" action="{{ url_for('dashboard.save_skills') }}">
+                        <div class="skill-grid">
+                            {% for skill in all_skills %}
+                            <label class="skill-chip {{ 'selected' if skill.id in student_skill_ids else '' }}">
+                                <input type="checkbox" name="skill_ids" value="{{ skill.id }}" {{ 'checked' if skill.id
+                                    in student_skill_ids else '' }} onchange="this.form.submit()">
+                                <i class="fas fa-code" style="font-size:11px;"></i>
+                                {{ skill.skill_name }}
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </form>
+
+                    <!-- Step 2: Matching Careers -->
+                    <div class="field-label" style="margin-top:20px;margin-bottom:10px;">2. Matching Career Paths</div>
+
+                    {% if matching_careers %}
+                    <div class="career-match-list">
+                        {% for career in matching_careers %}
+                        <div class="career-match-item">
+                            <div class="career-match-info">
+                                <div class="career-match-title">
+                                    {{ career.title }}
+                                    {% if career.id in goal_career_ids %}
+                                    <span class="primary-badge">SELECTED</span>
+                                    {% endif %}
+                                </div>
+                                <div class="career-match-score">
+                                    <strong>{{ career.match_count }}</strong> of your skills match &middot;
+                                    {{ career.field_category or '' }}
+                                </div>
+                            </div>
+                            {% if career.id not in goal_career_ids %}
+                            <form method="POST" action="{{ url_for('dashboard.add_goal') }}" style="margin:0;">
+                                <input type="hidden" name="career_id" value="{{ career.id }}">
+                                <select name="goal_type"
+                                    style="padding:4px 8px;font-size:12px;border-radius:6px;border:1px solid var(--border-light);margin-right:6px;font-family:'Inter',sans-serif;">
+                                    <option value="Long Term">Long Term</option>
+                                    <option value="Short Term">Short Term</option>
+                                </select>
+                                <button type="submit" class="career-select-btn">
+                                    <i class="fas fa-plus"></i> Add Goal
+                                </button>
+                            </form>
+                            {% else %}
+                            <form method="POST" action="{{ url_for('dashboard.delete_goal', goal_id=career.goal_id) }}"
+                                style="margin:0;">
+                                <button type="submit" class="delete-btn" title="Remove goal">
+                                    <i class="fas fa-times-circle"></i> Remove
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="no-data-msg">
+                        <i class="fas fa-search" style="font-size:20px;display:block;margin-bottom:8px;"></i>
+                        Select your skills above to see matching career paths.
+                    </div>
+                    {% endif %}
+
+                    <!-- Current Goals -->
+                    {% if goals %}
+                    <div class="field-label" style="margin-top:20px;margin-bottom:10px;">Your Current Goals</div>
+                    <table class="records-table">
+                        <thead>
+                            <tr>
+                                <th>Career Path</th>
+                                <th>Type</th>
+                                <th>Primary</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for g in goals %}
+                            <tr>
+                                <td>{{ g.career_title }}</td>
+                                <td>{{ g.goal_type }}</td>
+                                <td>
+                                    {% if g.is_primary %}
+                                    <span class="primary-badge">PRIMARY</span>
+                                    {% else %}
+                                    <form method="POST"
+                                        action="{{ url_for('dashboard.set_primary_goal', goal_id=g.id) }}"
+                                        style="display:inline;margin:0;">
+                                        <button type="submit"
+                                            style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:12px;">
+                                            Set Primary
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <form method="POST" action="{{ url_for('dashboard.delete_goal', goal_id=g.id) }}"
+                                        style="margin:0;">
+                                        <button type="submit" class="delete-btn"><i class="fas fa-trash"></i></button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% endif %}
+                </div>
+
+                <!-- ===== SECTION 2: GRADE INPUT ===== -->
+                <div class="gg-card">
+                    <div class="gg-card-title">
+                        <i class="fas fa-graduation-cap"></i>
+                        Grade Input
+                    </div>
+
+                    <form method="POST" action="{{ url_for('dashboard.add_grade') }}">
+                        <div class="grade-form-row">
+                            <div>
+                                <label class="field-label">Course</label>
+                                <select name="course_id" class="form-input" required>
+                                    <option value="">Select course...</option>
+                                    {% for c in courses %}
+                                    <option value="{{ c.id }}">{{ c.course_name }} ({{ c.course_type }}, {{
+                                        c.credit_value }}cr)</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div>
+                                <label class="field-label">Semester</label>
+                                <select name="semester" class="form-input" required>
+                                    {% for i in range(1, 13) %}
+                                    <option value="{{ i }}">Sem {{ i }}{% if i <= 3 %} (Y1){% elif i <=6 %} (Y2){% elif
+                                            i <=9 %} (Y3){% else %} (Y4){% endif %}</option>
+                                            {% endfor %}
+                                </select>
+                            </div>
+                            <div>
+                                <label class="field-label">Grade</label>
+                                <select name="grade" class="form-input" required>
+                                    <option value="">Grade...</option>
+                                    <option value="A+">A+ (4.0)</option>
+                                    <option value="A">A (4.0)</option>
+                                    <option value="A-">A- (3.7)</option>
+                                    <option value="B+">B+ (3.3)</option>
+                                    <option value="B">B (3.0)</option>
+                                    <option value="B-">B- (2.7)</option>
+                                    <option value="C+">C+ (2.3)</option>
+                                    <option value="C">C (2.0)</option>
+                                    <option value="D">D (1.0)</option>
+                                    <option value="F">F (0.0)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <button type="submit" class="btn btn-primary" style="padding:10px 18px;">
+                                    <i class="fas fa-plus"></i> Add
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- Existing Records -->
+                    {% if records %}
+                    <table class="records-table" style="margin-top:20px;">
+                        <thead>
+                            <tr>
+                                <th>Course</th>
+                                <th>Type</th>
+                                <th>Semester</th>
+                                <th>Grade</th>
+                                <th>GPA</th>
+                                <th>Credits</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for r in records %}
+                            <tr>
+                                <td>{{ r.course_name }}</td>
+                                <td>{{ r.course_type }}</td>
+                                <td>Sem {{ r.semester_taken }}</td>
+                                <td><strong>{{ r.grade }}</strong></td>
+                                <td>{{ r.grade_point }}</td>
+                                <td>{{ r.credit_value }}cr</td>
+                                <td>
+                                    <form method="POST" action="{{ url_for('dashboard.delete_grade', record_id=r.id) }}"
+                                        style="margin:0;">
+                                        <button type="submit" class="delete-btn"><i class="fas fa-trash"></i></button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <div class="no-data-msg" style="margin-top:16px;">
+                        <i class="fas fa-book-open" style="font-size:20px;display:block;margin-bottom:8px;"></i>
+                        No grades recorded yet. Add your first course grade above.
+                    </div>
+                    {% endif %}
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Toast -->
+        {% if success %}
+        <div class="toast show" id="successToast">
+            <i class="fas fa-check-circle"></i>
+            <span>{{ success_msg or 'Saved! Dashboard updated.' }}</span>
+        </div>
+        <script>setTimeout(function () { document.getElementById('successToast').classList.remove('show'); }, 3000);</script>
+        {% endif %}
+    </main>
+</body>
+
+</html>

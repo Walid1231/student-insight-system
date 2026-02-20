@@ -57,6 +57,7 @@ class StudentProfile(db.Model):
     current_semester = db.Column(db.Integer)
     expected_graduation_date = db.Column(db.Date)
     completed_credits = db.Column(db.Integer)
+    target_cgpa = db.Column(db.Float)  # Student's goal CGPA
     
     # Relationships
     academic_metrics = db.relationship('AcademicMetric', backref='student', uselist=False, cascade="all, delete-orphan")
@@ -364,6 +365,7 @@ class WeeklyUpdate(db.Model):
     burnout_risk_score = db.Column(db.Float)
     goal_achievability_prob = db.Column(db.Float)
     status_label = db.Column(db.String(50))  # 'On Track', 'At Risk', etc.
+    mood_score = db.Column(db.Integer)  # 1-5 mood/stress from check-in
     
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 

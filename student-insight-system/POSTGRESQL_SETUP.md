@@ -23,7 +23,7 @@ Your Flask application is now configured to use PostgreSQL!
 Open [`config.py`](file:///D:/Project/student-insight-system/student-insight-system/config.py) and **replace `YOUR_DB_PASSWORD`** with your actual PostgreSQL password:
 
 ```python
-SQLALCHEMY_DATABASE_URI = 'postgresql://postgres:YOUR_ACTUAL_PASSWORD@localhost:5432/student_insight_system'
+SQLALCHEMY_DATABASE_URI = 'postgresql://postgres:12345@localhost:5432/student_insight_system'
 ```
 
 > **Don't remember your password?** You can reset it using pgAdmin or PostgreSQL command line.

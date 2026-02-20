@@ -20,20 +20,24 @@ def register():
             return jsonify({"msg": "User already exists"}), 400
 
         # Create User
-        hashed_password = generate_password_hash(password)
-        new_user = User(email=email, password_hash=hashed_password, role=role)
-        db.session.add(new_user)
-        db.session.commit()
+        try:
+            hashed_password = generate_password_hash(password)
+            new_user = User(email=email, password_hash=hashed_password, role=role)
+            db.session.add(new_user)
+            db.session.commit()
 
-        # Create Profile based on role
-        if role == 'teacher':
-            new_teacher = TeacherProfile(user_id=new_user.id, full_name=name)
-            db.session.add(new_teacher)
-        elif role == 'student':
-            new_student = StudentProfile(user_id=new_user.id, full_name=name)
-            db.session.add(new_student)
+            # Create Profile based on role
+            if role == 'teacher':
+                new_teacher = TeacherProfile(user_id=new_user.id, full_name=name)
+                db.session.add(new_teacher)
+            elif role == 'student':
+                new_student = StudentProfile(user_id=new_user.id, full_name=name)
+                db.session.add(new_student)
             
-        db.session.commit()
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({"msg": f"Registration error: {str(e)}"}), 500
 
         return jsonify({"msg": "Registration successful", "email": email})
 
