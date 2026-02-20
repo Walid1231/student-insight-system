@@ -19,6 +19,12 @@ from models import StudentInsight
 @dashboard_bp.route("/student/dashboard")
 @jwt_required()
 def student_dashboard():
+    from models import (StudentAcademicRecord, CourseCatalog, WeeklyUpdate,
+                        StudentGoal, CareerPath, CareerRequiredSkill, Skill as SkillModel)
+    from datetime import timedelta
+    from collections import defaultdict
+    from sqlalchemy import func
+
     claims = get_jwt()
     role = claims.get("role")
     user_id = get_jwt_identity()
@@ -29,89 +35,155 @@ def student_dashboard():
     try:
         student = StudentProfile.query.filter_by(user_id=int(user_id)).first()
     except (ValueError, TypeError):
-        # If no profile exists yet (should be created at register, but safety check)
         return jsonify({"msg": "Invalid user identity"}), 400
 
     if not student:
         return jsonify({"msg": "Student profile not found"}), 404
-    
-    # Get the student's courses and calculate performance
-    courses = StudentCourse.query.filter_by(student_id=student.id).all()
-    subjects = []
-    for course in courses:
-        # Convert grade to score (simplified mapping)
-        grade_map = {'A': 95, 'A-': 90, 'B+': 87, 'B': 83, 'B-': 80, 'C+': 77, 'C': 73, 'D': 65, 'F': 50}
-        score = grade_map.get(course.grade, 70)
-        subjects.append({
-            "name": course.course_name,
-            "score": score,
-            "grade": course.grade
-        })
-    
-    # If no real data, use mock data
-    if not subjects:
-        subjects = [
-            {"name": "Programming", "score": 88, "grade": "B+"},
-            {"name": "Database Systems", "score": 75, "grade": "C+"},
-            {"name": "Web Development", "score": 92, "grade": "A-"},
-            {"name": "Mathematics", "score": 68, "grade": "C"},
-            {"name": "Data Structures", "score": 85, "grade": "B"}
-        ]
-    
-    # Get career interests
-    career_interests = CareerInterest.query.filter_by(student_id=student.id).all()
-    careers = []
-    for interest in career_interests:
-        careers.append({
-            "role": interest.field_name,
-            "match": int(interest.interest_score) if interest.interest_score else 75
-        })
-    
-    # If no real data, use mock
-    if not careers:
-        careers = [
-            {"role": "Full Stack Developer", "match": 85},
-            {"role": "Data Analyst", "match": 72},
-            {"role": "Software Engineer", "match": 68}
-        ]
-    
-    # Get skills
+
+    # ── 1. CGPA TREND (from AcademicMetric) ──
+    academic_metric = AcademicMetric.query.filter_by(student_id=student.id).first()
+    semester_gpas = academic_metric.get_gpas() if academic_metric else []
+    cgpa_labels = [f"Sem {i+1}" for i in range(len(semester_gpas))]
+
+    # ── 2. STRENGTH & WEAKNESS RADAR (from StudentSkill) ──
     skills = StudentSkill.query.filter_by(student_id=student.id).all()
-    skills_known = [skill.skill_name for skill in skills] if skills else ["Python", "HTML", "CSS", "JavaScript"]
-    skills_todo = ["React", "Node.js", "MongoDB", "Docker"] # This would be calculated based on career requirements
+    radar_labels = [s.skill_name for s in skills[:6]]
+    radar_scores = [s.proficiency_score for s in skills[:6]]
+
+    # ── 3. CORE vs GED (from StudentAcademicRecord + CourseCatalog) ──
+    records = (db.session.query(StudentAcademicRecord, CourseCatalog)
+               .join(CourseCatalog, StudentAcademicRecord.course_id == CourseCatalog.id)
+               .filter(StudentAcademicRecord.student_id == student.id)
+               .all())
+    core_count = sum(1 for r, c in records if c.course_type == 'Core')
+    ged_count = sum(1 for r, c in records if c.course_type == 'GED')
+    elective_count = sum(1 for r, c in records if c.course_type == 'Elective')
+
+    # ── 4. WEEKLY STUDY HOURS (from StudySession, current week) ──
+    today = datetime.utcnow().date()
+    week_start = today - timedelta(days=today.weekday())  # Monday
+    sessions_this_week = StudySession.query.filter(
+        StudySession.student_id == student.id,
+        StudySession.date >= week_start,
+        StudySession.date <= week_start + timedelta(days=6)
+    ).all()
+
+    weekly_hours = [0.0] * 7  # Mon-Sun
+    for s in sessions_this_week:
+        day_idx = (s.date - week_start).days
+        if 0 <= day_idx < 7:
+            weekly_hours[day_idx] += round(s.duration_minutes / 60, 1)
+    weekly_hours = [round(h, 1) for h in weekly_hours]
+
+    # ── 5. SKILL EFFORT DISTRIBUTION (StudySession grouped by skill for 3 periods) ──
+    last_week_start = week_start - timedelta(days=7)
+    sessions_two_weeks = StudySession.query.filter(
+        StudySession.student_id == student.id,
+        StudySession.date >= last_week_start,
+        StudySession.date <= week_start + timedelta(days=6)
+    ).all()
+
+    # Group: Mon of this week, Fri of this week, last week total
+    skill_effort = defaultdict(lambda: [0, 0, 0])  # [Mon, Fri, LastWeek]
+    for s in sessions_two_weeks:
+        if not s.related_skill:
+            continue
+        hours = round(s.duration_minutes / 60, 1)
+        if s.date < week_start:
+            skill_effort[s.related_skill][2] += hours
+        elif s.date == week_start:  # Monday
+            skill_effort[s.related_skill][0] += hours
+        elif s.date == week_start + timedelta(days=4):  # Friday
+            skill_effort[s.related_skill][1] += hours
+
+    # Top 3 skills by total effort
+    top_skills = sorted(skill_effort.items(), key=lambda x: sum(x[1]), reverse=True)[:3]
+    effort_labels = [s[0] for s in top_skills]
+    effort_mon = [round(s[1][0], 1) for s in top_skills]
+    effort_fri = [round(s[1][1], 1) for s in top_skills]
+    effort_lastweek = [round(s[1][2], 1) for s in top_skills]
+
+    # ── 6. CAREER COMPATIBILITY (from CareerInterest + AnalyticsResult) ──
+    career_interests = CareerInterest.query.filter_by(student_id=student.id).all()
+    careers = [{"role": ci.field_name, "match": int(ci.interest_score)} for ci in career_interests]
     
-    # Mock weekly hours (in a real app, this would come from StudySession model)
-    weekly_hours = [3, 5, 4, 6, 2, 7, 4]
+    # Also check AnalyticsResult for career predictions
+    analytics = AnalyticsResult.query.filter_by(student_id=student.id).first()
+    if analytics and analytics.career_predictions:
+        try:
+            predictions = analytics.get_career_predictions()
+            if isinstance(predictions, dict):
+                for role, score in predictions.items():
+                    if not any(c['role'] == role for c in careers):
+                        careers.append({"role": role, "match": int(score)})
+        except Exception:
+            pass
     
-    # Calculate goal probability (mock for now)
-    goal_prob = 75
-    target_gpa = student.current_cgpa + 0.3 if student.current_cgpa else 3.5
+    # Sort by match and take top 3
+    careers = sorted(careers, key=lambda x: x['match'], reverse=True)[:3]
+
+    # ── 7. BURNOUT RISK GAUGE (from WeeklyUpdate) ──
+    latest_update = (WeeklyUpdate.query
+                     .filter_by(student_id=student.id)
+                     .order_by(WeeklyUpdate.created_at.desc())
+                     .first())
+    burnout_score = latest_update.burnout_risk_score if latest_update else 0
+    burnout_pct = int(burnout_score * 100) if burnout_score else 0
+    if burnout_pct < 40:
+        burnout_label = "Low Risk"
+        burnout_message = "Keep it up!"
+    elif burnout_pct < 70:
+        burnout_label = "Medium Risk"
+        burnout_message = "Watch your pace"
+    else:
+        burnout_label = "High Risk"
+        burnout_message = "Take a break!"
+
+    # ── 8. GOAL ACHIEVABILITY (from WeeklyUpdate + StudentGoal) ──
+    goal_prob = int(latest_update.goal_achievability_prob * 100) if latest_update and latest_update.goal_achievability_prob else 0
     
-    # AI Guidance (mock for now - in real app, this would use Gemini)
-    guidance_msg = "Your progress in Web Development is excellent! However, Database Systems needs attention."
-    guidance_tip = "Practice SQL queries daily using platforms like HackerRank or LeetCode."
-    
-    # Prepare comprehensive data object
+    # Get primary goal's target career
+    primary_goal = StudentGoal.query.filter_by(student_id=student.id, is_primary=True).first()
+    target_career = ""
+    target_gpa = round(student.current_cgpa + 0.2, 1) if student.current_cgpa else 3.5
+    if primary_goal:
+        career_path = CareerPath.query.get(primary_goal.career_id)
+        if career_path:
+            target_career = career_path.title
+
+    # ── BUILD DATA DICT ──
     data = {
         "name": student.full_name,
-        "department": student.department or "Computer Science",
-        "year": student.class_level or "3",
-        "university_name": "Your University",  # Add this field to StudentProfile if needed
-        "status": "On Track" if student.current_cgpa and student.current_cgpa >= 3.0 else "At Risk",
-        "cgpa": student.current_cgpa or 3.0,
-        "credits_completed": student.completed_credits or 90,
-        "subjects": subjects,
-        "careers": careers,
-        "skills_known": skills_known,
-        "skills_todo": skills_todo,
+        "cgpa": student.current_cgpa or 0,
+        # CGPA Trend
+        "cgpa_labels": cgpa_labels,
+        "cgpa_values": semester_gpas,
+        # Radar
+        "radar_labels": radar_labels,
+        "radar_scores": radar_scores,
+        # Core vs GED
+        "core_count": core_count,
+        "ged_count": ged_count,
+        "elective_count": elective_count,
+        # Weekly Study Hours
         "weekly_hours": weekly_hours,
+        # Skill Effort
+        "effort_labels": effort_labels,
+        "effort_mon": effort_mon,
+        "effort_fri": effort_fri,
+        "effort_lastweek": effort_lastweek,
+        # Career Compatibility
+        "careers": careers,
+        # Burnout
+        "burnout_pct": burnout_pct,
+        "burnout_label": burnout_label,
+        "burnout_message": burnout_message,
+        # Goal
         "goal_prob": goal_prob,
-        "target_gpa": round(target_gpa, 2),
-        "time_to_goal": "3 months",
-        "guidance_msg": guidance_msg,
-        "guidance_tip": guidance_tip
+        "target_gpa": target_gpa,
+        "target_career": target_career,
     }
-    
+
     return render_template("student_dashboard.html", data=data)
 
 
@@ -873,6 +945,10 @@ def add_study_session():
     db.session.add(session)
     db.session.commit()
 
+    # Recalculate dashboard data
+    from dashboard.recalculate import recalculate_weekly_update
+    recalculate_weekly_update(student.id)
+
     return redirect(url_for('dashboard.student_routine'))
 
 @dashboard_bp.route("/student/update-study-session/<int:session_id>", methods=["POST"])
@@ -924,3 +1000,450 @@ def student_settings():
     
     return render_template("student_settings.html", user=user, profile=student)
 
+
+# =============================================================
+# WEEKLY CHECK-IN
+# =============================================================
+
+@dashboard_bp.route("/student/weekly-checkin", methods=["GET"])
+@jwt_required()
+def weekly_checkin():
+    from models import WeeklyUpdate
+    from datetime import timedelta
+
+    user_id = get_jwt_identity()
+    student = StudentProfile.query.filter_by(user_id=int(user_id)).first()
+    if not student:
+        return jsonify({"msg": "Student not found"}), 404
+
+    today = datetime.utcnow().date()
+    week_start = today - timedelta(days=today.weekday())
+
+    # Current week's update (if exists)
+    current = WeeklyUpdate.query.filter_by(
+        student_id=student.id, week_start_date=week_start
+    ).first()
+
+    # Past 4 weeks
+    history = (WeeklyUpdate.query
+               .filter(WeeklyUpdate.student_id == student.id,
+                       WeeklyUpdate.week_start_date < week_start)
+               .order_by(WeeklyUpdate.week_start_date.desc())
+               .limit(4).all())
+
+    success = request.args.get('success', False)
+
+    return render_template("student_weekly_checkin.html",
+                           current_productivity=current.productivity_rating if current else '',
+                           current_mood=current.mood_score if current else '',
+                           current_difficulty=current.difficulty_rating if current else '',
+                           current_goals=current.status_label if current else '',
+                           history=history,
+                           success=success)
+
+
+@dashboard_bp.route("/student/weekly-checkin", methods=["POST"])
+@jwt_required()
+def submit_weekly_checkin():
+    from models import WeeklyUpdate
+    from dashboard.recalculate import recalculate_weekly_update
+    from datetime import timedelta
+
+    user_id = get_jwt_identity()
+    student = StudentProfile.query.filter_by(user_id=int(user_id)).first()
+    if not student:
+        return jsonify({"msg": "Student not found"}), 404
+
+    today = datetime.utcnow().date()
+    week_start = today - timedelta(days=today.weekday())
+
+    # Find or create this week's update
+    update = WeeklyUpdate.query.filter_by(
+        student_id=student.id, week_start_date=week_start
+    ).first()
+
+    if not update:
+        update = WeeklyUpdate(student_id=student.id, week_start_date=week_start)
+        db.session.add(update)
+
+    # Save user-submitted fields
+    prod = request.form.get("productivity_rating")
+    if prod:
+        update.productivity_rating = int(prod)
+
+    mood = request.form.get("mood_score")
+    if mood:
+        update.mood_score = int(mood)
+
+    diff = request.form.get("difficulty_rating")
+    if diff:
+        update.difficulty_rating = diff
+
+    db.session.commit()
+
+    # Recalculate system fields
+    recalculate_weekly_update(student.id)
+
+    return redirect(url_for('dashboard.weekly_checkin', success=1))
+
+
+# =============================================================
+# GOALS & GRADES
+# =============================================================
+
+@dashboard_bp.route("/student/goals-grades", methods=["GET"])
+@jwt_required()
+def goals_grades():
+    from models import (StudentGoal, StudentAcademicRecord, CourseCatalog,
+                        CareerPath, CareerRequiredSkill, StudentSkill,
+                        Skill as SkillModel)
+
+    user_id = get_jwt_identity()
+    student = StudentProfile.query.filter_by(user_id=int(user_id)).first()
+    if not student:
+        return jsonify({"msg": "Student not found"}), 404
+
+    # All master skills
+    all_skills = SkillModel.query.order_by(SkillModel.skill_name).all()
+
+    # Student's current skill IDs
+    student_skills = StudentSkill.query.filter_by(student_id=student.id).all()
+    student_skill_ids = [ss.skill_name for ss in student_skills]
+    # Map skill names to skill IDs
+    skill_name_to_id = {s.skill_name: s.id for s in all_skills}
+    student_skill_id_set = set()
+    for ss in student_skills:
+        sid = skill_name_to_id.get(ss.skill_name)
+        if sid:
+            student_skill_id_set.add(sid)
+
+    # Find matching careers based on selected skills
+    matching_careers = []
+    if student_skill_id_set:
+        # Get all career-skill links for the student's skills
+        career_links = (db.session.query(
+            CareerRequiredSkill.career_id,
+            db.func.count(CareerRequiredSkill.id).label('match_count')
+        ).filter(CareerRequiredSkill.skill_id.in_(student_skill_id_set))
+         .group_by(CareerRequiredSkill.career_id)
+         .order_by(db.desc('match_count'))
+         .all())
+
+        for career_id, match_count in career_links:
+            career = CareerPath.query.get(career_id)
+            if career:
+                # Check if student already has a goal for this career
+                existing_goal = StudentGoal.query.filter_by(
+                    student_id=student.id, career_id=career_id
+                ).first()
+                matching_careers.append({
+                    'id': career.id,
+                    'title': career.title,
+                    'field_category': career.field_category,
+                    'match_count': match_count,
+                    'goal_id': existing_goal.id if existing_goal else None
+                })
+
+    # Goal career IDs (set for template)
+    goals_raw = StudentGoal.query.filter_by(student_id=student.id).all()
+    goal_career_ids = {g.career_id: g.id for g in goals_raw}
+
+    # Goals with career titles
+    goals = []
+    for g in goals_raw:
+        career = CareerPath.query.get(g.career_id)
+        goals.append({
+            'id': g.id,
+            'career_title': career.title if career else 'Unknown',
+            'goal_type': g.goal_type,
+            'is_primary': g.is_primary
+        })
+
+    # Academic records with course info
+    records_raw = (db.session.query(StudentAcademicRecord, CourseCatalog)
+                   .join(CourseCatalog, StudentAcademicRecord.course_id == CourseCatalog.id)
+                   .filter(StudentAcademicRecord.student_id == student.id)
+                   .order_by(StudentAcademicRecord.semester_taken)
+                   .all())
+    records = [{
+        'id': r.id,
+        'course_name': c.course_name,
+        'course_type': c.course_type,
+        'semester_taken': r.semester_taken,
+        'grade': r.grade,
+        'grade_point': r.grade_point,
+        'credit_value': c.credit_value
+    } for r, c in records_raw]
+
+    # All courses for dropdown
+    courses = CourseCatalog.query.order_by(CourseCatalog.course_name).all()
+
+    success = request.args.get('success', False)
+    success_msg = request.args.get('msg', '')
+
+    return render_template("student_goals_grades.html",
+                           student=student,
+                           all_skills=all_skills,
+                           student_skill_ids=student_skill_id_set,
+                           matching_careers=matching_careers,
+                           goal_career_ids=goal_career_ids,
+                           goals=goals,
+                           records=records,
+                           courses=courses,
+                           success=success,
+                           success_msg=success_msg)
+
+
+@dashboard_bp.route("/student/goals-grades/target-cgpa", methods=["POST"])
+@jwt_required()
+def save_target_cgpa():
+    user_id = get_jwt_identity()
+    student = StudentProfile.query.filter_by(user_id=int(user_id)).first()
+    if not student:
+        return jsonify({"msg": "Student not found"}), 404
+
+    target = request.form.get("target_cgpa")
+    if target:
+        student.target_cgpa = float(target)
+        db.session.commit()
+
+        from dashboard.recalculate import recalculate_weekly_update
+        recalculate_weekly_update(student.id)
+
+    return redirect(url_for('dashboard.goals_grades', success=1, msg='Target CGPA saved!'))
+
+
+@dashboard_bp.route("/student/goals-grades/skills", methods=["POST"])
+@jwt_required()
+def save_skills():
+    from models import StudentSkill, Skill as SkillModel
+
+    user_id = get_jwt_identity()
+    student = StudentProfile.query.filter_by(user_id=int(user_id)).first()
+    if not student:
+        return jsonify({"msg": "Student not found"}), 404
+
+    selected_ids = request.form.getlist("skill_ids")
+    selected_ids = [int(x) for x in selected_ids]
+
+    # Get skill names for selected IDs
+    selected_skills = SkillModel.query.filter(SkillModel.id.in_(selected_ids)).all() if selected_ids else []
+    selected_names = {s.skill_name for s in selected_skills}
+
+    # Current student skills
+    current_skills = StudentSkill.query.filter_by(student_id=student.id).all()
+    current_names = {ss.skill_name for ss in current_skills}
+
+    # Add new skills
+    for skill in selected_skills:
+        if skill.skill_name not in current_names:
+            new_ss = StudentSkill(
+                student_id=student.id,
+                skill_name=skill.skill_name,
+                proficiency_score=50,  # Default medium proficiency
+                last_updated=datetime.utcnow()
+            )
+            db.session.add(new_ss)
+
+    # Remove deselected skills
+    for ss in current_skills:
+        if ss.skill_name not in selected_names:
+            db.session.delete(ss)
+
+    db.session.commit()
+    return redirect(url_for('dashboard.goals_grades'))
+
+
+@dashboard_bp.route("/student/goals-grades/goal", methods=["POST"])
+@jwt_required()
+def add_goal():
+    from models import StudentGoal
+
+    user_id = get_jwt_identity()
+    student = StudentProfile.query.filter_by(user_id=int(user_id)).first()
+    if not student:
+        return jsonify({"msg": "Student not found"}), 404
+
+    career_id = request.form.get("career_id")
+    goal_type = request.form.get("goal_type", "Long Term")
+
+    if not career_id:
+        return redirect(url_for('dashboard.goals_grades'))
+
+    # Check if already exists
+    existing = StudentGoal.query.filter_by(
+        student_id=student.id, career_id=int(career_id)
+    ).first()
+    if not existing:
+        goal = StudentGoal(
+            student_id=student.id,
+            career_id=int(career_id),
+            goal_type=goal_type,
+            is_primary=not StudentGoal.query.filter_by(student_id=student.id).first()  # First goal = primary
+        )
+        db.session.add(goal)
+        db.session.commit()
+
+        from dashboard.recalculate import recalculate_weekly_update
+        recalculate_weekly_update(student.id)
+
+    return redirect(url_for('dashboard.goals_grades', success=1, msg='Goal added!'))
+
+
+@dashboard_bp.route("/student/goals-grades/goal/<int:goal_id>/delete", methods=["POST"])
+@jwt_required()
+def delete_goal(goal_id):
+    from models import StudentGoal
+
+    user_id = get_jwt_identity()
+    student = StudentProfile.query.filter_by(user_id=int(user_id)).first()
+    if not student:
+        return jsonify({"msg": "Student not found"}), 404
+
+    goal = StudentGoal.query.filter_by(id=goal_id, student_id=student.id).first()
+    if goal:
+        db.session.delete(goal)
+        db.session.commit()
+
+    return redirect(url_for('dashboard.goals_grades'))
+
+
+@dashboard_bp.route("/student/goals-grades/goal/<int:goal_id>/primary", methods=["POST"])
+@jwt_required()
+def set_primary_goal(goal_id):
+    from models import StudentGoal
+
+    user_id = get_jwt_identity()
+    student = StudentProfile.query.filter_by(user_id=int(user_id)).first()
+    if not student:
+        return jsonify({"msg": "Student not found"}), 404
+
+    # Unset all primary
+    StudentGoal.query.filter_by(student_id=student.id).update({"is_primary": False})
+
+    # Set the selected one
+    goal = StudentGoal.query.filter_by(id=goal_id, student_id=student.id).first()
+    if goal:
+        goal.is_primary = True
+
+    db.session.commit()
+
+    from dashboard.recalculate import recalculate_weekly_update
+    recalculate_weekly_update(student.id)
+
+    return redirect(url_for('dashboard.goals_grades', success=1, msg='Primary goal updated!'))
+
+
+@dashboard_bp.route("/student/goals-grades/grade", methods=["POST"])
+@jwt_required()
+def add_grade():
+    from models import StudentAcademicRecord, CourseCatalog, AcademicMetric
+
+    user_id = get_jwt_identity()
+    student = StudentProfile.query.filter_by(user_id=int(user_id)).first()
+    if not student:
+        return jsonify({"msg": "Student not found"}), 404
+
+    course_id = request.form.get("course_id")
+    semester = request.form.get("semester")
+    grade = request.form.get("grade")
+
+    if not all([course_id, semester, grade]):
+        return redirect(url_for('dashboard.goals_grades'))
+
+    # Grade to GPA mapping
+    grade_map = {
+        'A+': 4.0, 'A': 4.0, 'A-': 3.7,
+        'B+': 3.3, 'B': 3.0, 'B-': 2.7,
+        'C+': 2.3, 'C': 2.0,
+        'D': 1.0, 'F': 0.0
+    }
+
+    record = StudentAcademicRecord(
+        student_id=student.id,
+        course_id=int(course_id),
+        grade=grade,
+        grade_point=grade_map.get(grade, 0),
+        semester_taken=int(semester)
+    )
+    db.session.add(record)
+    db.session.commit()
+
+    # Recalculate CGPA
+    _recalculate_cgpa(student)
+
+    from dashboard.recalculate import recalculate_weekly_update
+    recalculate_weekly_update(student.id)
+
+    return redirect(url_for('dashboard.goals_grades', success=1, msg='Grade added! CGPA updated.'))
+
+
+@dashboard_bp.route("/student/goals-grades/grade/<int:record_id>/delete", methods=["POST"])
+@jwt_required()
+def delete_grade(record_id):
+    from models import StudentAcademicRecord
+
+    user_id = get_jwt_identity()
+    student = StudentProfile.query.filter_by(user_id=int(user_id)).first()
+    if not student:
+        return jsonify({"msg": "Student not found"}), 404
+
+    record = StudentAcademicRecord.query.filter_by(
+        id=record_id, student_id=student.id
+    ).first()
+    if record:
+        db.session.delete(record)
+        db.session.commit()
+        _recalculate_cgpa(student)
+
+    return redirect(url_for('dashboard.goals_grades'))
+
+
+def _recalculate_cgpa(student):
+    """Recalculate semester GPAs and overall CGPA from academic records."""
+    from models import StudentAcademicRecord, CourseCatalog, AcademicMetric
+    from collections import defaultdict
+    import json
+
+    records = (db.session.query(StudentAcademicRecord, CourseCatalog)
+               .join(CourseCatalog, StudentAcademicRecord.course_id == CourseCatalog.id)
+               .filter(StudentAcademicRecord.student_id == student.id)
+               .all())
+
+    if not records:
+        student.current_cgpa = None
+        db.session.commit()
+        return
+
+    # Group by semester
+    semesters = defaultdict(list)
+    for r, c in records:
+        semesters[r.semester_taken].append((r.grade_point or 0, c.credit_value or 3))
+
+    # Calculate semester GPAs
+    semester_gpas = []
+    total_points = 0
+    total_credits = 0
+    for sem_num in sorted(semesters.keys()):
+        sem_points = sum(gp * cr for gp, cr in semesters[sem_num])
+        sem_credits = sum(cr for _, cr in semesters[sem_num])
+        sem_gpa = round(sem_points / sem_credits, 2) if sem_credits > 0 else 0
+        semester_gpas.append(sem_gpa)
+        total_points += sem_points
+        total_credits += sem_credits
+
+    overall_cgpa = round(total_points / total_credits, 2) if total_credits > 0 else 0
+
+    # Update StudentProfile
+    student.current_cgpa = overall_cgpa
+    student.completed_credits = total_credits
+
+    # Update AcademicMetric
+    metric = AcademicMetric.query.filter_by(student_id=student.id).first()
+    if not metric:
+        metric = AcademicMetric(student_id=student.id)
+        db.session.add(metric)
+    metric.semester_gpas = json.dumps(semester_gpas)
+    metric.total_credits = total_credits
+
+    db.session.commit()

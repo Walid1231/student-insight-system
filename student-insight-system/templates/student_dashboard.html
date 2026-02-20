@@ -5,14 +5,243 @@
     <meta charset="UTF-8">
     <title>Student Growth Dashboard | Insight System</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Using the same fonts and Chart.js as the original -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-    <!-- Unified Styles -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/unified_styles.css') }}?v=2">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/unified_styles.css') }}?v=3">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .dash-header {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 24px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--border-light)
+        }
+
+        .dash-header span {
+            font-weight: 400;
+            color: var(--text-muted)
+        }
+
+        .dash-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 20px;
+            max-width: 1400px;
+            margin: 0 auto
+        }
+
+        /* Row 1: 2 cards spanning 3 cols each */
+        .dash-card.span-half {
+            grid-column: span 3;
+        }
+
+        /* Rows 2-3: 3 cards spanning 2 cols each */
+        .dash-card.span-third {
+            grid-column: span 2;
+        }
+
+        .dash-card {
+            background: var(--bg-surface, #fff);
+            border: 1px solid var(--border-light);
+            border-radius: 14px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, .04);
+            transition: box-shadow .3s, transform .2s;
+            position: relative;
+            overflow: hidden
+        }
+
+        .dash-card:hover {
+            box-shadow: 0 8px 25px rgba(0, 0, 0, .08);
+            transform: translateY(-2px)
+        }
+
+        .dash-card-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 14px;
+            text-transform: uppercase;
+            letter-spacing: .5px
+        }
+
+        /* Constrain chart containers so they don't stretch infinitely */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 220px;
+        }
+
+        .chart-container-sm {
+            position: relative;
+            width: 100%;
+            height: 180px;
+        }
+
+        .career-compat-item {
+            margin-bottom: 14px
+        }
+
+        .career-compat-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 6px
+        }
+
+        .career-compat-label span {
+            color: var(--primary-navy);
+            font-weight: 700
+        }
+
+        .career-bar-bg {
+            height: 22px;
+            background: var(--border-light);
+            border-radius: 6px;
+            overflow: hidden
+        }
+
+        .career-bar-fill {
+            height: 100%;
+            border-radius: 6px;
+            background: linear-gradient(90deg, #3b82f6, #60a5fa);
+            transition: width 1s
+        }
+
+        .gauge-wrapper {
+            text-align: center;
+            padding: 10px 0
+        }
+
+        .gauge-wrapper canvas {
+            max-height: 160px
+        }
+
+        .gauge-label {
+            font-size: 28px;
+            font-weight: 800;
+            margin-top: 8px
+        }
+
+        .gauge-label.low {
+            color: var(--positive-green)
+        }
+
+        .gauge-label.medium {
+            color: var(--warning-orange)
+        }
+
+        .gauge-label.high {
+            color: var(--danger-red)
+        }
+
+        .gauge-message {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 2px
+        }
+
+        .goal-wrapper {
+            text-align: center;
+            padding: 10px 0
+        }
+
+        .goal-prob-value {
+            font-size: 40px;
+            font-weight: 800;
+            color: var(--positive-green)
+        }
+
+        .goal-prob-label {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 4px
+        }
+
+        .goal-target {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 10px
+        }
+
+        .cgpa-current {
+            text-align: center;
+            margin-top: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--primary-navy)
+        }
+
+        @media(max-width:1100px) {
+            .dash-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .dash-card.span-half,
+            .dash-card.span-third {
+                grid-column: span 1;
+            }
+        }
+
+        @media(max-width:700px) {
+            .dash-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .dash-card.span-half,
+            .dash-card.span-third {
+                grid-column: span 1;
+            }
+        }
+
+        html[data-theme="dark"] .dash-card {
+            background: #1a1d27;
+            border-color: #2d3241;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, .3)
+        }
+
+        html[data-theme="dark"] .dash-card:hover {
+            box-shadow: 0 8px 25px rgba(0, 0, 0, .5)
+        }
+
+        html[data-theme="dark"] .dash-card-title {
+            color: #e5e7eb
+        }
+
+        html[data-theme="dark"] .dash-header {
+            color: #e5e7eb;
+            border-bottom-color: #2d3241
+        }
+
+        html[data-theme="dark"] .dash-header span {
+            color: #9ca3af
+        }
+
+        html[data-theme="dark"] .career-compat-label {
+            color: #e5e7eb
+        }
+
+        html[data-theme="dark"] .career-compat-label span {
+            color: #60a5fa
+        }
+
+        html[data-theme="dark"] .career-bar-bg {
+            background: #2d3241
+        }
+
+        html[data-theme="dark"] .goal-prob-value {
+            color: #34d399
+        }
+
+        html[data-theme="dark"] .cgpa-current {
+            color: #60a5fa
+        }
+    </style>
 </head>
 
 <body class="preload">
@@ -23,172 +252,411 @@
     <main class="main-content">
         <div class="dashboard-container">
 
-            <div class="welcome-header">
-                <h1>Welcome, {{ data.name }}!</h1>
-                <p>Here is your comprehensive growth analysis for this week.</p>
+            <div class="dash-header">
+                Student Insight System <span>&mdash; Welcome, {{ data.name }}</span>
             </div>
 
-            <div class="grid">
+            <div class="dash-grid">
 
-                <!-- A. PROFILE SNAPSHOT -->
-                <div class="card profile-card">
-                    <div class="profile-info">
-                        <h2>{{ data.department }} · Year {{ data.year }}</h2>
-                        <p>{{ data.university_name }}</p>
-                        <div class="profile-badges">
-                            <span class="status-badge {{ 'track' if data.status == 'On Track' else 'risk' }}">
-                                {{ data.status }}
-                            </span>
-                        </div>
-                    </div>
-                    <div class="profile-stats">
-                        <div class="p-stat-item">
-                            <div class="val">{{ data.cgpa }}</div>
-                            <div class="lbl">CGPA</div>
-                        </div>
-                        <div class="p-stat-item">
-                            <div class="val text-gold">{{ data.credits_completed }}</div>
-                            <div class="lbl">Credits</div>
-                        </div>
-                    </div>
-                </div>
+                <!-- ===== ROW 1: 2 cards ===== -->
 
-                <!-- B. STRENGTH & WEAKNESS MAP -->
-                <div class="card strength-map">
-                    <div class="card-header">
-                        <div class="card-title">Subject Performance Map</div>
-                    </div>
-                    {% for subject in data.subjects %}
-                    <div class="subject-row">
-                        <div class="subject-name">{{ subject.name }}</div>
-                        <div class="subject-bar-bg">
-                            <div class="subject-bar-fill {{ 'bar-strong' if subject.score >= 80 else 'bar-avg' if subject.score >= 60 else 'bar-weak' }}"
-                                style="width: {{ subject.score }}%;"></div>
-                        </div>
-                        <div class="subject-grade">{{ subject.grade }}</div>
-                    </div>
-                    {% endfor %}
-                </div>
-
-                <!-- C. CAREER COMPATIBILITY -->
-                <div class="card career-card">
-                    <div class="card-header">
-                        <div class="card-title">Career Fit</div>
-                    </div>
-                    {% for career in data.careers %}
-                    <div class="career-item">
-                        <div class="career-name">{{ career.role }}</div>
-                        <div class="career-score">{{ career.match }}%</div>
-                    </div>
-                    {% endfor %}
-                    <div style="margin-top: 15px; font-size: 13px; color: var(--text-muted); text-align: center;">
-                        Based on your skills & interests
-                    </div>
-                </div>
-
-                <!-- D. SKILL GAP -->
-                <div class="card skill-gap-card">
-                    <div class="card-header">
-                        <div class="card-title">Skill Roadmap</div>
-                    </div>
-                    <div class="skill-section">
-                        <h4>Acquired Skills</h4>
-                        <div class="skill-tags">
-                            {% for skill in data.skills_known %}
-                            <span class="skill-tag skill-known">✓ {{ skill }}</span>
-                            {% endfor %}
-                        </div>
-                    </div>
-                    <div class="skill-section">
-                        <h4>Recommended to Learn</h4>
-                        <div class="skill-tags">
-                            {% for skill in data.skills_todo %}
-                            <span class="skill-tag skill-missing">+ {{ skill }}</span>
-                            {% endfor %}
-                        </div>
-                    </div>
-                </div>
-
-                <!-- E. WEEKLY PROGRESS -->
-                <div class="card progress-card">
-                    <div class="card-header">
-                        <div class="card-title">Study Consistency</div>
-                    </div>
+                <!-- CGPA TREND -->
+                <div class="dash-card span-half">
+                    <div class="dash-card-title">CGPA Trend</div>
                     <div class="chart-container">
-                        <canvas id="progressChart"></canvas>
+                        <canvas id="cgpaTrendChart"></canvas>
+                    </div>
+                    <div class="cgpa-current">
+                        Current: {{ data.cgpa }}
+                        {% if data.cgpa_values|length > 1 %}
+                        ({% if data.cgpa_values[-1] >= data.cgpa_values[-2] %}&uarr;{% else %}&darr;{% endif %})
+                        {% endif %}
                     </div>
                 </div>
 
-                <!-- F. GOAL ACHIEVABILITY -->
-                <div class="card goal-card">
-                    <div class="card-header">
-                        <div class="card-title">Semester Goal</div>
+                <!-- CORE vs GED -->
+                <div class="dash-card span-half">
+                    <div class="dash-card-title">Core vs. GED</div>
+                    <div class="chart-container">
+                        <canvas id="coreGedChart"></canvas>
                     </div>
-                    <div class="goal-circle"
-                        style="background: conic-gradient(var(--accent-gold) 0% {{ data.goal_prob }}%, #f3f4f6 {{ data.goal_prob }}% 100%);">
-                        <div class="goal-inner">
-                            <div class="goal-pct">{{ data.goal_prob }}%</div>
-                            <div class="goal-lbl">Probability</div>
+                </div>
+
+                <!-- ===== ROW 2: 3 cards ===== -->
+
+                <!-- WEEKLY STUDY HOURS -->
+                <div class="dash-card span-third">
+                    <div class="dash-card-title">Weekly Study Hours</div>
+                    <div class="chart-container">
+                        <canvas id="weeklyHoursChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- SKILL EFFORT DISTRIBUTION -->
+                <div class="dash-card span-third">
+                    <div class="dash-card-title">Skill Effort Distribution</div>
+                    <div class="chart-container">
+                        <canvas id="skillEffortChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- STRENGTH & WEAKNESS RADAR -->
+                <div class="dash-card span-third">
+                    <div class="dash-card-title">Strength &amp; Weakness Radar</div>
+                    <div class="chart-container">
+                        <canvas id="radarChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- ===== ROW 3: 3 cards ===== -->
+
+                <!-- BURNOUT RISK GAUGE -->
+                <div class="dash-card span-third">
+                    <div class="dash-card-title">Burnout Risk Gauge</div>
+                    <div class="gauge-wrapper">
+                        <canvas id="burnoutGauge" width="300" height="160"></canvas>
+                        <div
+                            class="gauge-label {{ 'low' if data.burnout_pct < 40 else 'medium' if data.burnout_pct < 70 else 'high' }}">
+                            {{ data.burnout_label }}
+                        </div>
+                        <div class="gauge-message">{{ data.burnout_message }}</div>
+                    </div>
+                </div>
+
+                <!-- GOAL ACHIEVABILITY PROBABILITY -->
+                <div class="dash-card span-third">
+                    <div class="dash-card-title">Goal Achievability Probability</div>
+                    <div class="goal-wrapper">
+                        <div class="chart-container-sm">
+                            <canvas id="goalCurveChart"></canvas>
+                        </div>
+                        <div class="goal-prob-value">{{ data.goal_prob }}%</div>
+                        <div class="goal-prob-label">Likelihood</div>
+                        <div class="goal-target">
+                            Target CGPA {{ data.target_gpa }} by Graduation
+                            {% if data.target_career %} &middot; {{ data.target_career }}{% endif %}
                         </div>
                     </div>
-                    <div class="goal-alert">Target: {{ data.target_gpa }} GPA</div>
-                    <p style="font-size: 12px; color: #666; margin-top: 5px;">Estimated time: {{ data.time_to_goal }}
-                    </p>
                 </div>
 
-                <!-- G. GUIDANCE BOX -->
-                <div class="card guidance-card">
-                    <div class="guidance-title">
-                        <svg style="width:20px; height:20px; fill:currentColor;" viewBox="0 0 24 24">
-                            <path
-                                d="M11,9H13V7H11M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11,17H13V11H11V17Z" />
-                        </svg>
-                        AI Mentor Insight
+                <!-- CAREER COMPATIBILITY -->
+                <div class="dash-card span-third">
+                    <div class="dash-card-title">Career Compatibility</div>
+                    {% for career in data.careers %}
+                    <div class="career-compat-item">
+                        <div class="career-compat-label">
+                            {{ career.role }}: <span>{{ career.match }}%</span>
+                        </div>
+                        <div class="career-bar-bg">
+                            <div class="career-bar-fill" style="width: {{ career.match }}%;"></div>
+                        </div>
                     </div>
-                    <div class="guidance-text">
-                        "{{ data.guidance_msg }}"
-                        <br><br>
-                        <strong>Quick Tip:</strong> {{ data.guidance_tip }}
-                    </div>
+                    {% endfor %}
+                    {% if not data.careers %}
+                    <p style="color:var(--text-muted);font-size:13px;text-align:center;">No career data available.</p>
+                    {% endif %}
                 </div>
 
             </div>
         </div>
+
         <script>
-            // CHART: Weekly Progress
-            // Check if canvas exists before initializing to prevent errors if element missing
-            const canvas = document.getElementById('progressChart');
-            if (canvas) {
-                const ctx = canvas.getContext('2d');
-                const progressChart = new Chart(ctx, {
+            // Inject server data into JS variables
+            var DASH_DATA = {
+                cgpa_labels: {{ data.cgpa_labels | tojson }},
+            cgpa_values: {{ data.cgpa_values | tojson }},
+            radar_labels: {{ data.radar_labels | tojson }},
+            radar_scores: {{ data.radar_scores | tojson }},
+            core_count: {{ data.core_count | tojson }},
+            ged_count: {{ data.ged_count | tojson }},
+            elective_count: {{ data.elective_count | tojson }},
+            weekly_hours: {{ data.weekly_hours | tojson }},
+            effort_labels: {{ data.effort_labels | tojson }},
+            effort_mon: {{ data.effort_mon | tojson }},
+            effort_fri: {{ data.effort_fri | tojson }},
+            effort_lastweek: {{ data.effort_lastweek | tojson }},
+            burnout_pct: {{ data.burnout_pct | tojson }},
+            goal_prob: {{ data.goal_prob | tojson }}
+            };
+
+            function isDark() { return document.documentElement.getAttribute('data-theme') === 'dark'; }
+            function gridColor() { return isDark() ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)'; }
+            function tickColor() { return isDark() ? '#9ca3af' : '#6b7280'; }
+
+            // 1. CGPA TREND
+            (function () {
+                var ctx = document.getElementById('cgpaTrendChart');
+                if (!ctx) return;
+                new Chart(ctx, {
                     type: 'line',
+                    data: {
+                        labels: DASH_DATA.cgpa_labels,
+                        datasets: [{
+                            label: 'CGPA',
+                            data: DASH_DATA.cgpa_values,
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59,130,246,0.08)',
+                            borderWidth: 2.5,
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 5,
+                            pointBackgroundColor: '#3b82f6',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { beginAtZero: false, grid: { color: gridColor() }, ticks: { color: tickColor(), font: { size: 11 } } },
+                            x: { grid: { display: false }, ticks: { color: tickColor(), font: { size: 11 } } }
+                        }
+                    }
+                });
+            })();
+
+            // 2. RADAR CHART
+            (function () {
+                var ctx = document.getElementById('radarChart');
+                if (!ctx) return;
+                new Chart(ctx, {
+                    type: 'radar',
+                    data: {
+                        labels: DASH_DATA.radar_labels,
+                        datasets: [{
+                            label: 'Proficiency',
+                            data: DASH_DATA.radar_scores,
+                            backgroundColor: 'rgba(16,185,129,0.15)',
+                            borderColor: '#10b981',
+                            borderWidth: 2,
+                            pointBackgroundColor: '#10b981',
+                            pointRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            r: {
+                                beginAtZero: true,
+                                max: 100,
+                                ticks: { stepSize: 20, display: false },
+                                grid: { color: gridColor() },
+                                angleLines: { color: gridColor() },
+                                pointLabels: { color: tickColor(), font: { size: 11, weight: '600' } }
+                            }
+                        }
+                    }
+                });
+            })();
+
+            // 3. CORE vs GED (Doughnut)
+            (function () {
+                var ctx = document.getElementById('coreGedChart');
+                if (!ctx) return;
+                var total = DASH_DATA.core_count + DASH_DATA.ged_count + DASH_DATA.elective_count;
+                new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Core (Major)', 'GED (Gen Ed)', 'Elective'],
+                        datasets: [{
+                            data: [DASH_DATA.core_count, DASH_DATA.ged_count, DASH_DATA.elective_count],
+                            backgroundColor: ['#3b82f6', '#10b981', '#f59e0b'],
+                            borderWidth: 2,
+                            borderColor: isDark() ? '#1a1d27' : '#ffffff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '55%',
+                        plugins: {
+                            legend: {
+                                position: 'right',
+                                labels: { color: tickColor(), font: { size: 12 }, padding: 16, usePointStyle: true, pointStyle: 'circle' }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function (c) {
+                                        var pct = total > 0 ? Math.round(c.raw / total * 100) : 0;
+                                        return c.label + ': ' + c.raw + ' (' + pct + '%)';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            })();
+
+            // 4. WEEKLY STUDY HOURS (Bar)
+            (function () {
+                var ctx = document.getElementById('weeklyHoursChart');
+                if (!ctx) return;
+                var hours = DASH_DATA.weekly_hours;
+                new Chart(ctx, {
+                    type: 'bar',
                     data: {
                         labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
                         datasets: [{
-                            label: 'Study Hours',
-                            data: {{ data.weekly_hours | tojson }},
-                    borderColor: '#002D62',
-                    backgroundColor: 'rgba(0, 45, 98, 0.1)',
-                    borderWidth: 2,
-                    fill: true,
-                    tension: 0.4,
-                    pointRadius: 4,
-                    pointBackgroundColor: '#D4AF37'
-                }]
-                },
-            options: {
-                responsive: true,
-                    maintainAspectRatio: false,
+                            label: 'Hours',
+                            data: hours,
+                            backgroundColor: hours.map(function (h, i) { return i < 5 ? '#3b82f6' : '#10b981'; }),
+                            borderRadius: 6,
+                            maxBarThickness: 35
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { beginAtZero: true, grid: { color: gridColor() }, ticks: { color: tickColor(), font: { size: 11 } } },
+                            x: { grid: { display: false }, ticks: { color: tickColor(), font: { size: 11 } } }
+                        }
+                    }
+                });
+            })();
+
+            // 5. SKILL EFFORT (Grouped Bar)
+            (function () {
+                var ctx = document.getElementById('skillEffortChart');
+                if (!ctx) return;
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: DASH_DATA.effort_labels,
+                        datasets: [
+                            { label: 'Mon', data: DASH_DATA.effort_mon, backgroundColor: '#3b82f6', borderRadius: 4 },
+                            { label: 'Fri', data: DASH_DATA.effort_fri, backgroundColor: '#6366f1', borderRadius: 4 },
+                            { label: 'Last week', data: DASH_DATA.effort_lastweek, backgroundColor: '#10b981', borderRadius: 4 }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
                         plugins: {
-                    legend: { display: false }
-                },
-                scales: {
-                    y: { beginAtZero: true, grid: { borderDash: [5, 5] } },
-                    x: { grid: { display: false } }
+                            legend: {
+                                position: 'bottom',
+                                labels: { color: tickColor(), font: { size: 11 }, usePointStyle: true, pointStyle: 'rect', padding: 14 }
+                            }
+                        },
+                        scales: {
+                            y: { beginAtZero: true, grid: { color: gridColor() }, ticks: { color: tickColor(), font: { size: 11 } } },
+                            x: { grid: { display: false }, ticks: { color: tickColor(), font: { size: 11 } } }
+                        }
+                    }
+                });
+            })();
+
+            // 7. BURNOUT GAUGE (Canvas 2D)
+            (function () {
+                var canvas = document.getElementById('burnoutGauge');
+                if (!canvas) return;
+                var pct = DASH_DATA.burnout_pct;
+
+                // Set proper pixel ratio
+                var dpr = window.devicePixelRatio || 1;
+                var rect = canvas.getBoundingClientRect();
+                canvas.width = rect.width * dpr;
+                canvas.height = rect.height * dpr;
+                var c = canvas.getContext('2d');
+                c.scale(dpr, dpr);
+
+                var w = rect.width, h = rect.height;
+                var cx = w / 2, cy = h * 0.85;
+                var r = Math.min(cx, cy) * 0.82;
+
+                var SA = Math.PI, EA = 2 * Math.PI;
+                var segs = [
+                    { s: 0, e: 0.33, col: '#10b981' },
+                    { s: 0.33, e: 0.66, col: '#f59e0b' },
+                    { s: 0.66, e: 1.0, col: '#ef4444' }
+                ];
+
+                // BG track
+                c.beginPath();
+                c.arc(cx, cy, r, SA, EA, false);
+                c.lineWidth = 24;
+                c.strokeStyle = isDark() ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)';
+                c.stroke();
+
+                // Color segments
+                segs.forEach(function (seg) {
+                    c.beginPath();
+                    c.arc(cx, cy, r, SA + (EA - SA) * seg.s, SA + (EA - SA) * seg.e, false);
+                    c.lineWidth = 20;
+                    c.lineCap = 'butt';
+                    c.strokeStyle = seg.col;
+                    c.stroke();
+                });
+
+                // Needle
+                var angle = SA + (EA - SA) * (pct / 100);
+                var nLen = r * 0.70;
+                c.save();
+                c.translate(cx, cy);
+                c.rotate(angle);
+                c.beginPath();
+                c.moveTo(0, 0);
+                c.lineTo(nLen, 0);
+                c.lineWidth = 3;
+                c.strokeStyle = isDark() ? '#e5e7eb' : '#1f2937';
+                c.stroke();
+                c.beginPath();
+                c.arc(0, 0, 5, 0, 2 * Math.PI);
+                c.fillStyle = isDark() ? '#e5e7eb' : '#1f2937';
+                c.fill();
+                c.restore();
+            })();
+
+            // 8. GOAL ACHIEVABILITY (Bell Curve)
+            (function () {
+                var ctx = document.getElementById('goalCurveChart');
+                if (!ctx) return;
+                var prob = DASH_DATA.goal_prob;
+                var labels = [], values = [];
+                var mean = prob, std = 15;
+                for (var x = 0; x <= 100; x += 2) {
+                    labels.push(x);
+                    values.push(Math.exp(-0.5 * Math.pow((x - mean) / std, 2)) / (std * Math.sqrt(2 * Math.PI)));
                 }
-            }
-            });
-        }
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Probability',
+                            data: values,
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16,185,129,0.1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { display: false },
+                            x: {
+                                grid: { display: false },
+                                ticks: {
+                                    color: tickColor(),
+                                    font: { size: 10 },
+                                    maxTicksLimit: 6,
+                                    callback: function (value, index) { return labels[index] + '%'; }
+                                }
+                            }
+                        }
+                    }
+                });
+            })();
         </script>
     </main>
 </body>

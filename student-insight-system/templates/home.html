@@ -566,7 +566,7 @@
                     alert('Account created! Please Sign In.');
                     container.classList.remove("right-panel-active");
                     document.getElementById('l-email').value = document.getElementById('r-email').value;
-                } else { err.innerText = 'Registration failed'; err.style.display = 'block'; }
+                } else { const json = await res.json(); err.innerText = json.msg || 'Registration failed'; err.style.display = 'block'; }
             } catch (e) { console.error(e); }
         });
 

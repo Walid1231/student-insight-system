@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Weekly Check-in | Student Insight</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/unified_styles.css') }}?v=3">
+    <style>
+        .checkin-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        @media(max-width:900px) {
+            .checkin-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .checkin-card {
+            background: var(--bg-surface, #fff);
+            border: 1px solid var(--border-light, #e5e7eb);
+            border-radius: 14px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, .04);
+        }
+
+        .checkin-card-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-dark, #111827);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .checkin-card-title i {
+            color: var(--primary-navy, #3b82f6);
+            font-size: 18px;
+        }
+
+        /* Star rating */
+        .star-group {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 6px;
+        }
+
+        .star-btn {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: var(--border-light, #d1d5db);
+            transition: color 0.15s, transform 0.15s;
+            padding: 0;
+        }
+
+        .star-btn:hover,
+        .star-btn.active {
+            color: #f59e0b;
+            transform: scale(1.15);
+        }
+
+        /* Emoji mood */
+        .mood-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .mood-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            border: 2px solid var(--border-light, #e5e7eb);
+            background: var(--bg-surface, #fff);
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mood-btn:hover {
+            border-color: var(--primary-navy, #3b82f6);
+            transform: translateY(-2px);
+        }
+
+        .mood-btn.active {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.08);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        }
+
+        /* Difficulty pills */
+        .diff-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .diff-btn {
+            padding: 8px 20px;
+            border-radius: 8px;
+            border: 2px solid var(--border-light, #e5e7eb);
+            background: var(--bg-surface, #fff);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-family: 'Inter', sans-serif;
+            color: var(--text-dark, #374151);
+        }
+
+        .diff-btn:hover {
+            border-color: var(--primary-navy, #3b82f6);
+        }
+
+        .diff-btn.active {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.08);
+            color: #3b82f6;
+        }
+
+        .field-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-dark, #374151);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .field-hint {
+            font-size: 12px;
+            color: var(--text-muted, #9ca3af);
+            margin-top: 4px;
+        }
+
+        .field-group {
+            margin-bottom: 20px;
+        }
+
+        textarea.form-input {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        /* History cards */
+        .history-item {
+            background: var(--bg-body, #f9fafb);
+            border: 1px solid var(--border-light, #e5e7eb);
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .history-date {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-dark, #111827);
+        }
+
+        .history-status {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 20px;
+        }
+
+        .status-on-track {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+
+        .status-needs-attention {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .status-at-risk {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .history-metrics {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .history-metric {
+            text-align: center;
+        }
+
+        .history-metric-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--primary-navy, #3b82f6);
+        }
+
+        .history-metric-label {
+            font-size: 11px;
+            color: var(--text-muted, #9ca3af);
+        }
+
+        /* Dark theme */
+        html[data-theme="dark"] .checkin-card {
+            background: #1a1d27;
+            border-color: #2d3241;
+        }
+
+        html[data-theme="dark"] .checkin-card-title {
+            color: #e5e7eb;
+        }
+
+        html[data-theme="dark"] .field-label {
+            color: #d1d5db;
+        }
+
+        html[data-theme="dark"] .star-btn {
+            color: #4b5563;
+        }
+
+        html[data-theme="dark"] .mood-btn {
+            border-color: #2d3241;
+            background: #141720;
+        }
+
+        html[data-theme="dark"] .diff-btn {
+            border-color: #2d3241;
+            background: #141720;
+            color: #d1d5db;
+        }
+
+        html[data-theme="dark"] .history-item {
+            background: #141720;
+            border-color: #2d3241;
+        }
+
+        html[data-theme="dark"] .history-date {
+            color: #e5e7eb;
+        }
+
+        html[data-theme="dark"] .status-on-track {
+            background: #064e3b;
+            color: #34d399;
+        }
+
+        html[data-theme="dark"] .status-needs-attention {
+            background: #78350f;
+            color: #fbbf24;
+        }
+
+        html[data-theme="dark"] .status-at-risk {
+            background: #7f1d1d;
+            color: #f87171;
+        }
+    </style>
+</head>
+
+<body class="preload">
+    {% set active_page = 'checkin' %}
+    {% include 'components/sidebar.html' %}
+
+    <main class="main-content">
+        <div class="dashboard-container">
+
+            <div class="welcome-header">
+                <h1><i class="fas fa-clipboard-check"></i> Weekly Check-in</h1>
+                <p>Reflect on your week to keep your dashboard insights fresh and accurate.</p>
+            </div>
+
+            <div class="checkin-grid">
+
+                <!-- LEFT: Check-in Form -->
+                <div class="checkin-card">
+                    <div class="checkin-card-title">
+                        <i class="fas fa-edit"></i>
+                        This Week's Reflection
+                    </div>
+
+                    <form method="POST" action="{{ url_for('dashboard.submit_weekly_checkin') }}" id="checkinForm">
+
+                        <!-- Productivity Rating -->
+                        <div class="field-group">
+                            <div class="field-label">Productivity Rating</div>
+                            <div class="star-group" id="starGroup">
+                                {% for i in range(1, 6) %}
+                                <button type="button" class="star-btn" data-value="{{ i }}" onclick="setStars({{ i }})">
+                                    <i class="fas fa-star"></i>
+                                </button>
+                                {% endfor %}
+                            </div>
+                            <input type="hidden" name="productivity_rating" id="productivityInput"
+                                value="{{ current_productivity or '' }}">
+                            <div class="field-hint">How productive were you this week?</div>
+                        </div>
+
+                        <!-- Mood -->
+                        <div class="field-group">
+                            <div class="field-label">Mood / Stress Level</div>
+                            <div class="mood-group" id="moodGroup">
+                                <button type="button" class="mood-btn" data-value="1" onclick="setMood(1)">😫</button>
+                                <button type="button" class="mood-btn" data-value="2" onclick="setMood(2)">😟</button>
+                                <button type="button" class="mood-btn" data-value="3" onclick="setMood(3)">😐</button>
+                                <button type="button" class="mood-btn" data-value="4" onclick="setMood(4)">🙂</button>
+                                <button type="button" class="mood-btn" data-value="5" onclick="setMood(5)">😄</button>
+                            </div>
+                            <input type="hidden" name="mood_score" id="moodInput" value="{{ current_mood or '' }}">
+                            <div class="field-hint">1 = Very stressed, 5 = Feeling great</div>
+                        </div>
+
+                        <!-- Difficulty -->
+                        <div class="field-group">
+                            <div class="field-label">Overall Difficulty</div>
+                            <div class="diff-group" id="diffGroup">
+                                <button type="button" class="diff-btn" data-value="Easy"
+                                    onclick="setDiff('Easy')">Easy</button>
+                                <button type="button" class="diff-btn" data-value="Medium"
+                                    onclick="setDiff('Medium')">Medium</button>
+                                <button type="button" class="diff-btn" data-value="Hard"
+                                    onclick="setDiff('Hard')">Hard</button>
+                            </div>
+                            <input type="hidden" name="difficulty_rating" id="diffInput"
+                                value="{{ current_difficulty or '' }}">
+                            <div class="field-hint">How challenging was this week's workload?</div>
+                        </div>
+
+                        <!-- Goals achieved -->
+                        <div class="field-group">
+                            <div class="field-label">Goals Achieved This Week</div>
+                            <textarea name="goals_achieved" class="form-input"
+                                placeholder="e.g., Finished ML assignment, studied 15hrs, started Docker project...">{{ current_goals or '' }}</textarea>
+                            <div class="field-hint">What did you accomplish? (optional)</div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-check"></i> Submit Check-in
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- RIGHT: History -->
+                <div class="checkin-card">
+                    <div class="checkin-card-title">
+                        <i class="fas fa-history"></i>
+                        Past Check-ins
+                    </div>
+
+                    {% if history %}
+                    {% for h in history %}
+                    <div class="history-item">
+                        <div class="history-header">
+                            <div class="history-date">Week of {{ h.week_start_date.strftime('%b %d, %Y') }}</div>
+                            {% if h.status_label %}
+                            <span
+                                class="history-status 
+                                    {{ 'status-on-track' if h.status_label == 'On Track' else 'status-needs-attention' if h.status_label == 'Needs Attention' else 'status-at-risk' }}">
+                                {{ h.status_label }}
+                            </span>
+                            {% endif %}
+                        </div>
+                        <div class="history-metrics">
+                            <div class="history-metric">
+                                <div class="history-metric-value">{{ h.total_hours_studied or 0 }}h</div>
+                                <div class="history-metric-label">Study Hours</div>
+                            </div>
+                            <div class="history-metric">
+                                <div class="history-metric-value">
+                                    {% if h.productivity_rating %}
+                                    {{ '★' * h.productivity_rating }}
+                                    {% else %}—{% endif %}
+                                </div>
+                                <div class="history-metric-label">Productivity</div>
+                            </div>
+                            <div class="history-metric">
+                                <div class="history-metric-value">
+                                    {% if h.mood_score %}
+                                    {{ ['😫','😟','😐','🙂','😄'][h.mood_score - 1] }}
+                                    {% else %}—{% endif %}
+                                </div>
+                                <div class="history-metric-label">Mood</div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <div style="text-align:center;color:var(--text-muted);padding:40px 0;">
+                        <i class="fas fa-inbox" style="font-size:32px;margin-bottom:12px;display:block;"></i>
+                        <p>No check-ins yet. Submit your first one!</p>
+                    </div>
+                    {% endif %}
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Toast -->
+        {% if success %}
+        <div class="toast show" id="successToast">
+            <i class="fas fa-check-circle"></i>
+            <span>Check-in submitted! Dashboard updated.</span>
+        </div>
+        {% endif %}
+
+        <script>
+            // Star rating
+            function setStars(val) {
+                document.getElementById('productivityInput').value = val;
+                document.querySelectorAll('#starGroup .star-btn').forEach(function (btn) {
+                    btn.classList.toggle('active', parseInt(btn.dataset.value) <= val);
+                });
+            }
+
+            // Mood selector
+            function setMood(val) {
+                document.getElementById('moodInput').value = val;
+                document.querySelectorAll('#moodGroup .mood-btn').forEach(function (btn) {
+                    btn.classList.toggle('active', parseInt(btn.dataset.value) === val);
+                });
+            }
+
+            // Difficulty selector
+            function setDiff(val) {
+                document.getElementById('diffInput').value = val;
+                document.querySelectorAll('#diffGroup .diff-btn').forEach(function (btn) {
+                    btn.classList.toggle('active', btn.dataset.value === val);
+                });
+            }
+
+            // Restore state on load
+            (function () {
+                var prod = document.getElementById('productivityInput').value;
+                if (prod) setStars(parseInt(prod));
+
+                var mood = document.getElementById('moodInput').value;
+                if (mood) setMood(parseInt(mood));
+
+                var diff = document.getElementById('diffInput').value;
+                if (diff) setDiff(diff);
+
+                // Auto-hide toast
+                var toast = document.getElementById('successToast');
+                if (toast) setTimeout(function () { toast.classList.remove('show'); }, 3000);
+            })();
+        </script>
+    </main>
+</body>
+
+</html>
