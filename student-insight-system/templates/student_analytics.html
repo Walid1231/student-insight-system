@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Analytics Dashboard | Insight System</title>
+    <meta name="description"
+        content="Student Insight System: Academic analytics dashboard for tracking CGPA, skills, study habits, and career compatibility.">
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Font Awesome 6 Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Unified Styles (sidebar, theme, layout) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/unified_styles.css') }}?v=10">
+
+    <!-- Analytics Dashboard Styles -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/student_analytics.css') }}?v=1">
+
+    <!-- Chart.js 4 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
+
+    <!-- Dashboard Charts -->
+    <script src="{{ url_for('static', filename='js/student_analytics.js') }}?v=10" defer></script>
+</head>
+
+<body>
+    {% set active_page = 'dashboard' %}
+    {% include 'components/sidebar.html' %}
+
+    <main class="main-content">
+
+        <!-- ═══════════════════════════════════════════════════════
+             PAGE HEADER
+             ═══════════════════════════════════════════════════════ -->
+        <header class="page-header">
+            <h1>Analytics Dashboard</h1>
+            <p class="subtitle">Welcome, <span>{{ data.name }}</span> — here's your academic snapshot</p>
+        </header>
+
+
+        <!-- ═══════════════════════════════════════════════════════
+             QUICK STATS BAR
+             ═══════════════════════════════════════════════════════ -->
+        <section class="stats-bar" id="statsBar">
+            <div class="stat-card">
+                <div class="stat-icon blue">
+                    <i class="fas fa-graduation-cap"></i>
+                </div>
+                <div>
+                    <div class="stat-value">{{ data.cgpa or '—' }}</div>
+                    <div class="stat-label">Current CGPA</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon green">
+                    <i class="fas fa-book-open"></i>
+                </div>
+                <div>
+                    <div class="stat-value">{{ data.total_credits }}</div>
+                    <div class="stat-label">Credits Earned</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon purple">
+                    <i class="fas fa-bullseye"></i>
+                </div>
+                <div>
+                    <div class="stat-value">{{ data.goals_count }}</div>
+                    <div class="stat-label">Goals Active</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon amber">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div>
+                    <div class="stat-value">{{ data.sessions_count }}</div>
+                    <div class="stat-label">Study Sessions</div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ═══════════════════════════════════════════════════════
+             DASHBOARD GRID  —  3-Column Responsive
+             ═══════════════════════════════════════════════════════ -->
+        <div class="dashboard-grid" id="dashboardGrid">
+
+            <!-- ┌─────────────────────── ROW 1 ───────────────────────┐ -->
+
+            <!-- 1 ▸ CGPA Trend -->
+            <article class="dash-card" id="cardCgpaTrend">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <i class="fas fa-chart-line" style="color: var(--accent-blue);"></i>
+                        CGPA Trend
+                    </h2>
+                    {% if data.has_grades and data.cgpa_values|length > 1 %}
+                    <span class="card-badge">{{ data.cgpa_values|length }} Semesters</span>
+                    {% endif %}
+                </div>
+                {% if data.has_grades %}
+                <div class="chart-wrap">
+                    <canvas id="cgpaTrendChart"></canvas>
+                </div>
+                <div class="chart-annotation">
+                    Current: <span id="cgpaCurrentValue">{{ data.cgpa }}</span>
+                    {% if data.cgpa_values|length > 1 %}
+                    ({% if data.cgpa_values[-1] >= data.cgpa_values[-2] %}&uarr;{% else %}&darr;{% endif %})
+                    {% endif %}
+                    <small>Semester-over-semester performance</small>
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-chart-line"></i>
+                    <p>Add your grades to see your semester CGPA trend.</p>
+                    <a href="{{ url_for('dashboard.goals_grades') }}"><i class="fas fa-plus"></i> Add Grades</a>
+                </div>
+                {% endif %}
+            </article>
+
+            <!-- 2 ▸ Strength vs Weakness Radar -->
+            <article class="dash-card" id="cardSkillRadar">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <i class="fas fa-crosshairs" style="color: var(--accent-green);"></i>
+                        Strength vs Weakness
+                    </h2>
+                    <span class="card-badge">Radar</span>
+                </div>
+                {% if data.has_skills %}
+                <div class="chart-wrap">
+                    <canvas id="skillRadarChart"></canvas>
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-crosshairs"></i>
+                    <p>Select your skills in Goals & Grades to see your radar.</p>
+                    <a href="{{ url_for('dashboard.goals_grades') }}"><i class="fas fa-star"></i> Pick Skills</a>
+                </div>
+                {% endif %}
+            </article>
+
+            <!-- 3 ▸ Core vs GED Distribution -->
+            <article class="dash-card" id="cardCoreGed">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <i class="fas fa-circle-half-stroke" style="color: var(--accent-purple);"></i>
+                        Core vs GED Distribution
+                    </h2>
+                </div>
+                {% if data.has_grades %}
+                <div class="chart-wrap">
+                    <canvas id="coreGedChart"></canvas>
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-layer-group"></i>
+                    <p>Add courses with different types to see distribution.</p>
+                    <a href="{{ url_for('dashboard.goals_grades') }}"><i class="fas fa-plus"></i> Add Grades</a>
+                </div>
+                {% endif %}
+            </article>
+
+
+            <!-- ┌─────────────────────── ROW 2 ───────────────────────┐ -->
+
+            <!-- 4 ▸ Weekly Study Hours -->
+            <article class="dash-card" id="cardWeeklyHours">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <i class="fas fa-calendar-week" style="color: var(--accent-purple);"></i>
+                        Weekly Study Hours
+                    </h2>
+                    <span class="card-badge">Last 7 Days</span>
+                </div>
+                {% if data.has_recent_sessions %}
+                <div class="chart-wrap">
+                    <canvas id="weeklyHoursChart"></canvas>
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-calendar-week"></i>
+                    <p>No sessions logged in the last 7 days.</p>
+                    <a href="{{ url_for('dashboard.student_routine') }}"><i class="fas fa-plus"></i> Log Session</a>
+                </div>
+                {% endif %}
+            </article>
+
+            <!-- 5 ▸ Skill Effort Distribution -->
+            <article class="dash-card" id="cardSkillEffort">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <i class="fas fa-fire" style="color: var(--accent-amber);"></i>
+                        Skill Effort Distribution
+                    </h2>
+                </div>
+                {% if data.effort_labels %}
+                <div class="chart-wrap">
+                    <canvas id="skillEffortChart"></canvas>
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-fire"></i>
+                    <p>Log study sessions with a skill tag to see effort distribution.</p>
+                    <a href="{{ url_for('dashboard.student_routine') }}"><i class="fas fa-plus"></i> Log Session</a>
+                </div>
+                {% endif %}
+            </article>
+
+            <!-- 6 ▸ Career Compatibility -->
+            <article class="dash-card" id="cardCareer">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <i class="fas fa-briefcase" style="color: var(--accent-blue);"></i>
+                        Career Compatibility
+                    </h2>
+                </div>
+                {% if data.careers %}
+                <div class="career-list" id="careerBars">
+                    <!-- Populated dynamically by JS -->
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-briefcase"></i>
+                    <p>Add goals and skills to see career compatibility scores.</p>
+                    <a href="{{ url_for('dashboard.goals_grades') }}"><i class="fas fa-star"></i> Goals & Skills</a>
+                </div>
+                {% endif %}
+            </article>
+
+
+            <!-- ┌─────────────────────── ROW 3 ───────────────────────┐ -->
+
+            <!-- 7 ▸ Burnout Risk Gauge -->
+            <article class="dash-card" id="cardBurnout">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <i class="fas fa-heartbeat" style="color: var(--accent-red);"></i>
+                        Burnout Risk Gauge
+                    </h2>
+                </div>
+                {% if data.has_checkin %}
+                <div class="gauge-center">
+                    <div class="gauge-canvas-wrap">
+                        <canvas id="burnoutGauge"></canvas>
+                    </div>
+                    <div id="burnoutLabel"
+                        class="gauge-value-label {{ 'low' if data.burnout_pct < 40 else 'medium' if data.burnout_pct < 70 else 'high' }}">
+                        {{ data.burnout_label }}
+                    </div>
+                    <div id="burnoutDesc" class="gauge-desc">{{ data.burnout_message }}</div>
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-heartbeat"></i>
+                    <p>Submit your Weekly Check-in for a burnout risk assessment.</p>
+                    <a href="{{ url_for('dashboard.weekly_checkin') }}"><i class="fas fa-clipboard-check"></i> Check
+                        In</a>
+                </div>
+                {% endif %}
+            </article>
+
+            <!-- 8 ▸ Goal Achievability Probability -->
+            <article class="dash-card span-2" id="cardGoal">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <i class="fas fa-trophy" style="color: var(--accent-amber);"></i>
+                        Goal Achievability Probability
+                    </h2>
+                    {% if data.has_goals %}
+                    <span class="card-badge">Bell Curve</span>
+                    {% endif %}
+                </div>
+                {% if data.has_goals %}
+                <div class="chart-wrap-sm">
+                    <canvas id="goalCurveChart"></canvas>
+                </div>
+                <div class="goal-center">
+                    <div id="goalProbValue" class="goal-big-number">{{ data.goal_prob }}%</div>
+                    <div class="goal-label">Likelihood of Achievement</div>
+                    <div id="goalTargetInfo" class="goal-target-info">
+                        Target CGPA <strong>{{ data.target_gpa }}</strong>
+                        {% if data.target_career %} &middot; {{ data.target_career }}{% endif %}
+                    </div>
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-trophy"></i>
+                    <p>Set a career goal in Goals & Grades to see your achievability score.</p>
+                    <a href="{{ url_for('dashboard.goals_grades') }}"><i class="fas fa-bullseye"></i> Set Goal</a>
+                </div>
+                {% endif %}
+            </article>
+
+        </div><!-- /.dashboard-grid -->
+
+
+        <!-- ═══════════════════════════════════════════════════════
+             DATA INJECTION — Backend → JS
+             ═══════════════════════════════════════════════════════ -->
+        <script>
+            // ── Data Injection (Backend → JS) ──
+            window.DASH = {
+                cgpa_labels: {{ data.cgpa_labels | tojson }},
+            cgpa_values: {{ data.cgpa_values | tojson }},
+            radar_labels: {{ data.radar_labels | tojson }},
+            radar_scores: {{ data.radar_scores | tojson }},
+            core_count: {{ data.core_count | tojson }},
+            ged_count: {{ data.ged_count | tojson }},
+            elective_count: {{ data.elective_count | tojson }},
+            weekly_labels: {{ data.weekly_labels | tojson }},
+            weekly_hours: {{ data.weekly_hours | tojson }},
+            effort_labels: {{ data.effort_labels | tojson }},
+            effort_week_a: {{ data.effort_week_a | tojson }},
+            effort_week_b: {{ data.effort_week_b | tojson }},
+            careers: {{ data.careers | tojson }},
+            burnout_pct: {{ data.burnout_pct | tojson }},
+            goal_prob: {{ data.goal_prob | tojson }},
+            target_gpa: {{ data.target_gpa | tojson }},
+            target_career: {{ data.target_career | tojson }}
+            };
+
+            // ── SPA-safe init ──
+            // On full page load, document.readyState is 'loading' here — let
+            // DOMContentLoaded in student_analytics.js handle that case.
+            // On SPA re-injection the DOM is already 'interactive'/'complete' —
+            // call initStudentDashboardCharts() directly (+ load deps if missing).
+            if (document.readyState !== 'loading') {
+                (function () {
+                    function run() {
+                        if (typeof initStudentDashboardCharts === 'function') {
+                            initStudentDashboardCharts();
+                        }
+                    }
+                    function loadScript(id, src, cb) {
+                        if (document.getElementById(id)) { cb(); return; }
+                        var s = document.createElement('script');
+                        s.id = id; s.src = src; s.onload = cb;
+                        document.head.appendChild(s);
+                    }
+                    if (typeof Chart === 'undefined') {
+                        loadScript('_chartjs', 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js', function () {
+                            if (typeof initStudentDashboardCharts === 'undefined') {
+                                loadScript('_analyticsjs', '{{ url_for("static", filename="js/student_analytics.js") }}?v=2', run);
+                            } else { run(); }
+                        });
+                    } else if (typeof initStudentDashboardCharts === 'undefined') {
+                        loadScript('_analyticsjs', '{{ url_for("static", filename="js/student_analytics.js") }}?v=2', run);
+                    } else {
+                        run();
+                    }
+                })();
+            }
+        </script>
+
+    </main>
+
+</body>
+
+</html>
