@@ -202,6 +202,329 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        /* ── Dashboard Snapshot — dark SaaS theme ── */
+        .snapshot-section {
+            background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 100%);
+            border-radius: 16px;
+            padding: 28px;
+            margin-bottom: 28px;
+            border: 1px solid rgba(99, 102, 241, 0.25);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+        }
+
+        .snapshot-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 24px;
+        }
+
+        .snapshot-header h2 {
+            font-size: 18px;
+            font-weight: 700;
+            color: #e2e8f0;
+            letter-spacing: 0.3px;
+        }
+
+        .snapshot-badge {
+            background: linear-gradient(90deg, #6366f1, #8b5cf6);
+            color: white;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 99px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        /* Profile row */
+        .snap-profile-row {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 18px 22px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .snap-cgpa-ring {
+            width: 76px;
+            height: 76px;
+            border-radius: 50%;
+            background: conic-gradient(#6366f1 calc(var(--pct, 0) * 1%),
+                    rgba(99, 102, 241, 0.12) 0);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        .snap-cgpa-inner {
+            width: 58px;
+            height: 58px;
+            border-radius: 50%;
+            background: #1a1a2e;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        .snap-cgpa-value {
+            font-size: 17px;
+            font-weight: 800;
+            color: #c7d2fe;
+            line-height: 1;
+        }
+
+        .snap-cgpa-label {
+            font-size: 9px;
+            color: #6b7280;
+            font-weight: 500;
+        }
+
+        .snap-profile-info {
+            flex: 1;
+        }
+
+        .snap-profile-info h3 {
+            font-size: 18px;
+            font-weight: 700;
+            color: #f1f5f9;
+            margin-bottom: 4px;
+        }
+
+        .snap-profile-meta {
+            font-size: 13px;
+            color: #94a3b8;
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .snap-status-pill {
+            padding: 4px 14px;
+            border-radius: 99px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: capitalize;
+            letter-spacing: 0.4px;
+        }
+
+        .snap-status-good {
+            background: rgba(16, 185, 129, 0.15);
+            color: #6ee7b7;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .snap-status-average {
+            background: rgba(245, 158, 11, 0.15);
+            color: #fcd34d;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .snap-status-at-risk {
+            background: rgba(239, 68, 68, 0.15);
+            color: #fca5a5;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .snap-status-unknown {
+            background: rgba(148, 163, 184, 0.1);
+            color: #94a3b8;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+        }
+
+        /* 3-col stat grid */
+        .snap-stat-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+            margin-bottom: 20px;
+        }
+
+        .snap-stat-card {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            border-radius: 12px;
+            padding: 16px 18px;
+            text-align: center;
+            transition: border-color 0.2s;
+        }
+
+        .snap-stat-card:hover {
+            border-color: rgba(99, 102, 241, 0.4);
+        }
+
+        .snap-stat-label {
+            font-size: 11px;
+            color: #64748b;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            margin-bottom: 8px;
+        }
+
+        .snap-stat-value {
+            font-size: 26px;
+            font-weight: 800;
+            color: #e2e8f0;
+            line-height: 1;
+        }
+
+        .snap-stat-sub {
+            font-size: 11px;
+            color: #64748b;
+            margin-top: 4px;
+        }
+
+        .snap-stat-value.good {
+            color: #6ee7b7;
+        }
+
+        .snap-stat-value.warning {
+            color: #fcd34d;
+        }
+
+        .snap-stat-value.danger {
+            color: #fca5a5;
+        }
+
+        /* Skills table */
+        .snap-skills-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        .snap-skills-table th {
+            text-align: left;
+            font-size: 11px;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            padding: 8px 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .snap-skills-table td {
+            padding: 10px 10px;
+            font-size: 13px;
+            color: #cbd5e1;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        .snap-risk-bar-wrap {
+            background: rgba(255, 255, 255, 0.07);
+            border-radius: 99px;
+            height: 6px;
+            width: 100%;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+
+        .snap-risk-bar {
+            height: 6px;
+            border-radius: 99px;
+            transition: width 0.5s ease;
+        }
+
+        .risk-low {
+            background: #10b981;
+        }
+
+        .risk-medium {
+            background: #f59e0b;
+        }
+
+        .risk-high {
+            background: #ef4444;
+        }
+
+        .snap-section-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.7px;
+            margin-bottom: 10px;
+        }
+
+        /* Career chip */
+        .snap-career-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(99, 102, 241, 0.12);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            color: #c7d2fe;
+            border-radius: 99px;
+            padding: 8px 18px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        /* Insight preview */
+        .snap-insight-box {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            border-left: 3px solid #6366f1;
+            border-radius: 10px;
+            padding: 16px 18px;
+        }
+
+        .snap-insight-preview {
+            font-size: 13px;
+            color: #94a3b8;
+            line-height: 1.65;
+            margin-bottom: 12px;
+        }
+
+        .snap-insight-meta {
+            font-size: 11px;
+            color: #475569;
+            margin-bottom: 10px;
+        }
+
+        .snap-btn-insight {
+            display: inline-block;
+            background: linear-gradient(90deg, #6366f1, #8b5cf6);
+            color: white;
+            text-decoration: none;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 18px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .snap-btn-insight:hover {
+            opacity: 0.85;
+        }
+
+        @media (max-width: 768px) {
+            .snap-stat-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .snap-profile-row {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .snap-profile-meta {
+                justify-content: center;
+            }
+        }
     </style>
 </head>
 
@@ -209,135 +532,290 @@
     <div class="container">
         <a href="/teacher/dashboard" class="back-link">← Back to Dashboard</a>
 
-        <div class="header-card">
-            <div class="header-info">
-                <h1>{{ student.full_name }}</h1>
-                <div class="header-meta">
-                    <span>ID: #{{ student.id }}</span>
-                    <span>Class: {{ student.class_level }}-{{ student.section }}</span>
-                    <span>Last Active: {{ student.last_activity.strftime('%b %d') if student.last_activity else '--'
-                        }}</span>
-                </div>
+        <!-- ════════════════════════════════════════════════
+             STUDENT DASHBOARD SNAPSHOT  (read-only)
+        ════════════════════════════════════════════════ -->
+        <div class="snapshot-section">
+
+            <!-- Header -->
+            <div class="snapshot-header">
+                <h2>📊 Student Dashboard Snapshot</h2>
+                <span class="snapshot-badge">Read-Only</span>
             </div>
-            <div>
-                <span class="status-badge status-{{ student.performance_status }}">
-                    {{ student.performance_status }}
+
+            <!-- ── Profile Card ── -->
+            {% set cgpa_val = profile_summary.current_cgpa or 0 %}
+            {% set cgpa_pct = (cgpa_val / 4.0 * 100) | round | int %}
+            <div class="snap-profile-row">
+                <div class="snap-cgpa-ring" style="--pct: {{ cgpa_pct }};">
+                    <div class="snap-cgpa-inner">
+                        <span class="snap-cgpa-value">
+                            {% if profile_summary.current_cgpa %}{{ "%.2f" | format(profile_summary.current_cgpa) }}{%
+                            else %}N/A{% endif %}
+                        </span>
+                        <span class="snap-cgpa-label">CGPA</span>
+                    </div>
+                </div>
+                <div class="snap-profile-info">
+                    <h3>{{ profile_summary.full_name }}</h3>
+                    <div class="snap-profile-meta">
+                        <span>🏛 {{ profile_summary.department }}</span>
+                        <span>📚 Class {{ profile_summary.class_level }}-{{ profile_summary.section }}</span>
+                        {% if profile_summary.target_cgpa %}
+                        <span>🎯 Target: {{ "%.2f" | format(profile_summary.target_cgpa) }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <span class="snap-status-pill snap-status-{{ profile_summary.performance_status }}">
+                    {{ profile_summary.performance_status | replace('-', ' ') }}
                 </span>
             </div>
-        </div>
 
-        <div class="grid">
-            <!-- Academic Stats -->
-            <div class="card">
-                <h2>📊 Academic KPI</h2>
-                <div class="metric-row">
-                    <span class="metric-label">Current CGPA</span>
-                    <span class="metric-value" style="font-size:24px; color:var(--primary);">{{
-                        "%.2f"|format(student.current_cgpa) if student.current_cgpa else '--' }}</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Attendance</span>
-                    <span class="metric-value">{{ attendance.percentage }}%</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Assignments</span>
-                    <span class="metric-value">{{ assignments.completion_rate }}% Complete</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Performance Trend</span>
-                    <span class="metric-value" style="text-transform:capitalize;">{{ performance_trend }}</span>
-                </div>
-            </div>
+            <!-- ── 3-Column Stat Grid ── -->
+            <div class="snap-stat-grid">
 
-            <!-- AI Insight Report -->
-            <div class="card" style="grid-column: span 3;">
-                <h2>🤖 AI Career & Academic Insights</h2>
-                {% if insight %}
-                <div style="background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0;">
-                    <div style="font-size: 12px; color: var(--gray-500); margin-bottom: 10px; text-align: right;">
-                        Generated on: {{ insight.generated_at.strftime('%B %d, %Y') }}
+                <!-- Predicted GPA -->
+                <div class="snap-stat-card">
+                    <div class="snap-stat-label">Predicted Next GPA</div>
+                    {% if academic_snapshot.predicted_next_gpa %}
+                    {% set pgpa = academic_snapshot.predicted_next_gpa %}
+                    <div
+                        class="snap-stat-value {% if pgpa >= 3.5 %}good{% elif pgpa >= 2.5 %}warning{% else %}danger{% endif %}">
+                        {{ "%.2f" | format(pgpa) }}
                     </div>
-                    <div class="insight-content">
-                        {{ insight.content|safe }}
-                    </div>
-                </div>
-                {% else %}
-                <div style="text-align: center; padding: 40px; color: var(--gray-500);">
-                    <i class="fas fa-robot" style="font-size: 48px; margin-bottom: 16px; opacity: 0.5;"></i>
-                    <p>No AI insight report generated yet.</p>
-                    <p style="font-size: 13px;">The student needs to generate a report from their dashboard.</p>
-                </div>
-                {% endif %}
-            </div>
-
-            <!-- Notes Section -->
-            <div class="card" style="grid-column: span 2;">
-                <h2>📝 Teacher Notes (Private)</h2>
-                <div class="notes-list" id="notesList">
-                    {% if notes %}
-                    {% for note in notes %}
-                    <div class="note-item">
-                        <div class="note-content">{{ note.content }}</div>
-                        <div class="note-date">{{ note.created_at.strftime('%b %d, %Y %I:%M %p') }}</div>
-                    </div>
-                    {% endfor %}
+                    <div class="snap-stat-sub">/ 4.00 scale</div>
                     {% else %}
-                    <div style="text-align:center; color:var(--gray-500); padding:20px;">No notes added yet.</div>
+                    <div class="snap-stat-value" style="font-size:18px; color:#475569;">Not enough data</div>
                     {% endif %}
                 </div>
 
-                <div style="margin-top:16px; border-top:1px solid var(--gray-100); padding-top:16px;">
-                    <textarea id="noteContent"
-                        placeholder="Write a private note about {{ student.full_name }}..."></textarea>
-                    <div style="text-align:right;">
-                        <button onclick="addNote()">Add Note</button>
+                <!-- Burnout Risk -->
+                <div class="snap-stat-card">
+                    <div class="snap-stat-label">Burnout Risk</div>
+                    {% if weekly_snapshot %}
+                    {% set brisk = weekly_snapshot.burnout_risk_pct %}
+                    <div
+                        class="snap-stat-value {% if brisk < 40 %}good{% elif brisk < 70 %}warning{% else %}danger{% endif %}">
+                        {{ brisk }}%
+                    </div>
+                    <div class="snap-stat-sub">
+                        {% if brisk < 40 %}Low Risk{% elif brisk < 70 %}Moderate{% else %}High Risk{% endif %} </div>
+                            {% else %}
+                            <div class="snap-stat-value" style="font-size:18px; color:#475569;">—</div>
+                            <div class="snap-stat-sub">No check-in data</div>
+                            {% endif %}
+                    </div>
+
+                    <!-- Weekly Study Hours -->
+                    <div class="snap-stat-card">
+                        <div class="snap-stat-label">Weekly Hours</div>
+                        {% if weekly_snapshot %}
+                        <div class="snap-stat-value">{{ weekly_snapshot.total_hours_studied | round(1) }}</div>
+                        <div class="snap-stat-sub">hrs studied · {{ weekly_snapshot.status_label }}</div>
+                        {% else %}
+                        <div class="snap-stat-value" style="font-size:18px; color:#475569;">—</div>
+                        <div class="snap-stat-sub">No data yet</div>
+                        {% endif %}
+                    </div>
+
+                </div>
+
+                <!-- ── Top 3 At-Risk Skills ── -->
+                <div class="snap-section-title">⚠️ Top At-Risk Skills</div>
+                {% if skill_snapshot %}
+                <table class="snap-skills-table">
+                    <thead>
+                        <tr>
+                            <th>Skill</th>
+                            <th>Proficiency</th>
+                            <th style="width:35%;">Risk Level</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sk in skill_snapshot %}
+                        <tr>
+                            <td>{{ sk.skill_name }}</td>
+                            <td>{{ sk.proficiency_score }}/100</td>
+                            <td>
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <span
+                                        style="font-size:12px; font-weight:600;
+                                color:{% if sk.risk_score >= 70 %}#fca5a5{% elif sk.risk_score >= 40 %}#fcd34d{% else %}#6ee7b7{% endif %};">{{
+                                        sk.risk_score }}%</span>
+                                    <div class="snap-risk-bar-wrap" style="flex:1;">
+                                        <div class="snap-risk-bar {% if sk.risk_score >= 70 %}risk-high{% elif sk.risk_score >= 40 %}risk-medium{% else %}risk-low{% endif %}"
+                                            style="width: {{ sk.risk_score }}%;"></div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p style="color:#475569; font-size:13px; margin-bottom:20px;">No skill data recorded yet.</p>
+                {% endif %}
+
+                <!-- ── Primary Career Goal ── -->
+                <div class="snap-section-title">🎯 Primary Career Goal</div>
+                {% if career_snapshot %}
+                <div class="snap-career-chip">
+                    <span>🚀</span>
+                    <span>{{ career_snapshot.career_title }}</span>
+                    <span style="font-size:11px; opacity:0.65;">· {{ career_snapshot.goal_type }}</span>
+                </div>
+                {% else %}
+                <p style="color:#475569; font-size:13px; margin-bottom:20px;">No primary career goal set.</p>
+                {% endif %}
+
+                <!-- ── AI Insight Preview ── -->
+                <div class="snap-section-title">🤖 AI Insight Preview</div>
+                {% if insight_preview %}
+                <div class="snap-insight-box">
+                    <div class="snap-insight-meta">Generated: {{ insight_preview.generated_at.strftime('%B %d, %Y') }}
+                    </div>
+                    <p class="snap-insight-preview">{{ insight_preview.preview_text }}</p>
+                    <a href="#insight-full" class="snap-btn-insight">View Full Insight Report ↓</a>
+                </div>
+                {% else %}
+                <div class="snap-insight-box">
+                    <p class="snap-insight-preview">No AI insight report has been generated for this student yet. The
+                        student must generate one from their dashboard.</p>
+                </div>
+                {% endif %}
+
+            </div>
+            <!-- end .snapshot-section -->
+
+            <div class="header-card">
+                <div class="header-info">
+                    <h1>{{ student.full_name }}</h1>
+                    <div class="header-meta">
+                        <span>ID: #{{ student.id }}</span>
+                        <span>Class: {{ student.class_level }}-{{ student.section }}</span>
+                        <span>Last Active: {{ student.last_activity.strftime('%b %d') if student.last_activity else '--'
+                            }}</span>
                     </div>
                 </div>
+                <div>
+                    <span class="status-badge status-{{ student.performance_status }}">
+                        {{ student.performance_status }}
+                    </span>
+                </div>
             </div>
 
-            <!-- Recent Activity -->
-            <div class="card">
-                <h2>🕒 Recent Activity</h2>
-                {% if assignments.recent %}
-                {% for sub in assignments.recent[:3] %}
-                <div class="metric-row">
-                    <span class="metric-label" style="flex:1;">{{ sub.assignment.title }}</span>
-                    <span class="metric-value" style="font-size:14px;">{{ sub.score }} pts</span>
+            <div class="grid">
+                <!-- Academic Stats -->
+                <div class="card">
+                    <h2>📊 Academic KPI</h2>
+                    <div class="metric-row">
+                        <span class="metric-label">Current CGPA</span>
+                        <span class="metric-value" style="font-size:24px; color:var(--primary);">{{
+                            "%.2f"|format(student.current_cgpa) if student.current_cgpa else '--' }}</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Attendance</span>
+                        <span class="metric-value">{{ attendance.percentage }}%</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Assignments</span>
+                        <span class="metric-value">{{ assignments.completion_rate }}% Complete</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Performance Trend</span>
+                        <span class="metric-value" style="text-transform:capitalize;">{{ performance_trend }}</span>
+                    </div>
                 </div>
-                {% endfor %}
-                {% else %}
-                <div style="color:var(--gray-500); font-size:14px;">No recent assignments.</div>
-                {% endif %}
+
+                <!-- AI Insight Report -->
+                <div class="card" id="insight-full" style="grid-column: span 3;">
+                    <h2>🤖 AI Career & Academic Insights</h2>
+                    {% if insight %}
+                    <div style="background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                        <div style="font-size: 12px; color: var(--gray-500); margin-bottom: 10px; text-align: right;">
+                            Generated on: {{ insight.generated_at.strftime('%B %d, %Y') }}
+                        </div>
+                        <div class="insight-content">
+                            {{ insight.content|safe }}
+                        </div>
+                    </div>
+                    {% else %}
+                    <div style="text-align: center; padding: 40px; color: var(--gray-500);">
+                        <i class="fas fa-robot" style="font-size: 48px; margin-bottom: 16px; opacity: 0.5;"></i>
+                        <p>No AI insight report generated yet.</p>
+                        <p style="font-size: 13px;">The student needs to generate a report from their dashboard.</p>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Notes Section -->
+                <div class="card" style="grid-column: span 2;">
+                    <h2>📝 Teacher Notes (Private)</h2>
+                    <div class="notes-list" id="notesList">
+                        {% if notes %}
+                        {% for note in notes %}
+                        <div class="note-item">
+                            <div class="note-content">{{ note.content }}</div>
+                            <div class="note-date">{{ note.created_at.strftime('%b %d, %Y %I:%M %p') }}</div>
+                        </div>
+                        {% endfor %}
+                        {% else %}
+                        <div style="text-align:center; color:var(--gray-500); padding:20px;">No notes added yet.</div>
+                        {% endif %}
+                    </div>
+
+                    <div style="margin-top:16px; border-top:1px solid var(--gray-100); padding-top:16px;">
+                        <textarea id="noteContent"
+                            placeholder="Write a private note about {{ student.full_name }}..."></textarea>
+                        <div style="text-align:right;">
+                            <button onclick="addNote()">Add Note</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="card">
+                    <h2>🕒 Recent Activity</h2>
+                    {% if assignments.recent %}
+                    {% for sub in assignments.recent[:3] %}
+                    <div class="metric-row">
+                        <span class="metric-label" style="flex:1;">{{ sub.assignment.title }}</span>
+                        <span class="metric-value" style="font-size:14px;">{{ sub.score }} pts</span>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <div style="color:var(--gray-500); font-size:14px;">No recent assignments.</div>
+                    {% endif %}
+                </div>
             </div>
         </div>
-    </div>
 
-    <script>
-        async function addNote() {
-            const content = document.getElementById('noteContent').value;
-            if (!content) return;
+        <script>
+            async function addNote() {
+                const content = document.getElementById('noteContent').value;
+                if (!content) return;
 
-            try {
-                const response = await fetch('/api/teacher/notes', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        student_id: {{ student.id }},
-                    content: content
+                try {
+                    const response = await fetch('/api/teacher/notes', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            student_id: {{ student.id }},
+                        content: content
                     })
-        });
+            });
 
-        if (response.ok) {
-            // Ideally reload list via JS, but reload page is simpler for now
-            window.location.reload();
-        } else {
-            alert("Failed to add note");
-        }
+            if (response.ok) {
+                // Ideally reload list via JS, but reload page is simpler for now
+                window.location.reload();
+            } else {
+                alert("Failed to add note");
+            }
             } catch (e) {
-            console.error(e);
+                console.error(e);
+            }
         }
-        }
-    </script>
+        </script>
 </body>
 
 </html>

@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Get Started | Student Insight</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --navy: #002D62;
+            --blue: #3b82f6;
+            --green: #10b981;
+            --amber: #f59e0b;
+            --purple: #8b5cf6;
+            --red: #ef4444;
+            --bg: #f1f5f9;
+            --surface: #ffffff;
+            --border: #e2e8f0;
+            --muted: #64748b;
+            --dark: #1e293b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: var(--bg);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+
+        .page-wrap {
+            width: 100%;
+            max-width: 680px;
+        }
+
+        /* ── Header ── */
+        .ob-header {
+            text-align: center;
+            margin-bottom: 36px;
+        }
+
+        .ob-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--blue);
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            padding: 6px 16px;
+            border-radius: 50px;
+            margin-bottom: 20px;
+        }
+
+        .ob-title {
+            font-size: 34px;
+            font-weight: 800;
+            color: var(--dark);
+            line-height: 1.2;
+            margin-bottom: 12px;
+        }
+
+        .ob-title span {
+            color: var(--blue);
+        }
+
+        .ob-subtitle {
+            font-size: 15px;
+            color: var(--muted);
+            max-width: 460px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* ── Progress Bar ── */
+        .progress-wrap {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 20px 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        .progress-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .progress-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .progress-count {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--blue);
+        }
+
+        .progress-track {
+            height: 8px;
+            background: var(--border);
+            border-radius: 50px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 50px;
+            background: linear-gradient(90deg, var(--blue), #60a5fa);
+            transition: width 0.6s ease;
+        }
+
+        /* ── Step Cards ── */
+        .steps-list {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            margin-bottom: 28px;
+        }
+
+        .step-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px 20px;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+            transition: transform 0.15s, box-shadow 0.15s;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .step-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+        }
+
+        .step-card.done {
+            border-color: #bbf7d0;
+            background: #f0fdf4;
+        }
+
+        .step-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .step-icon.blue {
+            background: rgba(59, 130, 246, 0.12);
+            color: var(--blue);
+        }
+
+        .step-icon.green {
+            background: rgba(16, 185, 129, 0.12);
+            color: var(--green);
+        }
+
+        .step-icon.amber {
+            background: rgba(245, 158, 11, 0.12);
+            color: var(--amber);
+        }
+
+        .step-icon.purple {
+            background: rgba(139, 92, 246, 0.12);
+            color: var(--purple);
+        }
+
+        .step-icon.done-icon {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--green);
+        }
+
+        .step-body {
+            flex: 1;
+        }
+
+        .step-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 3px;
+        }
+
+        .step-desc {
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .step-status {
+            flex-shrink: 0;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+        }
+
+        .step-status.done-badge {
+            background: var(--green);
+            color: #fff;
+        }
+
+        .step-status.pending-badge {
+            background: var(--border);
+            color: var(--muted);
+        }
+
+        /* ── CTA ── */
+        .cta-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary {
+            flex: 1;
+            min-width: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 14px 24px;
+            background: var(--navy);
+            color: #fff;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        .btn-primary:hover {
+            background: #004080;
+            transform: translateY(-1px);
+        }
+
+        .btn-ghost {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 14px 24px;
+            background: transparent;
+            color: var(--muted);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: background 0.15s;
+        }
+
+        .btn-ghost:hover {
+            background: var(--surface);
+            color: var(--dark);
+        }
+
+        /* ── Tip Banner ── */
+        .tip-banner {
+            margin-top: 24px;
+            background: rgba(59, 130, 246, 0.06);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 10px;
+            padding: 14px 18px;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            font-size: 13px;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        .tip-banner i {
+            color: var(--blue);
+            margin-top: 2px;
+            flex-shrink: 0;
+        }
+
+        /* ── Done CTA ── */
+        .all-done {
+            text-align: center;
+            padding: 20px;
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 14px;
+            margin-bottom: 24px;
+        }
+
+        .all-done i {
+            font-size: 36px;
+            color: var(--green);
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .all-done h3 {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--dark);
+            margin-bottom: 6px;
+        }
+
+        .all-done p {
+            font-size: 14px;
+            color: var(--muted);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="page-wrap">
+
+        <!-- Header -->
+        <div class="ob-header">
+            <div class="ob-badge"><i class="fas fa-rocket"></i> Getting Started</div>
+            <h1 class="ob-title">Welcome, <span>{{ data.name }}</span>!</h1>
+            <p class="ob-subtitle">Complete these 4 quick steps to unlock your personalised dashboard with live charts
+                and AI insights.</p>
+        </div>
+
+        <!-- Progress -->
+        <div class="progress-wrap">
+            <div class="progress-meta">
+                <span class="progress-label">Setup Progress</span>
+                <span class="progress-count">{{ data.steps_done }} / 4 Complete</span>
+            </div>
+            <div class="progress-track">
+                <div class="progress-fill" style="width: {{ (data.steps_done / 4 * 100) | int }}%;"></div>
+            </div>
+        </div>
+
+        {% if data.steps_done == 3 %}
+        <div class="all-done">
+            <i class="fas fa-star"></i>
+            <h3>Almost there — 1 step left!</h3>
+            <p>Complete the last step to activate all charts on your dashboard.</p>
+        </div>
+        {% endif %}
+
+        <!-- Steps -->
+        <div class="steps-list">
+
+            <!-- Step 1: Add Grades -->
+            <a href="/student/goals-grades" class="step-card {% if data.has_grades %}done{% endif %}">
+                <div class="step-icon {% if data.has_grades %}done-icon{% else %}blue{% endif %}">
+                    <i class="fas {% if data.has_grades %}fa-check{% else %}fa-graduation-cap{% endif %}"></i>
+                </div>
+                <div class="step-body">
+                    <div class="step-title">Add Your First Grade</div>
+                    <div class="step-desc">
+                        {% if data.has_grades %}
+                        Grades added ✓ — CGPA Trend and Course Distribution charts are ready.
+                        {% else %}
+                        Go to Goals &amp; Grades → Add Grade. Enter at least 1 course with a grade to activate CGPA
+                        charts.
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="step-status {% if data.has_grades %}done-badge{% else %}pending-badge{% endif %}">
+                    <i class="fas {% if data.has_grades %}fa-check{% else %}fa-chevron-right{% endif %}"></i>
+                </div>
+            </a>
+
+            <!-- Step 2: Add Skills -->
+            <a href="/student/goals-grades#skills" class="step-card {% if data.has_skills %}done{% endif %}">
+                <div class="step-icon {% if data.has_skills %}done-icon{% else %}green{% endif %}">
+                    <i class="fas {% if data.has_skills %}fa-check{% else %}fa-crosshairs{% endif %}"></i>
+                </div>
+                <div class="step-body">
+                    <div class="step-title">Select At Least 3 Skills</div>
+                    <div class="step-desc">
+                        {% if data.has_skills %}
+                        Skills saved ✓ — Skill Radar chart is active.
+                        {% else %}
+                        Go to Goals &amp; Grades → Skills section. Pick skills that reflect your strengths to activate
+                        the radar chart.
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="step-status {% if data.has_skills %}done-badge{% else %}pending-badge{% endif %}">
+                    <i class="fas {% if data.has_skills %}fa-check{% else %}fa-chevron-right{% endif %}"></i>
+                </div>
+            </a>
+
+            <!-- Step 3: Log Study Session -->
+            <a href="/student/weekly-routine" class="step-card {% if data.has_sessions %}done{% endif %}">
+                <div class="step-icon {% if data.has_sessions %}done-icon{% else %}amber{% endif %}">
+                    <i class="fas {% if data.has_sessions %}fa-check{% else %}fa-calendar-alt{% endif %}"></i>
+                </div>
+                <div class="step-body">
+                    <div class="step-title">Log 1 Study Session</div>
+                    <div class="step-desc">
+                        {% if data.has_sessions %}
+                        Session logged ✓ — Weekly Hours and Skill Effort charts will reflect recent sessions.
+                        {% else %}
+                        Go to Weekly Routine and add a study session. Tag it with a skill to also power the Skill Effort
+                        chart.
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="step-status {% if data.has_sessions %}done-badge{% else %}pending-badge{% endif %}">
+                    <i class="fas {% if data.has_sessions %}fa-check{% else %}fa-chevron-right{% endif %}"></i>
+                </div>
+            </a>
+
+            <!-- Step 4: Set a Career Goal -->
+            <a href="/student/goals-grades#goals" class="step-card {% if data.has_goals %}done{% endif %}">
+                <div class="step-icon {% if data.has_goals %}done-icon{% else %}purple{% endif %}">
+                    <i class="fas {% if data.has_goals %}fa-check{% else %}fa-bullseye{% endif %}"></i>
+                </div>
+                <div class="step-body">
+                    <div class="step-title">Set 1 Career Goal</div>
+                    <div class="step-desc">
+                        {% if data.has_goals %}
+                        Goal set ✓ — Career Compatibility and Goal Achievability charts are active.
+                        {% else %}
+                        Go to Goals &amp; Grades → Goals section and pick a career path to unlock career charts.
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="step-status {% if data.has_goals %}done-badge{% else %}pending-badge{% endif %}">
+                    <i class="fas {% if data.has_goals %}fa-check{% else %}fa-chevron-right{% endif %}"></i>
+                </div>
+            </a>
+
+        </div>
+
+        <!-- CTA Row -->
+        <div class="cta-row">
+            <a href="/student/dashboard" class="btn-primary">
+                <i class="fas fa-chart-line"></i>
+                Go to Dashboard
+            </a>
+            <a href="/student/goals-grades" class="btn-ghost">
+                <i class="fas fa-arrow-right"></i>
+                Start with Grades &amp; Goals
+            </a>
+        </div>
+
+        <!-- Tip -->
+        <div class="tip-banner">
+            <i class="fas fa-lightbulb"></i>
+            <span>You can access the dashboard at any time — charts will show an empty-state guide for any data you
+                haven't added yet. Complete all 4 steps to see the full picture.</span>
+        </div>
+
+    </div>
+</body>
+
+</html>
