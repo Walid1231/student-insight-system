@@ -9,277 +9,277 @@
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/unified_styles.css') }}?v=3">
-    <style>
-        .checkin-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 24px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        @media(max-width:900px) {
-            .checkin-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .checkin-card {
-            background: var(--bg-surface, #fff);
-            border: 1px solid var(--border-light, #e5e7eb);
-            border-radius: 14px;
-            padding: 24px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, .04);
-        }
-
-        .checkin-card-title {
-            font-size: 16px;
-            font-weight: 700;
-            color: var(--text-dark, #111827);
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .checkin-card-title i {
-            color: var(--primary-navy, #3b82f6);
-            font-size: 18px;
-        }
-
-        /* Star rating */
-        .star-group {
-            display: flex;
-            gap: 6px;
-            margin-bottom: 6px;
-        }
-
-        .star-btn {
-            background: none;
-            border: none;
-            font-size: 28px;
-            cursor: pointer;
-            color: var(--border-light, #d1d5db);
-            transition: color 0.15s, transform 0.15s;
-            padding: 0;
-        }
-
-        .star-btn:hover,
-        .star-btn.active {
-            color: #f59e0b;
-            transform: scale(1.15);
-        }
-
-        /* Emoji mood */
-        .mood-group {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 6px;
-        }
-
-        .mood-btn {
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
-            border: 2px solid var(--border-light, #e5e7eb);
-            background: var(--bg-surface, #fff);
-            font-size: 24px;
-            cursor: pointer;
-            transition: all 0.15s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .mood-btn:hover {
-            border-color: var(--primary-navy, #3b82f6);
-            transform: translateY(-2px);
-        }
-
-        .mood-btn.active {
-            border-color: #3b82f6;
-            background: rgba(59, 130, 246, 0.08);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
-        }
-
-        /* Difficulty pills */
-        .diff-group {
-            display: flex;
-            gap: 8px;
-        }
-
-        .diff-btn {
-            padding: 8px 20px;
-            border-radius: 8px;
-            border: 2px solid var(--border-light, #e5e7eb);
-            background: var(--bg-surface, #fff);
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.15s;
-            font-family: 'Inter', sans-serif;
-            color: var(--text-dark, #374151);
-        }
-
-        .diff-btn:hover {
-            border-color: var(--primary-navy, #3b82f6);
-        }
-
-        .diff-btn.active {
-            border-color: #3b82f6;
-            background: rgba(59, 130, 246, 0.08);
-            color: #3b82f6;
-        }
-
-        .field-label {
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--text-dark, #374151);
-            margin-bottom: 8px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .field-hint {
-            font-size: 12px;
-            color: var(--text-muted, #9ca3af);
-            margin-top: 4px;
-        }
-
-        .field-group {
-            margin-bottom: 20px;
-        }
-
-        textarea.form-input {
-            min-height: 80px;
-            resize: vertical;
-        }
-
-        /* History cards */
-        .history-item {
-            background: var(--bg-body, #f9fafb);
-            border: 1px solid var(--border-light, #e5e7eb);
-            border-radius: 10px;
-            padding: 16px;
-            margin-bottom: 12px;
-        }
-
-        .history-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-
-        .history-date {
-            font-size: 13px;
-            font-weight: 700;
-            color: var(--text-dark, #111827);
-        }
-
-        .history-status {
-            font-size: 11px;
-            font-weight: 600;
-            padding: 3px 10px;
-            border-radius: 20px;
-        }
-
-        .status-on-track {
-            background: #dcfce7;
-            color: #16a34a;
-        }
-
-        .status-needs-attention {
-            background: #fef3c7;
-            color: #d97706;
-        }
-
-        .status-at-risk {
-            background: #fee2e2;
-            color: #dc2626;
-        }
-
-        .history-metrics {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-        }
-
-        .history-metric {
-            text-align: center;
-        }
-
-        .history-metric-value {
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--primary-navy, #3b82f6);
-        }
-
-        .history-metric-label {
-            font-size: 11px;
-            color: var(--text-muted, #9ca3af);
-        }
-
-        /* Dark theme */
-        html[data-theme="dark"] .checkin-card {
-            background: #1a1d27;
-            border-color: #2d3241;
-        }
-
-        html[data-theme="dark"] .checkin-card-title {
-            color: #e5e7eb;
-        }
-
-        html[data-theme="dark"] .field-label {
-            color: #d1d5db;
-        }
-
-        html[data-theme="dark"] .star-btn {
-            color: #4b5563;
-        }
-
-        html[data-theme="dark"] .mood-btn {
-            border-color: #2d3241;
-            background: #141720;
-        }
-
-        html[data-theme="dark"] .diff-btn {
-            border-color: #2d3241;
-            background: #141720;
-            color: #d1d5db;
-        }
-
-        html[data-theme="dark"] .history-item {
-            background: #141720;
-            border-color: #2d3241;
-        }
-
-        html[data-theme="dark"] .history-date {
-            color: #e5e7eb;
-        }
-
-        html[data-theme="dark"] .status-on-track {
-            background: #064e3b;
-            color: #34d399;
-        }
-
-        html[data-theme="dark"] .status-needs-attention {
-            background: #78350f;
-            color: #fbbf24;
-        }
-
-        html[data-theme="dark"] .status-at-risk {
-            background: #7f1d1d;
-            color: #f87171;
-        }
-    </style>
 </head>
 
-<body class="preload">
+<body>
     {% set active_page = 'checkin' %}
     {% include 'components/sidebar.html' %}
 
     <main class="main-content">
+        <style>
+            .checkin-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 24px;
+                max-width: 1200px;
+                margin: 0 auto;
+            }
+
+            @media(max-width:900px) {
+                .checkin-grid {
+                    grid-template-columns: 1fr;
+                }
+            }
+
+            .checkin-card {
+                background: var(--bg-surface, #fff);
+                border: 1px solid var(--border-light, #e5e7eb);
+                border-radius: 14px;
+                padding: 24px;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, .04);
+            }
+
+            .checkin-card-title {
+                font-size: 16px;
+                font-weight: 700;
+                color: var(--text-dark, #111827);
+                margin-bottom: 20px;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+
+            .checkin-card-title i {
+                color: var(--primary-navy, #3b82f6);
+                font-size: 18px;
+            }
+
+            /* Star rating */
+            .star-group {
+                display: flex;
+                gap: 6px;
+                margin-bottom: 6px;
+            }
+
+            .star-btn {
+                background: none;
+                border: none;
+                font-size: 28px;
+                cursor: pointer;
+                color: var(--border-light, #d1d5db);
+                transition: color 0.15s, transform 0.15s;
+                padding: 0;
+            }
+
+            .star-btn:hover,
+            .star-btn.active {
+                color: #f59e0b;
+                transform: scale(1.15);
+            }
+
+            /* Emoji mood */
+            .mood-group {
+                display: flex;
+                gap: 8px;
+                margin-bottom: 6px;
+            }
+
+            .mood-btn {
+                width: 48px;
+                height: 48px;
+                border-radius: 12px;
+                border: 2px solid var(--border-light, #e5e7eb);
+                background: var(--bg-surface, #fff);
+                font-size: 24px;
+                cursor: pointer;
+                transition: all 0.15s;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .mood-btn:hover {
+                border-color: var(--primary-navy, #3b82f6);
+                transform: translateY(-2px);
+            }
+
+            .mood-btn.active {
+                border-color: #3b82f6;
+                background: rgba(59, 130, 246, 0.08);
+                box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+            }
+
+            /* Difficulty pills */
+            .diff-group {
+                display: flex;
+                gap: 8px;
+            }
+
+            .diff-btn {
+                padding: 8px 20px;
+                border-radius: 8px;
+                border: 2px solid var(--border-light, #e5e7eb);
+                background: var(--bg-surface, #fff);
+                font-size: 13px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.15s;
+                font-family: 'Inter', sans-serif;
+                color: var(--text-dark, #374151);
+            }
+
+            .diff-btn:hover {
+                border-color: var(--primary-navy, #3b82f6);
+            }
+
+            .diff-btn.active {
+                border-color: #3b82f6;
+                background: rgba(59, 130, 246, 0.08);
+                color: #3b82f6;
+            }
+
+            .field-label {
+                font-size: 13px;
+                font-weight: 600;
+                color: var(--text-dark, #374151);
+                margin-bottom: 8px;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+
+            .field-hint {
+                font-size: 12px;
+                color: var(--text-muted, #9ca3af);
+                margin-top: 4px;
+            }
+
+            .field-group {
+                margin-bottom: 20px;
+            }
+
+            textarea.form-input {
+                min-height: 80px;
+                resize: vertical;
+            }
+
+            /* History cards */
+            .history-item {
+                background: var(--bg-body, #f9fafb);
+                border: 1px solid var(--border-light, #e5e7eb);
+                border-radius: 10px;
+                padding: 16px;
+                margin-bottom: 12px;
+            }
+
+            .history-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 10px;
+            }
+
+            .history-date {
+                font-size: 13px;
+                font-weight: 700;
+                color: var(--text-dark, #111827);
+            }
+
+            .history-status {
+                font-size: 11px;
+                font-weight: 600;
+                padding: 3px 10px;
+                border-radius: 20px;
+            }
+
+            .status-on-track {
+                background: #dcfce7;
+                color: #16a34a;
+            }
+
+            .status-needs-attention {
+                background: #fef3c7;
+                color: #d97706;
+            }
+
+            .status-at-risk {
+                background: #fee2e2;
+                color: #dc2626;
+            }
+
+            .history-metrics {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 10px;
+            }
+
+            .history-metric {
+                text-align: center;
+            }
+
+            .history-metric-value {
+                font-size: 18px;
+                font-weight: 700;
+                color: var(--primary-navy, #3b82f6);
+            }
+
+            .history-metric-label {
+                font-size: 11px;
+                color: var(--text-muted, #9ca3af);
+            }
+
+            /* Dark theme */
+            html[data-theme="dark"] .checkin-card {
+                background: #1a1d27;
+                border-color: #2d3241;
+            }
+
+            html[data-theme="dark"] .checkin-card-title {
+                color: #e5e7eb;
+            }
+
+            html[data-theme="dark"] .field-label {
+                color: #d1d5db;
+            }
+
+            html[data-theme="dark"] .star-btn {
+                color: #4b5563;
+            }
+
+            html[data-theme="dark"] .mood-btn {
+                border-color: #2d3241;
+                background: #141720;
+            }
+
+            html[data-theme="dark"] .diff-btn {
+                border-color: #2d3241;
+                background: #141720;
+                color: #d1d5db;
+            }
+
+            html[data-theme="dark"] .history-item {
+                background: #141720;
+                border-color: #2d3241;
+            }
+
+            html[data-theme="dark"] .history-date {
+                color: #e5e7eb;
+            }
+
+            html[data-theme="dark"] .status-on-track {
+                background: #064e3b;
+                color: #34d399;
+            }
+
+            html[data-theme="dark"] .status-needs-attention {
+                background: #78350f;
+                color: #fbbf24;
+            }
+
+            html[data-theme="dark"] .status-at-risk {
+                background: #7f1d1d;
+                color: #f87171;
+            }
+        </style>
         <div class="dashboard-container">
 
             <div class="welcome-header">
