@@ -350,20 +350,44 @@
                         </div>
                     </form>
 
-                    <!-- Step 1: Select Skills -->
-                    <div class="field-label" style="margin-bottom:10px;">1. Select Your Current Skills</div>
-                    <form id="skillForm" method="POST" action="{{ url_for('dashboard.save_skills') }}">
-                        <div class="skill-grid">
-                            {% for skill in all_skills %}
-                            <label class="skill-chip {{ 'selected' if skill.id in student_skill_ids else '' }}">
-                                <input type="checkbox" name="skill_ids" value="{{ skill.id }}" {{ 'checked' if skill.id
-                                    in student_skill_ids else '' }} onchange="this.form.submit()">
-                                <i class="fas fa-code" style="font-size:11px;"></i>
-                                {{ skill.skill_name }}
-                            </label>
-                            {% endfor %}
-                        </div>
+                    <!-- Step 1: Add Your Skills -->
+                    <div class="field-label" style="margin-bottom:10px;">1. Add Your Skills</div>
+
+                    <!-- Add skill form -->
+                    <form method="POST" action="{{ url_for('dashboard.add_skill_entry') }}"
+                        style="display:flex; gap:8px; margin-bottom:16px; align-items:center; flex-wrap:wrap;">
+                        <input type="text" name="skill_name" class="form-input"
+                            placeholder="e.g. Python, Machine Learning, Public Speaking..."
+                            style="flex:1; min-width:200px;" required autocomplete="off">
+                        <button type="submit" class="btn btn-primary" style="padding:9px 18px; font-size:13px;">
+                            <i class="fas fa-plus"></i> Add Skill
+                        </button>
                     </form>
+
+                    <!-- Current skills as tags -->
+                    <div class="skill-grid">
+                        {% for ss in student_skills %}
+                        <div class="skill-chip selected"
+                            style="padding-right:6px; display:inline-flex; align-items:center; gap:6px;">
+                            <i class="fas fa-code" style="font-size:11px;"></i>
+                            {{ ss.skill_name }}
+                            <form method="POST" action="{{ url_for('dashboard.remove_skill_entry', skill_id=ss.id) }}"
+                                style="margin:0; display:inline;">
+                                <button type="submit"
+                                    style="background:none; border:none; color:inherit; cursor:pointer; padding:2px 4px; font-size:14px; opacity:.6; transition:opacity .15s;"
+                                    onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.6'"
+                                    title="Remove skill">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </form>
+                        </div>
+                        {% endfor %}
+                        {% if not student_skills %}
+                        <div style="color:var(--text-muted, #9ca3af); font-size:13px; padding:8px 0;">
+                            No skills added yet. Type a skill name above and click "Add Skill".
+                        </div>
+                        {% endif %}
+                    </div>
 
                     <!-- Step 2: Matching Careers -->
                     <div class="field-label" style="margin-top:20px;margin-bottom:10px;">2. Matching Career Paths</div>

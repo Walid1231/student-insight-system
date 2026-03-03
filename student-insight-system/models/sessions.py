@@ -45,5 +45,6 @@ class WeeklyUpdate(db.Model):
     goal_achievability_prob = db.Column(db.Float)
     status_label = db.Column(db.String(50))
     mood_score = db.Column(db.Integer)
+    goals_achieved = db.Column(db.Text, nullable=True)
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)

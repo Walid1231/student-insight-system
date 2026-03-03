@@ -36,16 +36,22 @@
 
     /* ── FIX 1: Global defaults moved here, called before every init ── */
     function _applyGlobalDefaults() {
-        Chart.defaults.font.family = "'Inter', sans-serif";
-        Chart.defaults.font.size = 12;
-        Chart.defaults.color = tc();                              // re-reads theme each time
-        Chart.defaults.plugins.tooltip.backgroundColor = '#1f2937';
-        Chart.defaults.plugins.tooltip.titleFont = { weight: '600', size: 12 };
-        Chart.defaults.plugins.tooltip.bodyFont = { size: 11 };
-        Chart.defaults.plugins.tooltip.padding = 10;
-        Chart.defaults.plugins.tooltip.cornerRadius = 8;
-        Chart.defaults.plugins.tooltip.displayColors = true;
-        Chart.defaults.plugins.tooltip.boxPadding = 4;
+        try {
+            Chart.defaults.font.family = "'Inter', sans-serif";
+            Chart.defaults.font.size = 12;
+            Chart.defaults.color = tc();
+            if (!Chart.defaults.plugins) Chart.defaults.plugins = {};
+            if (!Chart.defaults.plugins.tooltip) Chart.defaults.plugins.tooltip = {};
+            Chart.defaults.plugins.tooltip.backgroundColor = '#1f2937';
+            Chart.defaults.plugins.tooltip.titleFont = { weight: '600', size: 12 };
+            Chart.defaults.plugins.tooltip.bodyFont = { size: 11 };
+            Chart.defaults.plugins.tooltip.padding = 10;
+            Chart.defaults.plugins.tooltip.cornerRadius = 8;
+            Chart.defaults.plugins.tooltip.displayColors = true;
+            Chart.defaults.plugins.tooltip.boxPadding = 4;
+        } catch (e) {
+            console.warn('[StudentAnalytics] Could not apply global defaults:', e);
+        }
     }
 
 
@@ -497,57 +503,7 @@
     }
 
 
-    /* 6 ▸ Career Compatibility — Animated Progress Bars ─────── */
-    function initCareerBars(D) {
-        var container = document.getElementById('careerBars');
-        if (!container) return;
-
-        var careers = D.careers;
-        if (!Array.isArray(careers) || !careers.length) return;
-
-        /* FIX 6: Build DOM nodes with textContent — eliminates XSS via career.role */
-        careers.forEach(function (career, idx) {
-            var colorClass = CAREER_COLORS[idx % CAREER_COLORS.length];
-
-            var item = document.createElement('div');
-            item.className = 'career-item';
-
-            var meta = document.createElement('div');
-            meta.className = 'career-meta';
-
-            var nameSpan = document.createElement('span');
-            nameSpan.className = 'career-name';
-            nameSpan.textContent = career.role;           // safe — no innerHTML
-
-            var pctSpan = document.createElement('span');
-            pctSpan.className = 'career-pct';
-            pctSpan.textContent = career.match + '%';     // safe
-
-            var track = document.createElement('div');
-            track.className = 'career-track';
-
-            var fill = document.createElement('div');
-            fill.className = 'career-fill ' + colorClass;
-            fill.dataset.width = career.match;
-
-            meta.appendChild(nameSpan);
-            meta.appendChild(pctSpan);
-            track.appendChild(fill);
-            item.appendChild(meta);
-            item.appendChild(track);
-            container.appendChild(item);
-        });
-
-        // Animate fills after paint
-        requestAnimationFrame(function () {
-            setTimeout(function () {
-                container.querySelectorAll('.career-fill').forEach(function (el) {
-                    el.style.width = el.getAttribute('data-width') + '%';
-                });
-            }, 300);
-        });
-    }
-
+    /* Career bars implementation was moved to pure HTML/CSS in Jinja */
 
     /* 7 ▸ Burnout Risk Gauge — Canvas 2D Arc ───────────────── */
     function initBurnoutGauge(D) {
@@ -625,7 +581,7 @@
     }
 
 
-    /* 8 ▸ Goal Achievability — 3D Isometric Path ───────────────── */
+    /* 8 ▸ Goal Achievability — Bell Curve ───────────────── */
     function initGoalCurve(D) {
         var canvas = document.getElementById('goalCurveChart');
         if (!canvas) return null;
@@ -633,178 +589,103 @@
         var prob = (D.goal_prob !== null && D.goal_prob !== undefined) ? safeNum(D.goal_prob) : null;
         if (prob === null) return null;
 
-        var c = canvas.getContext('2d');
-        var dpr = window.devicePixelRatio || 1;
-        var W = canvas.parentElement.clientWidth || document.getElementById('cardGoal').clientWidth - 40;
-        var H = 240;
+        // Generate Bell Curve data (Normal Distribution)
+        var dataPoints = [];
+        var labels = [];
+        var mean = 70; // Peak of the bell curve
+        var stdDev = 15; // Spread
 
-        canvas.width = W * dpr;
-        canvas.height = H * dpr;
-        canvas.style.width = W + 'px';
-        canvas.style.height = H + 'px';
-        c.scale(dpr, dpr);
-
-        /* Iso Math */
-        var tW = Math.min(26, W / 24);
-        var tH = tW * 0.5;
-        var tZ = tW * 0.8;
-        var offX = W * 0.45;
-        var offY = H * 0.65;
-
-        function iso(x, y, z) {
-            return {
-                x: offX + (x - y) * tW,
-                y: offY + (x + y) * tH - (z * tZ)
-            };
+        for (var x = 0; x <= 100; x++) {
+            var y = Math.exp(-0.5 * Math.pow((x - mean) / stdDev, 2));
+            dataPoints.push(y);
+            labels.push(x + '%');
         }
 
-        /* 3D Winding Path (20 steps = 0 to 100%) */
-        var path = [
-            [0, 12], [1, 12], [2, 12], [3, 12], [4, 12], [5, 12], // bottom straight
-            [5, 11], [5, 10], [5, 9],                          // left turn up
-            [6, 9], [7, 9], [8, 9], [9, 9], [10, 9],             // right turn up to peak
-            [10, 10], [10, 11], [10, 12],                      // left turn down
-            [11, 12], [12, 12], [13, 12], [14, 12]              // final straight
-        ];
+        // Custom plugin to draw the "You are here" marker line
+        var probMarkerPlugin = {
+            id: 'probMarker',
+            afterDatasetsDraw: function (chart) {
+                var c2d = chart.ctx;
+                var ca = chart.chartArea;
+                var meta = chart.getDatasetMeta(0);
 
-        var steps = Math.min(20, Math.floor(prob / 5)); // 5% per block
-        var peakIdx = steps;
+                // Find X coordinate for the user's probability score
+                var targetIdx = Math.max(0, Math.min(100, Math.round(prob)));
+                var pt = meta.data[targetIdx];
+                if (!pt) return;
 
-        var blocks = [];
-        for (var i = 0; i < path.length; i++) {
-            var x = path[i][0];
-            var y = path[i][1];
-            var z = 0;
-            if (i <= peakIdx) {
-                z = i * 0.4; // rise
-            } else {
-                z = (peakIdx * 0.4) - (i - peakIdx) * 0.2; // fall
-            }
-            if (z < 0) z = 0;
-            blocks.push({ i: i, x: x, y: y, z: z });
-        }
+                c2d.save();
 
-        /* Sort Painters Algo (x + y is depth in Iso) */
-        blocks.sort(function (a, b) { return (a.x + a.y) - (b.x + b.y); });
+                // Vertical dashed line
+                c2d.beginPath();
+                c2d.setLineDash([5, 5]);
+                c2d.moveTo(pt.x, ca.top);
+                c2d.lineTo(pt.x, ca.bottom);
+                c2d.strokeStyle = isDark() ? '#34d399' : '#10b981'; // Emerald
+                c2d.lineWidth = 2;
+                c2d.stroke();
 
-        var dark = isDark();
-        var cTop = dark ? '#1e293b' : '#ffffff';
-        var cLeft = dark ? '#0f172a' : '#f1f5f9';
-        var cRight = dark ? '#334155' : '#e2e8f0';
-        var cLine = dark ? '#475569' : '#cbd5e1';
+                // Marker Dot
+                c2d.beginPath();
+                c2d.arc(pt.x, pt.y, 6, 0, 2 * Math.PI);
+                c2d.fillStyle = isDark() ? '#34d399' : '#10b981';
+                c2d.fill();
+                c2d.lineWidth = 3;
+                c2d.strokeStyle = cardBg();
+                c2d.stroke();
 
-        /* Draw Blocks */
-        blocks.forEach(function (b) {
-            var p = iso(b.x, b.y, b.z);
-            c.lineWidth = 1;
-            c.strokeStyle = cLine;
-            c.lineJoin = 'round';
+                // "You" Label
+                c2d.fillStyle = isDark() ? '#f8fafc' : '#0f172a';
+                c2d.font = "bold 12px 'Inter', sans-serif";
+                c2d.textAlign = 'center';
+                c2d.fillText('You', pt.x, pt.y - 12);
 
-            // Base drop/thickness
-            var drop = tZ * 2;
-
-            // Left Face
-            c.beginPath();
-            c.moveTo(p.x - tW, p.y + tH);
-            c.lineTo(p.x, p.y + tH * 2);
-            c.lineTo(p.x, p.y + tH * 2 + drop);
-            c.lineTo(p.x - tW, p.y + tH + drop);
-            c.closePath();
-            c.fillStyle = cLeft; c.fill(); c.stroke();
-
-            // Right Face
-            c.beginPath();
-            c.moveTo(p.x + tW, p.y + tH);
-            c.lineTo(p.x, p.y + tH * 2);
-            c.lineTo(p.x, p.y + tH * 2 + drop);
-            c.lineTo(p.x + tW, p.y + tH + drop);
-            c.closePath();
-            c.fillStyle = cRight; c.fill(); c.stroke();
-
-            // Top Face
-            c.beginPath();
-            c.moveTo(p.x, p.y);
-            c.lineTo(p.x + tW, p.y + tH);
-            c.lineTo(p.x, p.y + tH * 2);
-            c.lineTo(p.x - tW, p.y + tH);
-            c.closePath();
-            c.fillStyle = cTop; c.fill(); c.stroke();
-
-            // Path Ribbon (Green strip)
-            if (b.i <= peakIdx) {
-                c.beginPath();
-                c.moveTo(p.x, p.y + tH * 0.6);
-                c.lineTo(p.x + tW * 0.4, p.y + tH * 1.0);
-                c.lineTo(p.x, p.y + tH * 1.4);
-                c.lineTo(p.x - tW * 0.4, p.y + tH * 1.0);
-                c.closePath();
-                c.fillStyle = '#2ab7a9'; // matches radar ring
-                c.fill();
-            }
-
-            // The Flag
-            if (b.i === peakIdx && prob > 0) {
-                var fx = p.x;
-                var fy = p.y;
-                // Pole
-                c.beginPath();
-                c.moveTo(fx, fy);
-                c.lineTo(fx, fy - 45);
-                c.lineWidth = 2;
-                c.strokeStyle = '#2ab7a9';
-                c.stroke();
-                // Flag Body
-                c.beginPath();
-                c.moveTo(fx, fy - 45);
-                c.lineTo(fx + 22, fy - 35);
-                c.lineTo(fx + 22, fy - 20);
-                c.lineTo(fx, fy - 30);
-                c.closePath();
-                c.fillStyle = 'rgba(42,183,169,0.8)';
-                c.fill();
-                // Dots on Flag
-                c.beginPath();
-                c.arc(fx + 8, fy - 32, 2.5, 0, Math.PI * 2);
-                c.fillStyle = '#fff'; c.fill();
-                c.beginPath();
-                c.arc(fx + 15, fy - 29, 2.5, 0, Math.PI * 2);
-                c.fillStyle = '#fff'; c.fill();
-                // Base shadow
-                c.beginPath();
-                c.ellipse(fx, fy, 8, 4, 0, 0, Math.PI * 2);
-                c.fillStyle = 'rgba(42,183,169,0.4)'; c.fill();
-            }
-        });
-
-        /* Bottom Axis Tracker */
-        c.beginPath();
-        c.moveTo(0, H - 30);
-        c.lineTo(W, H - 30);
-        c.lineWidth = 1;
-        c.strokeStyle = dark ? '#334155' : '#e2e8f0';
-        c.stroke();
-
-        c.fillStyle = dark ? '#94a3b8' : '#64748b';
-        c.font = '11px Inter, sans-serif';
-        c.textAlign = 'center';
-
-        var ticks = [0, 18, 36, 54, 72, 90];
-        ticks.forEach(function (val) {
-            var x = (val / 100) * W;
-            if (x < 15) x = 15;
-            if (x > W - 15) x = W - 15;
-            c.fillText(val + '%', x, H - 10);
-            c.fillRect(x - 0.5, H - 34, 1, 4);
-        });
-
-        // Virtual chart interface for SPA destroy cycle
-        return {
-            destroy: function () {
-                var c = canvas.getContext('2d');
-                c.clearRect(0, 0, canvas.width, canvas.height);
+                c2d.restore();
             }
         };
+
+        return new Chart(canvas, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Distribution',
+                    data: dataPoints,
+                    borderColor: isDark() ? '#818cf8' : '#6366f1', // Indigo
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: true,
+                    backgroundColor: isDark() ? 'rgba(99, 102, 241, 0.2)' : 'rgba(99, 102, 241, 0.1)',
+                    pointRadius: 0,
+                    pointHoverRadius: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { intersect: false, mode: 'index' },
+                layout: { padding: { top: 20 } },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { enabled: false }
+                },
+                scales: {
+                    y: { display: false, min: 0 },
+                    x: {
+                        grid: { display: false },
+                        border: { display: false },
+                        ticks: {
+                            maxTicksLimit: 5,
+                            color: tc(),
+                            font: { size: 11, weight: '500' }
+                        }
+                    }
+                }
+            },
+            plugins: [probMarkerPlugin]
+        });
     }
+
 
 
     /* ── Chart instance registry — prevents memory leaks on SPA re-nav ── */
@@ -816,9 +697,7 @@
             if (inst && typeof inst.destroy === 'function') inst.destroy();
             delete window._studentChartInstances[key];
         });
-        // Also clear dynamically-generated career bars
-        var careerContainer = document.getElementById('careerBars');
-        if (careerContainer) careerContainer.innerHTML = '';
+        // Also clear dynamically-generated career bars (deprecated code removed)
     }
 
     function _initAll() {
@@ -828,19 +707,24 @@
             return;
         }
 
-        _applyGlobalDefaults();   // FIX 1: applied before every chart creation
+        _applyGlobalDefaults();
         _destroyAllCharts();
 
-        // Store chart instances in the registry
         var inst = window._studentChartInstances;
-        inst.cgpaTrend = initCGPATrend(D);
-        inst.skillRadar = initSkillRadar(D);
-        inst.coreGed = initCoreGed(D);
-        inst.weeklyHours = initWeeklyHours(D);
-        inst.skillEffort = initSkillEffort(D);
-        initCareerBars(D);        // DOM-based, no Chart instance
-        initBurnoutGauge(D);      // Canvas 2D, no Chart instance
-        inst.goalCurve = initGoalCurve(D);
+
+        var safeCall = function (name, initFn) {
+            try { return initFn(D); }
+            catch (e) { console.error('[StudentAnalytics] Failed to initialize ' + name, e); return null; }
+        };
+
+        inst.cgpaTrend = safeCall('cgpaTrend', initCGPATrend);
+        inst.skillRadar = safeCall('skillRadar', initSkillRadar);
+        inst.coreGed = safeCall('coreGed', initCoreGed);
+        inst.weeklyHours = safeCall('weeklyHours', initWeeklyHours);
+        inst.skillEffort = safeCall('skillEffort', initSkillEffort);
+
+        safeCall('burnoutGauge', initBurnoutGauge);
+        inst.goalCurve = safeCall('goalCurve', initGoalCurve);
     }
 
     /* ── Expose globally so the SPA router can call it after content injection ── */

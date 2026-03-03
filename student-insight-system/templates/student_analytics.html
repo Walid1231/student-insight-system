@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -219,16 +219,36 @@
             </article>
 
             <!-- 6 ▸ Career Compatibility -->
-            <article class="dash-card" id="cardCareer">
-                <div class="card-header">
-                    <h2 class="card-title">
-                        <i class="fas fa-briefcase" style="color: var(--accent-blue);"></i>
-                        Career Compatibility
-                    </h2>
+            <article class="dash-card career-compat-premium" id="cardCareer">
+                <div class="career-premium-header">
+                    <i class="fas fa-briefcase" style="color: #6366f1;"></i> CAREER COMPATIBILITY
                 </div>
-                {% if data.careers %}
-                <div class="career-list" id="careerBars">
-                    <!-- Populated dynamically by JS -->
+                {% if data.careers and data.careers|length > 0 %}
+                {% set top_career = data.careers[0] %}
+                <div class="career-premium-body">
+                    <div class="career-premium-role">{{ top_career.role }}</div>
+
+                    <div class="career-premium-score-wrapper">
+                        <div class="career-premium-score">{{ top_career.match }}% Match</div>
+                    </div>
+
+                    <div class="career-premium-bar-wrapper">
+                        <div class="career-premium-track">
+                            <div class="career-premium-fill" style="width: {{ top_career.match }}%;"></div>
+                        </div>
+                        <div class="career-premium-bar-text">{{ top_career.match }}%</div>
+                    </div>
+
+                    <div class="career-premium-insights">
+                        <div class="insight-line">
+                            <span class="insight-dot green"></span>
+                            <span class="insight-text">+12% above average in Math</span>
+                        </div>
+                        <div class="insight-line">
+                            <span class="insight-dot amber"></span>
+                            <span class="insight-text">-8% below required in System Design</span>
+                        </div>
+                    </div>
                 </div>
                 {% else %}
                 <div class="empty-state">
@@ -341,8 +361,7 @@
                     function run() {
                         if (typeof initStudentDashboardCharts === 'function') {
                             initStudentDashboardCharts();
-                        }
-                    }
+                        }}
                     function loadScript(id, src, cb) {
                         if (document.getElementById(id)) { cb(); return; }
                         var s = document.createElement('script');
@@ -353,14 +372,12 @@
                         loadScript('_chartjs', 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js', function () {
                             if (typeof initStudentDashboardCharts === 'undefined') {
                                 loadScript('_analyticsjs', '{{ url_for("static", filename="js/student_analytics.js") }}?v=2', run);
-                            } else { run(); }
-                        });
+                            } else { run(); }});
                     } else if (typeof initStudentDashboardCharts === 'undefined') {
                         loadScript('_analyticsjs', '{{ url_for("static", filename="js/student_analytics.js") }}?v=2', run);
                     } else {
                         run();
-                    }
-                })();
+                    }})();
             }
         </script>
 

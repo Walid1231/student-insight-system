@@ -129,6 +129,7 @@ class AcademicService:
             "all_skills": all_skills,
             "student_dept": student_dept,
             "student_skill_ids": student_skill_id_set,
+            "student_skills": student_skills,
             "matching_careers": matching_careers,
             "goal_career_ids": goal_career_ids,
             "goals": goals,
@@ -302,11 +303,59 @@ class AcademicService:
         from dashboard.recalculate import recalculate_weekly_update
         recalculate_weekly_update(student.id)
 
-    # ── Skills Save ───────────────────────────────────────────
+    # ── Skills Management ──────────────────────────────────────
+
+    @staticmethod
+    def add_skill(user_id: str, skill_name: str) -> None:
+        """Add a free-text skill. Auto-creates master Skill row if new."""
+        from datetime import datetime
+        student = AcademicService._get_student(user_id)
+        name = skill_name.strip()
+        if not name:
+            return
+
+        # Prevent duplicates for this student
+        existing = StudentSkill.query.filter_by(
+            student_id=student.id, skill_name=name
+        ).first()
+        if existing:
+            return
+
+        # Auto-create in master Skill table if it doesn't exist
+        master = SkillModel.query.filter(
+            db.func.lower(SkillModel.skill_name) == name.lower()
+        ).first()
+        if not master:
+            master = SkillModel(skill_name=name, department=None)
+            db.session.add(master)
+            db.session.flush()
+
+        new_ss = StudentSkill(
+            student_id=student.id,
+            skill_name=master.skill_name,  # use canonical casing
+            proficiency_score=50,
+            last_updated=datetime.utcnow(),
+        )
+        db.session.add(new_ss)
+        db.session.commit()
+        logger.info("Skill '%s' added for student_id=%d", name, student.id)
+
+    @staticmethod
+    def remove_skill(user_id: str, student_skill_id: int) -> None:
+        """Remove a specific StudentSkill by its ID."""
+        student = AcademicService._get_student(user_id)
+        ss = StudentSkill.query.filter_by(
+            id=student_skill_id, student_id=student.id
+        ).first()
+        if ss:
+            db.session.delete(ss)
+            db.session.commit()
+            logger.info("Skill id=%d removed for student_id=%d",
+                         student_skill_id, student.id)
 
     @staticmethod
     def save_skills(user_id: str, selected_skill_ids: list[int]) -> None:
-        """Sync student skills based on selected skill IDs."""
+        """Legacy: Sync student skills based on selected skill IDs."""
         from datetime import datetime
         student = AcademicService._get_student(user_id)
 

@@ -43,16 +43,57 @@ class CheckinService:
                 WeeklyUpdate.week_start_date < week_start,
             )
             .order_by(WeeklyUpdate.week_start_date.desc())
-            .limit(4)
+            .limit(8)
             .all()
         )
+
+        # --- Streak: consecutive weeks with a check-in ---
+        all_updates = (
+            WeeklyUpdate.query
+            .filter(
+                WeeklyUpdate.student_id == student.id,
+                WeeklyUpdate.week_start_date <= week_start,
+            )
+            .order_by(WeeklyUpdate.week_start_date.desc())
+            .all()
+        )
+        streak = 0
+        expected = week_start
+        for u in all_updates:
+            if u.week_start_date == expected:
+                streak += 1
+                expected -= timedelta(days=7)
+            else:
+                break
+
+        # --- Snapshot: current week's computed metrics ---
+        snapshot = None
+        if current:
+            snapshot = {
+                "hours": current.total_hours_studied or 0,
+                "consistency": round((current.consistency_score or 0) * 100),
+                "burnout": round((current.burnout_risk_score or 0) * 100),
+                "goal_prob": round((current.goal_achievability_prob or 0) * 100),
+                "status": current.status_label,
+            }
+
+        # --- Trend: last 4 weeks of productivity + mood for sparklines ---
+        trend_source = list(reversed(history[:4]))
+        trend = [
+            {"prod": h.productivity_rating, "mood": h.mood_score}
+            for h in trend_source
+        ]
 
         return {
             "current_productivity": current.productivity_rating if current else '',
             "current_mood": current.mood_score if current else '',
             "current_difficulty": current.difficulty_rating if current else '',
-            "current_goals": current.status_label if current else '',
+            "current_goals": current.goals_achieved if current else '',
+            "already_submitted": current is not None,
+            "snapshot": snapshot,
+            "streak": streak,
             "history": history,
+            "trend": trend,
         }
 
     @staticmethod
@@ -77,6 +118,8 @@ class CheckinService:
             update.mood_score = data.mood_score
         if data.difficulty_rating is not None:
             update.difficulty_rating = data.difficulty_rating
+        if data.goals_achieved is not None:
+            update.goals_achieved = data.goals_achieved
 
         db.session.commit()
 

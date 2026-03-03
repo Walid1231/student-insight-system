@@ -77,6 +77,18 @@ def create_app(config_name=None):
     # ── Landing page ───────────────────────────────────────────
     @app.route("/")
     def home():
+        # If already authenticated, redirect to their dashboard
+        from flask_jwt_extended import verify_jwt_in_request, get_jwt
+        try:
+            verify_jwt_in_request(optional=True)
+            claims = get_jwt()
+            role = claims.get("role")
+            if role == "student":
+                return redirect(url_for("dashboard.student_dashboard"))
+            elif role == "teacher":
+                return redirect(url_for("teacher.teacher_dashboard"))
+        except Exception:
+            pass
         return render_template("home.html")
 
     return app

@@ -315,6 +315,18 @@ def update_study_session(session_id):
     return jsonify({"success": True, "session": result})
 
 
+@dashboard_bp.route("/student/delete-study-session/<int:session_id>", methods=["POST"])
+@require_role("student")
+def delete_study_session(session_id):
+    user_id = get_jwt_identity()
+    try:
+        SessionService.delete_session(user_id, session_id)
+        return jsonify({"success": True})
+    except NotFoundError as e:
+        return jsonify({"success": False, "error": str(e)}), 404
+
+
+
 # =============================================================
 # WEEKLY CHECK-IN
 # =============================================================
@@ -373,6 +385,24 @@ def save_skills():
     user_id = get_jwt_identity()
     selected_ids = [int(x) for x in request.form.getlist("skill_ids")]
     AcademicService.save_skills(user_id, selected_ids)
+    return redirect(url_for('dashboard.goals_grades'))
+
+
+@dashboard_bp.route("/student/goals-grades/skills/add", methods=["POST"])
+@require_role("student")
+def add_skill_entry():
+    user_id = get_jwt_identity()
+    skill_name = request.form.get("skill_name", "").strip()
+    if skill_name:
+        AcademicService.add_skill(user_id, skill_name)
+    return redirect(url_for('dashboard.goals_grades'))
+
+
+@dashboard_bp.route("/student/goals-grades/skills/<int:skill_id>/delete", methods=["POST"])
+@require_role("student")
+def remove_skill_entry(skill_id):
+    user_id = get_jwt_identity()
+    AcademicService.remove_skill(user_id, skill_id)
     return redirect(url_for('dashboard.goals_grades'))
 
 

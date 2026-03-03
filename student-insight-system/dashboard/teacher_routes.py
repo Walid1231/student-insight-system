@@ -123,8 +123,82 @@ def teacher_dashboard():
         "teacher_dashboard.html",
         teacher=teacher,
         overview=overview_data,
-        students=students,
         alerts=alerts,
+        now_date=datetime.now().strftime("%d %B, %Y"),
+    )
+
+
+@teacher_bp.route("/teacher/students")
+@jwt_required()
+def teacher_students_page():
+    teacher, err = _get_teacher_or_403()
+    if err:
+        return err
+
+    students = (
+        StudentProfile.query
+        .join(TeacherAssignment, TeacherAssignment.student_id == StudentProfile.id)
+        .filter(TeacherAssignment.teacher_id == teacher.id)
+        .distinct()
+        .all()
+    )
+    student_ids = [s.id for s in students]
+
+    alerts_count = 0
+    if student_ids:
+        alerts_count = (
+            StudentAlert.query
+            .filter(
+                StudentAlert.student_id.in_(student_ids),
+                StudentAlert.is_resolved == False,
+            )
+            .count()
+        )
+
+    overview_data = {
+        "total_students": len(students),
+        "alerts_count":   alerts_count,
+    }
+
+    return render_template(
+        "teacher_students.html",
+        teacher=teacher,
+        overview=overview_data,
+        students=students,
+        now_date=datetime.now().strftime("%d %B, %Y"),
+    )
+
+
+@teacher_bp.route("/teacher/alerts")
+@jwt_required()
+def teacher_alerts_page():
+    teacher, err = _get_teacher_or_403()
+    if err:
+        return err
+
+    student_ids = [
+        a.student_id for a in
+        TeacherAssignment.query.filter_by(teacher_id=teacher.id).all()
+    ]
+
+    alerts = []
+    if student_ids:
+        alerts = (
+            StudentAlert.query
+            .filter(
+                StudentAlert.student_id.in_(student_ids),
+                StudentAlert.is_resolved == False,
+            )
+            .options(selectinload(StudentAlert.student))
+            .order_by(StudentAlert.created_at.desc())
+            .all()
+        )
+
+    return render_template(
+        "teacher_alerts.html",
+        teacher=teacher,
+        alerts=alerts,
+        total_alerts=len(alerts),
         now_date=datetime.now().strftime("%d %B, %Y"),
     )
 
