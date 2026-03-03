@@ -126,3 +126,16 @@ class SessionService:
             "duration": session.duration_minutes,
             "skill": session.related_skill or "",
         }
+
+    @staticmethod
+    def delete_session(user_id: str, session_id: int) -> None:
+        """Delete a study session. Raises NotFoundError if not found or wrong owner."""
+        student = SessionService._get_student(user_id)
+
+        session = StudySession.query.get(session_id)
+        if not session or session.student_id != student.id:
+            raise NotFoundError("Session not found")
+
+        db.session.delete(session)
+        db.session.commit()
+        logger.info("Study session %d deleted by student_id=%d", session_id, student.id)

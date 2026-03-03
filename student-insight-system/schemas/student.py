@@ -58,6 +58,7 @@ class WeeklyCheckinSubmit(BaseModel):
     productivity_rating: Optional[int] = Field(default=None, ge=1, le=5)
     mood_score: Optional[int] = Field(default=None, ge=1, le=5)
     difficulty_rating: Optional[str] = Field(default=None)
+    goals_achieved: Optional[str] = Field(default=None, max_length=1000)
 
     @field_validator("difficulty_rating")
     @classmethod
@@ -72,4 +73,5 @@ class WeeklyCheckinSubmit(BaseModel):
             productivity_rating=form.get("productivity_rating") or None,
             mood_score=form.get("mood_score") or None,
             difficulty_rating=form.get("difficulty_rating") or None,
+            goals_achieved=form.get("goals_achieved") or None,
         )

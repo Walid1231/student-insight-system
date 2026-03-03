@@ -585,3 +585,149 @@ html[data-theme="dark"] .empty-state i {
 html[data-theme="dark"] .card-badge {
     background: rgba(59, 130, 246, 0.15);
 }
+
+/* ══════════════════════════════════════════════════════════════
+   PREMIUM CAREER COMPATIBILITY CARD (SAAS STYLE)
+   ══════════════════════════════════════════════════════════════ */
+.career-compat-premium {
+    background: #f8fafc;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+}
+
+.career-compat-premium:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    transform: translateY(-2px);
+    transition: all 0.2s ease;
+}
+
+.career-premium-header {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #64748b;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.career-premium-role {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 24px;
+}
+
+.career-premium-score {
+    font-size: 52px;
+    font-weight: 800;
+    color: #4f46e5;
+    line-height: 1;
+    margin-bottom: 20px;
+}
+
+.career-premium-bar-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.career-premium-track {
+    flex: 1;
+    height: 8px;
+    background: #e2e8f0;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.career-premium-fill {
+    height: 100%;
+    background: #4f46e5;
+    border-radius: 8px;
+    transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.career-premium-bar-text {
+    font-size: 13px;
+    font-weight: 600;
+    color: #475569;
+}
+
+.career-premium-insights {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.career-premium-insights .insight-line {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.insight-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.insight-dot.green {
+    background: #10b981;
+}
+
+.insight-dot.amber {
+    background: #f59e0b;
+}
+
+.insight-text {
+    font-size: 13px;
+    color: #64748b;
+    font-weight: 500;
+}
+
+/* Dark Mode Overrides */
+html[data-theme="dark"] .career-compat-premium {
+    background: #1e293b;
+    border-color: #334155;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+html[data-theme="dark"] .career-compat-premium:hover {
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+html[data-theme="dark"] .career-premium-header {
+    color: #94a3b8;
+}
+
+html[data-theme="dark"] .career-premium-role {
+    color: #f8fafc;
+}
+
+html[data-theme="dark"] .career-premium-score {
+    color: #818cf8;
+}
+
+html[data-theme="dark"] .career-premium-track {
+    background: #334155;
+}
+
+html[data-theme="dark"] .career-premium-fill {
+    background: #818cf8;
+}
+
+html[data-theme="dark"] .career-premium-bar-text {
+    color: #94a3b8;
+}
+
+html[data-theme="dark"] .insight-text {
+    color: #94a3b8;
+}

@@ -5,12 +5,27 @@ Business logic extracted to services/auth_service.py.
 """
 
 from flask import Blueprint, render_template, request, redirect, url_for, jsonify, make_response
-from flask_jwt_extended import set_access_cookies, unset_jwt_cookies
+from flask_jwt_extended import set_access_cookies, unset_jwt_cookies, verify_jwt_in_request, get_jwt
 
 from services.auth_service import AuthService
 from core.errors import ConflictError, AuthorizationError, ValidationError
 
 auth_bp = Blueprint("auth", __name__)
+
+
+def _redirect_if_authenticated():
+    """If the user has a valid JWT, redirect to their dashboard. Returns None if not authenticated."""
+    try:
+        verify_jwt_in_request(optional=True)
+        claims = get_jwt()
+        role = claims.get("role")
+        if role == "student":
+            return redirect(url_for("dashboard.student_dashboard"))
+        elif role == "teacher":
+            return redirect(url_for("teacher.teacher_dashboard"))
+    except Exception:
+        pass
+    return None
 
 
 @auth_bp.route("/register", methods=["GET", "POST"])
@@ -32,6 +47,10 @@ def register():
         except ValidationError as e:
             return jsonify({"msg": e.message}), 500
 
+    # GET — redirect authenticated users to their dashboard
+    redir = _redirect_if_authenticated()
+    if redir:
+        return redir
     return redirect(url_for('home', _anchor='auth'))
 
 
@@ -52,12 +71,16 @@ def login():
         set_access_cookies(resp, result["access_token"])
         return resp
 
+    # GET — redirect authenticated users to their dashboard
+    redir = _redirect_if_authenticated()
+    if redir:
+        return redir
     return redirect(url_for('home', _anchor='auth'))
 
 
 @auth_bp.route("/logout")
 def logout():
-    """Clear JWT cookies and redirect to login page."""
-    resp = make_response(redirect(url_for('auth.login', _anchor='login')))
+    """Clear JWT cookies and redirect to home page."""
+    resp = make_response(redirect(url_for('home')))
     unset_jwt_cookies(resp)
     return resp
