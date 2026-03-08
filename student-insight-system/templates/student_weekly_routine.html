@@ -236,12 +236,16 @@
             <div class="cal-modal-overlay" id="calModal">
                 <div class="cal-modal">
                     <div class="cal-modal-header">
-                        <h3 id="calModalTitle">Sessions</h3>
+                        <div class="cal-modal-header-left">
+                            <h3 id="calModalTitle">Sessions</h3>
+                            <span class="cal-modal-badge" id="calModalBadge"></span>
+                        </div>
                         <button class="cal-modal-close" id="calModalClose">
                             <i class="fas fa-times"></i>
                         </button>
                     </div>
                     <div class="cal-modal-body" id="calModalBody"></div>
+                    <div class="cal-modal-footer" id="calModalFooter"></div>
                 </div>
             </div>
 
@@ -507,8 +511,9 @@
                 left: 0;
                 width: 100%;
                 height: 100%;
-                background: rgba(0, 0, 0, 0.55);
-                backdrop-filter: blur(6px);
+                background: rgba(0, 0, 0, 0.5);
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
                 z-index: 10000;
                 display: none;
                 align-items: center;
@@ -532,90 +537,131 @@
 
             @keyframes calSlideUp {
                 from {
-                    transform: translateY(20px);
+                    transform: translateY(16px) scale(0.98);
                     opacity: 0;
                 }
 
                 to {
-                    transform: translateY(0);
+                    transform: translateY(0) scale(1);
                     opacity: 1;
                 }
             }
 
             .cal-modal {
                 background: #1a1d27;
-                border: 1px solid #2d3241;
+                border: 1px solid rgba(255, 255, 255, 0.06);
                 border-radius: 16px;
-                max-width: 480px;
+                max-width: 460px;
                 width: 92%;
                 max-height: 75vh;
                 overflow: hidden;
                 display: flex;
                 flex-direction: column;
-                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-                animation: calSlideUp 0.25s ease;
+                box-shadow:
+                    0 0 0 1px rgba(255, 255, 255, 0.03),
+                    0 24px 64px rgba(0, 0, 0, 0.55),
+                    0 8px 20px rgba(0, 0, 0, 0.3);
+                animation: calSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
             }
 
+            /* ── Modal Header ── */
             .cal-modal-header {
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
-                padding: 20px 24px;
-                border-bottom: 1px solid #2d3241;
+                padding: 18px 22px;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            }
+
+            .cal-modal-header-left {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                min-width: 0;
             }
 
             .cal-modal-header h3 {
-                color: #f3f4f6;
-                font-size: 16px;
+                color: #f0f1f3;
+                font-size: 15px;
                 font-weight: 600;
                 margin: 0;
+                letter-spacing: -0.01em;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .cal-modal-badge {
+                background: rgba(34, 197, 94, 0.12);
+                color: #4ade80;
+                font-size: 11px;
+                font-weight: 700;
+                padding: 2px 8px;
+                border-radius: 20px;
+                white-space: nowrap;
+                flex-shrink: 0;
             }
 
             .cal-modal-close {
-                background: #2d3241;
-                border: none;
-                color: #9ca3af;
-                width: 32px;
-                height: 32px;
+                background: transparent;
+                border: 1px solid rgba(255, 255, 255, 0.06);
+                color: #6b7280;
+                width: 30px;
+                height: 30px;
                 border-radius: 8px;
                 cursor: pointer;
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 transition: all 0.15s ease;
+                flex-shrink: 0;
+                font-size: 13px;
             }
 
             .cal-modal-close:hover {
-                background: #3d4255;
-                color: #f3f4f6;
+                background: rgba(255, 255, 255, 0.06);
+                color: #f0f1f3;
             }
 
+            /* ── Modal Body ── */
             .cal-modal-body {
-                padding: 16px 24px 24px;
+                padding: 12px 16px;
                 overflow-y: auto;
+                display: flex;
+                flex-direction: column;
+                gap: 6px;
             }
 
+            /* ── Session Card ── */
             .cal-modal-row {
                 display: flex;
-                align-items: center;
-                gap: 12px;
-                padding: 14px 16px;
-                background: #141720;
-                border: 1px solid #2d3241;
+                align-items: stretch;
+                gap: 0;
+                background: rgba(255, 255, 255, 0.02);
+                border: 1px solid rgba(255, 255, 255, 0.04);
                 border-radius: 10px;
-                margin-bottom: 10px;
-                transition: border-color 0.15s ease;
+                overflow: hidden;
+                transition: all 0.15s ease;
             }
 
             .cal-modal-row:hover {
-                border-color: #3d4255;
+                background: rgba(255, 255, 255, 0.04);
+                border-color: rgba(255, 255, 255, 0.08);
             }
 
-            .cal-modal-dot {
-                width: 8px;
-                height: 8px;
-                border-radius: 50%;
+            .cal-modal-accent {
+                width: 3px;
                 flex-shrink: 0;
+                border-radius: 3px 0 0 3px;
+            }
+
+            .cal-modal-content {
+                flex: 1;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 12px 14px;
+                min-width: 0;
             }
 
             .cal-modal-info {
@@ -624,32 +670,62 @@
             }
 
             .cal-modal-topic {
-                font-size: 14px;
+                font-size: 13.5px;
                 font-weight: 600;
-                color: #f3f4f6;
-                margin-bottom: 2px;
+                color: #e5e7eb;
+                margin-bottom: 3px;
+                line-height: 1.3;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
             }
 
             .cal-modal-detail {
                 font-size: 12px;
                 color: #6b7280;
+                display: flex;
+                align-items: center;
+                gap: 4px;
+            }
+
+            .cal-modal-detail i {
+                font-size: 10px;
+                opacity: 0.7;
             }
 
             .cal-modal-dur {
-                font-size: 13px;
+                font-size: 12px;
                 font-weight: 600;
                 color: #818cf8;
                 white-space: nowrap;
+                background: rgba(129, 140, 248, 0.08);
+                padding: 4px 10px;
+                border-radius: 6px;
+                flex-shrink: 0;
             }
 
-            /* ===== EDIT BUTTON IN MODAL ===== */
-            .cal-modal-edit {
-                background: #2d3241;
+            /* ── Action Buttons (shown on hover) ── */
+            .cal-modal-actions {
+                display: flex;
+                align-items: center;
+                gap: 2px;
+                padding-right: 10px;
+                opacity: 0;
+                transition: opacity 0.15s ease;
+            }
+
+            .cal-modal-row:hover .cal-modal-actions {
+                opacity: 1;
+            }
+
+            .cal-modal-edit,
+            .cal-modal-del {
+                background: transparent;
                 border: none;
-                color: #9ca3af;
-                width: 30px;
-                height: 30px;
-                border-radius: 7px;
+                color: #4b5563;
+                width: 28px;
+                height: 28px;
+                border-radius: 6px;
                 cursor: pointer;
                 display: flex;
                 align-items: center;
@@ -660,20 +736,48 @@
             }
 
             .cal-modal-edit:hover {
-                background: #3d4255;
+                background: rgba(129, 140, 248, 0.1);
                 color: #818cf8;
             }
 
-            /* Inline edit form */
+            .cal-modal-del:hover {
+                background: rgba(239, 68, 68, 0.1);
+                color: #ef4444;
+            }
+
+            /* ── Modal Footer ── */
+            .cal-modal-footer {
+                padding: 14px 22px;
+                border-top: 1px solid rgba(255, 255, 255, 0.05);
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                color: #6b7280;
+                font-size: 12px;
+                font-weight: 500;
+            }
+
+            .cal-modal-footer i {
+                margin-right: 5px;
+                font-size: 11px;
+                opacity: 0.7;
+            }
+
+            .cal-modal-footer-total {
+                color: #818cf8;
+                font-weight: 700;
+                font-size: 13px;
+            }
+
+            /* ── Inline Edit Form ── */
             .cal-edit-form {
                 display: flex;
                 flex-direction: column;
                 gap: 8px;
                 padding: 14px 16px;
-                background: #141720;
-                border: 1px solid #818cf8;
+                background: rgba(129, 140, 248, 0.04);
+                border: 1px solid rgba(129, 140, 248, 0.2);
                 border-radius: 10px;
-                margin-bottom: 10px;
                 animation: calSlideUp 0.15s ease;
             }
 
@@ -684,8 +788,8 @@
             }
 
             .cal-edit-input {
-                background: #1a1d27;
-                border: 1px solid #2d3241;
+                background: rgba(0, 0, 0, 0.2);
+                border: 1px solid rgba(255, 255, 255, 0.06);
                 border-radius: 7px;
                 color: #f3f4f6;
                 font-size: 13px;
@@ -697,7 +801,7 @@
             }
 
             .cal-edit-input:focus {
-                border-color: #818cf8;
+                border-color: rgba(129, 140, 248, 0.4);
             }
 
             .cal-edit-input::placeholder {
@@ -737,13 +841,26 @@
             }
 
             .cal-edit-btn--cancel {
-                background: #2d3241;
+                background: rgba(255, 255, 255, 0.05);
                 color: #9ca3af;
             }
 
             .cal-edit-btn--cancel:hover {
-                background: #3d4255;
+                background: rgba(255, 255, 255, 0.08);
                 color: #f3f4f6;
+            }
+
+            /* ── Mobile: always show actions ── */
+            @media (max-width: 768px) {
+                .cal-modal-actions {
+                    opacity: 1;
+                }
+
+                .cal-modal {
+                    max-width: 100%;
+                    width: 95%;
+                    border-radius: 14px;
+                }
             }
 
             /* ===== DARK THEME OVERRIDES ===== */
@@ -880,6 +997,8 @@
             (function () {
                 const sessionsData = {{ sessions_by_date | tojson
             }};
+
+
             const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June',
                 'July', 'August', 'September', 'October', 'November', 'December'];
 
@@ -995,30 +1114,55 @@
                 const daySessions = sessionsData[dateStr] || [];
                 if (!daySessions.length) return;
 
-                const dt = new Date(dateStr + 'T00:00:00');
-                const opts = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-                modalTitle.textContent = dt.toLocaleDateString('en-US', opts);
+                const modalBadge = document.getElementById('calModalBadge');
+                const modalFooter = document.getElementById('calModalFooter');
 
+                const dt = new Date(dateStr + 'T00:00:00');
+                const opts = { weekday: 'long', month: 'short', day: 'numeric' };
+                modalTitle.textContent = dt.toLocaleDateString('en-US', opts);
+                modalBadge.textContent = daySessions.length + (daySessions.length === 1 ? ' session' : ' sessions');
+
+                let totalMin = 0;
                 let body = '';
                 for (const s of daySessions) {
                     const c = topicColor(s.topic);
                     const esc = str => str.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+                    totalMin += s.duration;
                     body += `
-                        <div class="cal-modal-row" id="session-row-${s.id}">
-                            <div class="cal-modal-dot" style="background:${c.dot}"></div>
+                    <div class="cal-modal-row" id="session-row-${s.id}">
+                        <div class="cal-modal-accent" style="background:${c.dot}"></div>
+                        <div class="cal-modal-content">
                             <div class="cal-modal-info">
                                 <div class="cal-modal-topic">${s.topic}</div>
                                 <div class="cal-modal-detail">
-                                    ${s.skill ? '<i class="fas fa-bolt"></i> ' + s.skill : 'No skill tagged'}
+                                    ${s.skill ? '<i class="fas fa-bolt"></i> ' + s.skill : '<i class="fas fa-tag"></i> No skill tagged'}
                                 </div>
                             </div>
-                            <div class="cal-modal-dur">${s.duration} min</div>
-                            <button class="cal-modal-edit" title="Edit session" onclick="showEditForm(${s.id}, '${esc(dateStr)}', '${esc(s.topic)}', ${s.duration}, '${esc(s.skill)}')">
-                                <i class="fas fa-pencil-alt"></i>
-                            </button>
-                        </div>`;
+                            <div class="cal-modal-dur">${s.duration}m</div>
+                            <div class="cal-modal-actions">
+                                <button class="cal-modal-edit" title="Edit" onclick="showEditForm(${s.id}, '${esc(dateStr)}', '${esc(s.topic)}', ${s.duration}, '${esc(s.skill)}')">
+                                    <i class="fas fa-pencil-alt"></i>
+                                </button>
+                                <button class="cal-modal-del" data-sid="${s.id}" data-date="${esc(dateStr)}" title="Delete">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>`;
                 }
                 modalBody.innerHTML = body;
+
+                // Footer summary
+                const hrs = Math.floor(totalMin / 60);
+                const mins = totalMin % 60;
+                const timeStr = hrs > 0 ? hrs + 'h ' + (mins > 0 ? mins + 'm' : '') : mins + 'm';
+                modalFooter.innerHTML = `<span><i class="fas fa-clock"></i> Total study time</span><span class="cal-modal-footer-total">${timeStr}</span>`;
+
+                // Wire delete buttons via event listeners
+                modalBody.querySelectorAll('.cal-modal-del').forEach(btn => {
+                    btn.addEventListener('click', () => deleteSession(parseInt(btn.dataset.sid), btn.dataset.date));
+                });
+
                 modal.classList.add('active');
             }
 
@@ -1091,7 +1235,42 @@
                     });
             }
 
+            // Delete session via API
+            function deleteSession(sessionId, dateStr) {
+                if (!confirm('Delete this session?')) return;
+                const row = document.getElementById('session-row-' + sessionId);
+                if (row) { row.style.opacity = '0.4'; row.style.pointerEvents = 'none'; }
+
+                fetch('/student/delete-study-session/' + sessionId, { method: 'POST' })
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.success) {
+                            const arr = sessionsData[dateStr];
+                            if (arr) {
+                                const idx = arr.findIndex(s => s.id === sessionId);
+                                if (idx !== -1) arr.splice(idx, 1);
+                            }
+                            if (!sessionsData[dateStr] || !sessionsData[dateStr].length) {
+                                delete sessionsData[dateStr];
+                                modal.classList.remove('active');
+                            } else {
+                                openDayModal(dateStr);
+                            }
+                            renderCalendar();
+                            showToast();
+                        } else {
+                            alert(data.error || 'Delete failed');
+                            if (row) { row.style.opacity = ''; row.style.pointerEvents = ''; }
+                        }
+                    })
+                    .catch(() => {
+                        alert('Network error');
+                        if (row) { row.style.opacity = ''; row.style.pointerEvents = ''; }
+                    });
+            }
+
             function attachEvents() {
+
                 // Pill hover → tooltip
                 grid.querySelectorAll('.cal-pill').forEach(pill => {
                     pill.addEventListener('mouseenter', (e) => {

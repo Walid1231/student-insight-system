@@ -3,255 +3,348 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Goals & Grades | Student Insight</title>
+    <title>Goals &amp; Grades | Student Insight</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/unified_styles.css') }}?v=3">
     <style>
-        .gg-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 24px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .gg-card {
-            background: var(--bg-surface, #fff);
-            border: 1px solid var(--border-light, #e5e7eb);
-            border-radius: 14px;
-            padding: 24px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, .04);
-        }
-
-        .gg-card-title {
-            font-size: 16px;
-            font-weight: 700;
-            color: var(--text-dark, #111827);
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding-bottom: 14px;
-            border-bottom: 1px solid var(--border-light, #e5e7eb);
-        }
-
-        .gg-card-title i {
-            color: var(--primary-navy, #3b82f6);
-            font-size: 18px;
-        }
-
-        /* Skill chips */
-        .skill-grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-bottom: 16px;
-        }
-
-        .skill-chip {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 8px 16px;
-            border: 2px solid var(--border-light, #e5e7eb);
-            border-radius: 8px;
-            background: var(--bg-surface, #fff);
-            font-size: 13px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.15s;
-            color: var(--text-dark, #374151);
-            font-family: 'Inter', sans-serif;
-        }
-
-        .skill-chip:hover {
-            border-color: #3b82f6;
-        }
-
-        .skill-chip.selected {
-            border-color: #3b82f6;
-            background: rgba(59, 130, 246, 0.08);
-            color: #3b82f6;
-        }
-
-        .skill-chip input {
-            display: none;
-        }
-
-        /* Career match list */
-        .career-match-list {
-            margin-top: 16px;
-        }
-
-        .career-match-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: var(--bg-body, #f9fafb);
-            border: 1px solid var(--border-light, #e5e7eb);
-            border-radius: 10px;
-            padding: 14px 18px;
-            margin-bottom: 10px;
-            transition: border-color 0.15s;
-        }
-
-        .career-match-item:hover {
-            border-color: #3b82f6;
-        }
-
-        .career-match-info {
+        /* ── Page layout ───────────────────────────────────────── */
+        .gg-layout {
             display: flex;
             flex-direction: column;
-            gap: 2px;
+            gap: 24px;
         }
 
-        .career-match-title {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--text-dark, #111827);
+        /* ── Section header accent bar ─────────────────────────── */
+        .saas-card {
+            position: relative;
+            overflow: hidden;
         }
 
-        .career-match-score {
-            font-size: 12px;
-            color: var(--text-muted, #6b7280);
+        .saas-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary-navy), var(--accent-gold));
+            border-radius: 10px 10px 0 0;
         }
 
-        .career-match-score strong {
-            color: #3b82f6;
+        /* ── Dept select ───────────────────────────────────────── */
+        .dept-wrap {
+            position: relative;
         }
 
-        .career-select-btn {
-            padding: 7px 16px;
-            border-radius: 8px;
-            border: 1px solid #3b82f6;
-            background: transparent;
-            color: #3b82f6;
-            font-size: 12px;
-            font-weight: 600;
+        .dept-wrap>i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            pointer-events: none;
+            font-size: 13px;
+            z-index: 1;
+        }
+
+        #dept-select {
+            padding-left: 38px;
+            appearance: none;
+            -webkit-appearance: none;
             cursor: pointer;
-            transition: all 0.15s;
-            font-family: 'Inter', sans-serif;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%236b7280' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
         }
 
-        .career-select-btn:hover,
-        .career-select-btn.selected {
-            background: #3b82f6;
-            color: #fff;
+        /* ── Suggestion panels ─────────────────────────────────── */
+        .suggest-section {
+            display: none;
+            animation: fadeUp .22s ease;
         }
 
-        /* Goal setting */
-        .goal-form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr auto;
-            gap: 12px;
-            align-items: end;
-            margin-top: 16px;
+        .suggest-section.show {
+            display: block;
         }
 
-        @media(max-width:800px) {
-            .goal-form-row {
-                grid-template-columns: 1fr;
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(6px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
             }
         }
 
-        /* Existing goals/grades table */
-        .records-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 16px;
-        }
-
-        .records-table th {
+        .suggest-label {
             font-size: 11px;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: var(--text-muted, #9ca3af);
-            padding: 10px 12px;
-            text-align: left;
-            border-bottom: 2px solid var(--border-light, #e5e7eb);
+            letter-spacing: .55px;
+            color: var(--text-muted);
+            margin: 18px 0 10px;
+            display: flex;
+            align-items: center;
+            gap: 7px;
         }
 
-        .records-table td {
+        .suggest-label i {
+            color: var(--primary-navy);
+        }
+
+        /* Pills for suggested careers */
+        .pill-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .c-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 13px;
+            border-radius: 7px;
+            border: 1.5px solid var(--border-light);
+            background: var(--bg-surface);
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-dark);
+            cursor: default;
+            font-family: 'Inter', sans-serif;
+            transition: border-color .15s, color .15s;
+        }
+
+        .c-pill i {
+            font-size: 10px;
+            opacity: .6;
+        }
+
+        /* Skill suggestion chips */
+        .s-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            border: 1.5px dashed #d1d5db;
+            background: transparent;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            transition: all .15s;
+        }
+
+        .s-chip:hover:not(.s-added) {
+            border-style: solid;
+            border-color: #10b981;
+            background: rgba(16, 185, 129, .08);
+            color: #10b981;
+        }
+
+        .s-chip.s-added {
+            border-style: solid;
+            border-color: #d1d5db;
+            background: var(--bg-body);
+            color: #9ca3af;
+            cursor: default;
+        }
+
+        .s-chip i {
+            font-size: 9px;
+        }
+
+        /* ── Active skill tags ─────────────────────────────────── */
+        .skill-tags-area {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            min-height: 36px;
+        }
+
+        .sk-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 7px 12px;
+            border-radius: 7px;
+            border: 1.5px solid rgba(0, 45, 98, .25);
+            background: rgba(0, 45, 98, .06);
             font-size: 13px;
-            padding: 12px;
-            color: var(--text-dark, #374151);
-            border-bottom: 1px solid var(--border-light, #f3f4f6);
+            font-weight: 500;
+            color: var(--primary-navy);
         }
 
-        .records-table tr:hover td {
-            background: rgba(59, 130, 246, 0.03);
-        }
-
-        .delete-btn {
+        .sk-tag button {
             background: none;
             border: none;
-            color: var(--text-muted, #9ca3af);
+            color: inherit;
+            opacity: .55;
             cursor: pointer;
-            font-size: 14px;
-            transition: color 0.15s;
-            padding: 4px 8px;
+            padding: 0;
+            font-size: 12px;
+            line-height: 1;
+            transition: opacity .15s;
         }
 
-        .delete-btn:hover {
-            color: #ef4444;
+        .sk-tag button:hover {
+            opacity: 1;
         }
 
-        /* Grade form */
-        .grade-form-row {
-            display: grid;
-            grid-template-columns: 2fr 1fr 1fr 1fr auto;
-            gap: 12px;
-            align-items: end;
-            margin-top: 16px;
+        /* ── Skill add row ─────────────────────────────────────── */
+        .skill-add-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 14px;
         }
 
-        @media(max-width:800px) {
-            .grade-form-row {
-                grid-template-columns: 1fr;
-            }
+        .skill-add-row input {
+            flex: 1;
         }
 
-        .target-cgpa-row {
+        /* ── Target CGPA strip ─────────────────────────────────── */
+        .target-strip {
             display: flex;
             align-items: center;
             gap: 12px;
-            margin-bottom: 16px;
-            padding: 14px 18px;
-            background: var(--bg-body, #f9fafb);
-            border-radius: 10px;
-            border: 1px solid var(--border-light, #e5e7eb);
+            flex-wrap: wrap;
+            padding: 12px 16px;
+            border-radius: 9px;
+            background: var(--bg-body);
+            border: 1px solid var(--border-light);
+            margin-bottom: 20px;
         }
 
-        .target-cgpa-row label {
+        .target-strip label {
             font-size: 13px;
             font-weight: 600;
-            color: var(--text-dark, #374151);
+            color: var(--text-dark);
             white-space: nowrap;
         }
 
-        .target-cgpa-row input {
-            width: 80px;
+        .target-strip input {
+            width: 90px;
         }
 
-        .section-divider {
+        #cgpa-save-status {
+            font-size: 12px;
+            color: #10b981;
+            font-weight: 500;
+            opacity: 0;
+            transition: opacity .3s;
+        }
+
+        .target-strip .cur {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-left: auto;
+        }
+
+        .target-strip .cur strong {
+            color: var(--primary-navy);
+            font-size: 14px;
+        }
+
+        /* ── Career match list ─────────────────────────────────── */
+        .career-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .career-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 13px 16px;
+            border-radius: 9px;
+            border: 1.5px solid var(--border-light);
+            background: var(--bg-body);
+            gap: 12px;
+            transition: border-color .15s;
+        }
+
+        .career-row:hover {
+            border-color: var(--primary-navy);
+        }
+
+        .career-row h4 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin: 0 0 2px;
+        }
+
+        .career-row span {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .career-row span strong {
+            color: var(--primary-navy);
+        }
+
+        .career-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .btn-add-g {
+            padding: 6px 13px;
+            border-radius: 7px;
+            border: 1.5px solid var(--primary-navy);
+            background: transparent;
+            color: var(--primary-navy);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            transition: all .15s;
+        }
+
+        .btn-add-g:hover {
+            background: var(--primary-navy);
+            color: #fff;
+        }
+
+        .goal-type-sel {
+            padding: 5px 8px;
+            font-size: 12px;
+            border-radius: 7px;
+            border: 1px solid var(--border-light);
+            font-family: 'Inter', sans-serif;
+            height: 32px;
+        }
+
+        .btn-rm-g {
+            background: none;
             border: none;
-            border-top: 1px solid var(--border-light, #e5e7eb);
-            margin: 24px 0;
+            color: var(--text-muted);
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-family: 'Inter', sans-serif;
+            transition: all .15s;
         }
 
-        .no-data-msg {
-            text-align: center;
-            color: var(--text-muted, #9ca3af);
-            font-size: 13px;
-            padding: 20px;
+        .btn-rm-g:hover {
+            color: #ef4444;
+            background: rgba(239, 68, 68, .07);
         }
 
-        /* Primary badge */
-        .primary-badge {
+        .badge-added {
             display: inline-block;
             font-size: 10px;
             font-weight: 700;
@@ -259,236 +352,582 @@
             color: #2563eb;
             padding: 2px 8px;
             border-radius: 10px;
-            margin-left: 8px;
+            margin-left: 6px;
         }
 
-        /* Dark theme */
-        html[data-theme="dark"] .gg-card {
+        /* ── Goals saved table ─────────────────────────────────── */
+        .gg-sep {
+            border: none;
+            border-top: 1px solid var(--border-light);
+            margin: 20px 0;
+        }
+
+        .sub-label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+
+        .mini-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .mini-table th {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .4px;
+            color: var(--text-muted);
+            padding: 9px 10px;
+            text-align: left;
+            border-bottom: 2px solid var(--border-light);
+        }
+
+        .mini-table td {
+            font-size: 13px;
+            padding: 11px 10px;
+            color: var(--text-dark);
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .mini-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .mini-table tr:hover td {
+            background: rgba(0, 45, 98, .02);
+        }
+
+        .badge-primary {
+            display: inline-block;
+            font-size: 10px;
+            font-weight: 700;
+            background: rgba(0, 45, 98, .12);
+            color: var(--primary-navy);
+            padding: 2px 9px;
+            border-radius: 10px;
+        }
+
+        .btn-set-primary {
+            background: none;
+            border: 1px dashed var(--border-light);
+            color: var(--text-muted);
+            font-size: 11px;
+            cursor: pointer;
+            padding: 3px 9px;
+            border-radius: 6px;
+            font-family: 'Inter', sans-serif;
+            transition: all .15s;
+        }
+
+        .btn-set-primary:hover {
+            border-color: var(--primary-navy);
+            color: var(--primary-navy);
+        }
+
+        .btn-del {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 13px;
+            padding: 4px 8px;
+            border-radius: 6px;
+            transition: all .15s;
+        }
+
+        .btn-del:hover {
+            color: #ef4444;
+            background: rgba(239, 68, 68, .07);
+        }
+
+        /* ── Grade form ────────────────────────────────────────── */
+        .grade-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 80px 1fr 1fr auto;
+            gap: 12px;
+            align-items: end;
+        }
+
+        @media (max-width: 800px) {
+            .grade-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .fg label {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .4px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        /* ── CGPA chip ─────────────────────────────────────────── */
+        .cgpa-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 12px;
+            border-radius: 7px;
+            background: rgba(16, 185, 129, .1);
+            color: #059669;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        /* Type badge in table */
+        .type-badge {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 9px;
+            border-radius: 5px;
+        }
+
+        .type-core {
+            background: rgba(0, 45, 98, .1);
+            color: var(--primary-navy);
+        }
+
+        .type-ged {
+            background: rgba(16, 185, 129, .1);
+            color: #059669;
+        }
+
+        .type-elective {
+            background: rgba(139, 92, 246, .1);
+            color: #7c3aed;
+        }
+
+        /* Empty placeholder */
+        .gg-empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            padding: 36px 16px;
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        .gg-empty i {
+            font-size: 28px;
+            opacity: .4;
+        }
+
+        .gg-empty p {
+            font-size: 13px;
+            margin: 0;
+        }
+
+        /* ── Toast ─────────────────────────────────────────────── */
+        #gg-toast {
+            position: fixed;
+            bottom: 28px;
+            right: 28px;
+            background: var(--primary-navy);
+            color: #fff;
+            padding: 13px 20px;
+            border-radius: 10px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, .18);
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity .25s, transform .25s;
+            z-index: 9999;
+            pointer-events: none;
+        }
+
+        #gg-toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        #gg-toast.err {
+            background: #dc2626;
+        }
+
+        /* ── Loader spinner ────────────────────────────────────── */
+        .spin {
+            display: inline-block;
+            animation: spin .6s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* ── Dark mode ─────────────────────────────────────────── */
+        html[data-theme="dark"] .saas-card {
             background: #1a1d27;
             border-color: #2d3241;
         }
 
-        html[data-theme="dark"] .gg-card-title {
-            color: #e5e7eb;
-            border-bottom-color: #2d3241;
-        }
-
-        html[data-theme="dark"] .skill-chip {
-            border-color: #2d3241;
-            background: #141720;
-            color: #d1d5db;
-        }
-
-        html[data-theme="dark"] .career-match-item {
+        html[data-theme="dark"] .saas-card-header {
             background: #141720;
             border-color: #2d3241;
         }
 
-        html[data-theme="dark"] .career-match-title {
+        html[data-theme="dark"] .saas-card-header h2 {
             color: #e5e7eb;
         }
 
-        html[data-theme="dark"] .records-table th {
-            color: #6b7280;
-            border-bottom-color: #2d3241;
-        }
-
-        html[data-theme="dark"] .records-table td {
-            color: #d1d5db;
-            border-bottom-color: #2d3241;
-        }
-
-        html[data-theme="dark"] .target-cgpa-row {
+        html[data-theme="dark"] .target-strip {
             background: #141720;
             border-color: #2d3241;
         }
 
-        html[data-theme="dark"] .target-cgpa-row label {
+        html[data-theme="dark"] .target-strip label {
             color: #d1d5db;
         }
 
-        html[data-theme="dark"] .primary-badge {
+        html[data-theme="dark"] .career-row {
+            background: #141720;
+            border-color: #2d3241;
+        }
+
+        .highlight-flash {
+            animation: highlight-flash-anim 2s;
+        }
+
+        @keyframes highlight-flash-anim {
+            0% {
+                border-color: var(--accent-gold);
+                box-shadow: 0 0 10px var(--accent-gold);
+            }
+
+            100% {
+                border-color: var(--border-color);
+                box-shadow: none;
+            }
+        }
+
+        html[data-theme="dark"] .career-row h4 {
+            color: #e5e7eb;
+        }
+
+        html[data-theme="dark"] .sk-tag {
+            border-color: rgba(107, 158, 222, .35);
+            background: rgba(107, 158, 222, .1);
+            color: #6b9fde;
+        }
+
+        html[data-theme="dark"] .mini-table th {
+            border-color: #2d3241;
+        }
+
+        html[data-theme="dark"] .mini-table td {
+            color: #d1d5db;
+            border-color: #2d3241;
+        }
+
+        html[data-theme="dark"] .mini-table tr:hover td {
+            background: #1e2231;
+        }
+
+        html[data-theme="dark"] .badge-primary {
             background: #1e3a5f;
             color: #60a5fa;
+        }
+
+        html[data-theme="dark"] .c-pill {
+            background: #141720;
+            border-color: #2d3241;
+            color: #d1d5db;
+        }
+
+        html[data-theme="dark"] .gg-sep {
+            border-color: #2d3241;
         }
     </style>
 </head>
 
-<body class="preload">
+<body>
     {% set active_page = 'goals' %}
     {% include 'components/sidebar.html' %}
 
     <main class="main-content">
-        <div class="dashboard-container">
+        <div class="dashboard-container" style="padding: 32px 28px 64px;">
 
+            <!-- Page header -->
             <div class="welcome-header">
-                <h1><i class="fas fa-bullseye"></i> Goals & Grades</h1>
-                <p>Set career goals based on your skills, and track your academic grades.</p>
+                <h1><i class="fas fa-bullseye"></i> Goals &amp; Grades</h1>
+                <p>Select your department, set career goals, and track your academic grades.</p>
             </div>
 
-            <div class="gg-grid">
+            <div class="gg-layout">
 
-                <!-- ===== SECTION 1: SKILL-DRIVEN GOAL SETTING ===== -->
-                <div class="gg-card">
-                    <div class="gg-card-title">
-                        <i class="fas fa-star"></i>
-                        Your Skills & Career Goals
+                <!-- ═══════════════════════════════════════
+             CARD 1 · Department
+        ═══════════════════════════════════════ -->
+                <div class="saas-card">
+                    <div class="saas-card-header">
+                        <h2><i class="fas fa-university"></i> Department</h2>
+                        <p>Pick your department to see relevant careers &amp; skills instantly</p>
                     </div>
+                    <div class="saas-card-body">
 
-                    <!-- Target CGPA -->
-                    <form method="POST" action="{{ url_for('dashboard.save_target_cgpa') }}" style="margin-bottom:0;">
-                        <div class="target-cgpa-row">
-                            <label><i class="fas fa-trophy"></i> Target CGPA:</label>
-                            <input type="number" name="target_cgpa" class="form-input" step="0.01" min="0" max="4.0"
-                                value="{{ student.target_cgpa or '' }}" placeholder="e.g. 3.50">
-                            <button type="submit" class="btn btn-primary" style="padding:8px 16px;font-size:12px;">
-                                <i class="fas fa-save"></i> Save
-                            </button>
-                            <span style="color:var(--text-muted);font-size:12px;">
-                                Current: {{ student.current_cgpa or 'N/A' }}
-                            </span>
+                        <div class="dept-wrap">
+                            <i class="fas fa-graduation-cap"></i>
+                            <select id="dept-select" class="form-input">
+                                <option value="">— Choose your department —</option>
+                                {% for group_name, depts in dept_groups %}
+                                <optgroup label="{{ group_name }}">
+                                    {% for dept in depts %}
+                                    <option value="{{ dept }}" {% if student.department==dept %}selected{% endif %}>
+                                        {{ dept }}
+                                    </option>
+                                    {% endfor %}
+                                </optgroup>
+                                {% endfor %}
+                            </select>
                         </div>
-                    </form>
 
-                    <!-- Step 1: Select Skills -->
-                    <div class="field-label" style="margin-bottom:10px;">1. Select Your Current Skills</div>
-                    <form id="skillForm" method="POST" action="{{ url_for('dashboard.save_skills') }}">
-                        <div class="skill-grid">
-                            {% for skill in all_skills %}
-                            <label class="skill-chip {{ 'selected' if skill.id in student_skill_ids else '' }}">
-                                <input type="checkbox" name="skill_ids" value="{{ skill.id }}" {{ 'checked' if skill.id
-                                    in student_skill_ids else '' }} onchange="this.form.submit()">
-                                <i class="fas fa-code" style="font-size:11px;"></i>
-                                {{ skill.skill_name }}
-                            </label>
-                            {% endfor %}
+                        <!-- Suggested careers -->
+                        <div class="suggest-section" id="dept-careers">
+                            <div class="suggest-label"><i class="fas fa-briefcase"></i> Suggested Career Paths</div>
+                            <div class="pill-row" id="career-pills"></div>
                         </div>
-                    </form>
 
-                    <!-- Step 2: Matching Careers -->
-                    <div class="field-label" style="margin-top:20px;margin-bottom:10px;">2. Matching Career Paths</div>
-
-                    {% if matching_careers %}
-                    <div class="career-match-list">
-                        {% for career in matching_careers %}
-                        <div class="career-match-item">
-                            <div class="career-match-info">
-                                <div class="career-match-title">
-                                    {{ career.title }}
-                                    {% if career.id in goal_career_ids %}
-                                    <span class="primary-badge">SELECTED</span>
-                                    {% endif %}
-                                </div>
-                                <div class="career-match-score">
-                                    <strong>{{ career.match_count }}</strong> of your skills match &middot;
-                                    {{ career.field_category or '' }}
-                                </div>
+                        <!-- Suggested skills -->
+                        <div class="suggest-section" id="dept-skills">
+                            <div class="suggest-label"><i class="fas fa-tools"></i> Suggested Skills — click to add
                             </div>
-                            {% if career.id not in goal_career_ids %}
-                            <form method="POST" action="{{ url_for('dashboard.add_goal') }}" style="margin:0;">
-                                <input type="hidden" name="career_id" value="{{ career.id }}">
-                                <select name="goal_type"
-                                    style="padding:4px 8px;font-size:12px;border-radius:6px;border:1px solid var(--border-light);margin-right:6px;font-family:'Inter',sans-serif;">
-                                    <option value="Long Term">Long Term</option>
-                                    <option value="Short Term">Short Term</option>
-                                </select>
-                                <button type="submit" class="career-select-btn">
-                                    <i class="fas fa-plus"></i> Add Goal
-                                </button>
-                            </form>
-                            {% else %}
-                            <form method="POST" action="{{ url_for('dashboard.delete_goal', goal_id=career.goal_id) }}"
-                                style="margin:0;">
-                                <button type="submit" class="delete-btn" title="Remove goal">
-                                    <i class="fas fa-times-circle"></i> Remove
-                                </button>
-                            </form>
-                            {% endif %}
+                            <div class="pill-row" id="skill-pills"></div>
                         </div>
-                        {% endfor %}
-                    </div>
-                    {% else %}
-                    <div class="no-data-msg">
-                        <i class="fas fa-search" style="font-size:20px;display:block;margin-bottom:8px;"></i>
-                        Select your skills above to see matching career paths.
-                    </div>
-                    {% endif %}
 
-                    <!-- Current Goals -->
-                    {% if goals %}
-                    <div class="field-label" style="margin-top:20px;margin-bottom:10px;">Your Current Goals</div>
-                    <table class="records-table">
-                        <thead>
-                            <tr>
-                                <th>Career Path</th>
-                                <th>Type</th>
-                                <th>Primary</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for g in goals %}
-                            <tr>
-                                <td>{{ g.career_title }}</td>
-                                <td>{{ g.goal_type }}</td>
-                                <td>
-                                    {% if g.is_primary %}
-                                    <span class="primary-badge">PRIMARY</span>
-                                    {% else %}
-                                    <form method="POST"
-                                        action="{{ url_for('dashboard.set_primary_goal', goal_id=g.id) }}"
-                                        style="display:inline;margin:0;">
-                                        <button type="submit"
-                                            style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:12px;">
-                                            Set Primary
-                                        </button>
-                                    </form>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <form method="POST" action="{{ url_for('dashboard.delete_goal', goal_id=g.id) }}"
-                                        style="margin:0;">
-                                        <button type="submit" class="delete-btn"><i class="fas fa-trash"></i></button>
-                                    </form>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                    {% endif %}
+                    </div>
                 </div>
 
-                <!-- ===== SECTION 2: GRADE INPUT ===== -->
-                <div class="gg-card">
-                    <div class="gg-card-title">
-                        <i class="fas fa-graduation-cap"></i>
-                        Grade Input
+                <!-- ═══════════════════════════════════════
+             CARD 2 · Skills
+        ═══════════════════════════════════════ -->
+                <div class="saas-card">
+                    <div class="saas-card-header">
+                        <h2><i class="fas fa-layer-group"></i> Your Skills</h2>
+                        <p>Skills are used to match you with careers — the more you add, the better</p>
                     </div>
+                    <div class="saas-card-body">
 
-                    <form method="POST" action="{{ url_for('dashboard.add_grade') }}">
-                        <div class="grade-form-row">
-                            <div>
-                                <label class="field-label">Course</label>
-                                <select name="course_id" class="form-input" required>
-                                    <option value="">Select course...</option>
-                                    {% for c in courses %}
-                                    <option value="{{ c.id }}">{{ c.course_name }} ({{ c.course_type }}, {{
-                                        c.credit_value }}cr)</option>
-                                    {% endfor %}
+                        <div class="skill-tags-area" id="skill-tags-area">
+                            {% for ss in student_skills %}
+                            <div class="sk-tag" data-skill-id="{{ ss.id }}">
+                                <i class="fas fa-check" style="font-size:10px;"></i>
+                                {{ ss.skill_name }}
+                                <button onclick="deleteSkill({{ ss.id }}, this)" title="Remove">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            {% endfor %}
+                            {% if not student_skills %}
+                            <div class="gg-empty" id="no-skills-msg" style="padding:12px 0;">
+                                <p>No skills yet — type below or pick from department suggestions above.</p>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="skill-add-row">
+                            <input type="text" id="skill-input" class="form-input"
+                                placeholder="e.g. Python, Machine Learning, Public Speaking..." autocomplete="off">
+                            <button class="btn btn-primary" onclick="addSkill()"
+                                style="white-space:nowrap;padding:10px 20px;">
+                                <i class="fas fa-plus"></i> Add Skill
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- ═══════════════════════════════════════
+             CARD 3 · Career Goals
+        ═══════════════════════════════════════ -->
+                <div class="saas-card">
+                    <div class="saas-card-header">
+                        <h2><i class="fas fa-star"></i> Career Goals</h2>
+                        <p>Set your target CGPA and choose the careers you're working towards</p>
+                    </div>
+                    <div class="saas-card-body">
+
+                        <!-- Target CGPA -->
+                        <div class="target-strip">
+                            <i class="fas fa-trophy" style="color:var(--accent-gold);font-size:16px;"></i>
+                            <label>Target CGPA</label>
+                            <input type="number" id="target-cgpa-input" class="form-input" step="0.01" min="0" max="4.0"
+                                value="{{ student.target_cgpa or '' }}" placeholder="e.g. 3.50"
+                                onkeydown="if(event.key==='Enter') saveTargetCgpa()">
+                            <button class="btn btn-primary" onclick="saveTargetCgpa()"
+                                style="padding:8px 16px;font-size:12px;">
+                                <i class="fas fa-save"></i> Save
+                            </button>
+                            <span id="cgpa-save-status"><i class="fas fa-check"></i> Saved</span>
+                            <span class="cur">Current: <strong id="live-cgpa">{{ student.current_cgpa or 'N/A'
+                                    }}</strong></span>
+                        </div>
+
+                        <!-- Manual Career Search/Selection -->
+                        <div class="sub-label"><i class="fas fa-search"></i> Select Career Goal Manually</div>
+                        <div class="skill-add-row" style="margin-bottom: 28px; gap: 10px;">
+                            <select id="manual-career-select" class="form-input" style="flex: 2;">
+                                <option value="">— Choose a career path —</option>
+                                {% for c in all_careers %}
+                                <option value="{{ c.id }}">{{ c.title }}</option>
+                                {% endfor %}
+                            </select>
+                            <select id="manual-goal-type" class="form-input" style="flex: 1;">
+                                <option value="Long Term">Long Term</option>
+                                <option value="Short Term">Short Term</option>
+                            </select>
+                            <button class="btn btn-primary" onclick="addManualGoal()"
+                                style="white-space:nowrap;padding:10px 20px;">
+                                <i class="fas fa-plus"></i> Add Goal
+                            </button>
+                        </div>
+
+                        <div class="sub-label"><i class="fas fa-magic"></i> Matches Based on Your Skills</div>
+
+                        <!-- Career matches (skill-driven) -->
+                        <div id="matching-careers-area">
+                            {% if matching_careers %}
+                            <div class="career-list">
+                                {% for career in matching_careers %}
+                                <div class="career-row" id="cr-{{ career.id }}">
+                                    <div>
+                                        <h4>{{ career.title }}
+                                            {% if career.id in goal_career_ids %}
+                                            <span class="badge-added">ADDED</span>
+                                            {% endif %}
+                                        </h4>
+                                        <span>
+                                            <strong>{{ career.match_count }}</strong> skills matched &middot;
+                                            {{ career.field_category or '' }}
+                                        </span>
+                                    </div>
+                                    <div class="career-actions">
+                                        {% if career.id not in goal_career_ids %}
+                                        <select class="goal-type-sel" id="gt-{{ career.id }}">
+                                            <option value="Long Term">Long Term</option>
+                                            <option value="Short Term">Short Term</option>
+                                        </select>
+                                        <button class="btn-add-g" onclick="addGoal({{ career.id }})">
+                                            <i class="fas fa-plus"></i> Add
+                                        </button>
+                                        {% else %}
+                                        <button class="btn-rm-g"
+                                            onclick="deleteGoal({{ career.goal_id }}, {{ career.id }})">
+                                            <i class="fas fa-times"></i> Remove
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <div class="gg-empty">
+                                <i class="fas fa-search"></i>
+                                <p>Add skills above to see matching career paths here.</p>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Saved goals table -->
+                        {% if goals %}
+                        <hr class="gg-sep">
+                        <div class="sub-label">Your Saved Goals</div>
+                        <table class="mini-table" id="goals-table">
+                            <thead>
+                                <tr>
+                                    <th>Career</th>
+                                    <th>Type</th>
+                                    <th>Priority</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="goals-tbody">
+                                {% for g in goals %}
+                                <tr id="goal-row-{{ g.id }}">
+                                    <td><strong>{{ g.career_title }}</strong></td>
+                                    <td>{{ g.goal_type }}</td>
+                                    <td>
+                                        {% if g.is_primary %}
+                                        <span class="badge-primary">PRIMARY</span>
+                                        {% else %}
+                                        <button class="btn-set-primary" onclick="setPrimary({{ g.id }})">Set
+                                            Primary</button>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <button class="btn-del" onclick="deleteGoal({{ g.id }}, null)" title="Delete">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        {% else %}
+                        <div id="goals-empty" style="display:none;"></div>
+                        {% endif %}
+
+                    </div>
+                </div>
+
+                <!-- ═══════════════════════════════════════
+             CARD 4 · Add a Grade
+        ═══════════════════════════════════════ -->
+                <div class="saas-card">
+                    <div class="saas-card-header">
+                        <h2><i class="fas fa-plus-circle"></i> Add a Grade</h2>
+                        <p>Each grade instantly recalculates your CGPA — no page refresh needed</p>
+                    </div>
+                    <div class="saas-card-body">
+                        <div class="grade-grid">
+                            <div class="fg">
+                                <label>Course Name</label>
+                                <input type="text" id="g-course" class="form-input" list="course-list"
+                                    placeholder="e.g. Data Structures" autocomplete="off">
+                                <datalist id="course-list">
+                                    {% for r in records %}
+                                    <option value="{{ r.course_name }}">
+                                        {% endfor %}
+                                </datalist>
+                            </div>
+                            <div class="fg">
+                                <label>Type</label>
+                                <select id="g-type" class="form-input">
+                                    <option value="Core">Core (Major)</option>
+                                    <option value="GED">GED (Gen Ed)</option>
+                                    <option value="Elective">Elective</option>
                                 </select>
                             </div>
-                            <div>
-                                <label class="field-label">Semester</label>
-                                <select name="semester" class="form-input" required>
+                            <div class="fg">
+                                <label>Credits</label>
+                                <input type="number" id="g-credits" class="form-input" value="3" min="1" max="6">
+                            </div>
+                            <div class="fg">
+                                <label>Semester</label>
+                                <select id="g-sem" class="form-input">
                                     {% for i in range(1, 13) %}
                                     <option value="{{ i }}">Sem {{ i }}{% if i <= 3 %} (Y1){% elif i <=6 %} (Y2){% elif
                                             i <=9 %} (Y3){% else %} (Y4){% endif %}</option>
                                             {% endfor %}
                                 </select>
                             </div>
-                            <div>
-                                <label class="field-label">Grade</label>
-                                <select name="grade" class="form-input" required>
+                            <div class="fg">
+                                <label>Grade</label>
+                                <select id="g-grade" class="form-input">
                                     <option value="">Grade...</option>
                                     <option value="A+">A+ (4.0)</option>
                                     <option value="A">A (4.0)</option>
@@ -502,67 +941,474 @@
                                     <option value="F">F (0.0)</option>
                                 </select>
                             </div>
-                            <div>
-                                <button type="submit" class="btn btn-primary" style="padding:10px 18px;">
+                            <div class="fg">
+                                <label>&nbsp;</label>
+                                <button id="add-grade-btn" class="btn btn-primary" onclick="addGrade()"
+                                    style="width:100%;padding:10px 14px;">
                                     <i class="fas fa-plus"></i> Add
                                 </button>
                             </div>
                         </div>
-                    </form>
-
-                    <!-- Existing Records -->
-                    {% if records %}
-                    <table class="records-table" style="margin-top:20px;">
-                        <thead>
-                            <tr>
-                                <th>Course</th>
-                                <th>Type</th>
-                                <th>Semester</th>
-                                <th>Grade</th>
-                                <th>GPA</th>
-                                <th>Credits</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for r in records %}
-                            <tr>
-                                <td>{{ r.course_name }}</td>
-                                <td>{{ r.course_type }}</td>
-                                <td>Sem {{ r.semester_taken }}</td>
-                                <td><strong>{{ r.grade }}</strong></td>
-                                <td>{{ r.grade_point }}</td>
-                                <td>{{ r.credit_value }}cr</td>
-                                <td>
-                                    <form method="POST" action="{{ url_for('dashboard.delete_grade', record_id=r.id) }}"
-                                        style="margin:0;">
-                                        <button type="submit" class="delete-btn"><i class="fas fa-trash"></i></button>
-                                    </form>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                    {% else %}
-                    <div class="no-data-msg" style="margin-top:16px;">
-                        <i class="fas fa-book-open" style="font-size:20px;display:block;margin-bottom:8px;"></i>
-                        No grades recorded yet. Add your first course grade above.
                     </div>
-                    {% endif %}
                 </div>
 
-            </div>
-        </div>
+                <!-- ═══════════════════════════════════════
+             CARD 5 · Academic Record
+        ═══════════════════════════════════════ -->
+                <div class="saas-card">
+                    <div class="saas-card-header"
+                        style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+                        <div>
+                            <h2><i class="fas fa-graduation-cap"></i> Academic Record</h2>
+                            <p>All grades — CGPA updates automatically when you add or remove</p>
+                        </div>
+                        <div class="cgpa-chip" id="cgpa-chip-header">
+                            <i class="fas fa-chart-line" style="font-size:12px;"></i>
+                            CGPA <span id="cgpa-chip-val">{{ student.current_cgpa or 'N/A' }}</span>
+                        </div>
+                    </div>
 
-        <!-- Toast -->
-        {% if success %}
-        <div class="toast show" id="successToast">
-            <i class="fas fa-check-circle"></i>
-            <span>{{ success_msg or 'Saved! Dashboard updated.' }}</span>
-        </div>
-        <script>setTimeout(function () { document.getElementById('successToast').classList.remove('show'); }, 3000);</script>
-        {% endif %}
+                    <!-- Table -->
+                    <div style="overflow-x:auto;" id="records-wrap">
+                        {% if records %}
+                        <table class="mini-table" style="margin:0;" id="records-table">
+                            <thead>
+                                <tr>
+                                    <th style="padding-left:24px;">Course</th>
+                                    <th>Type</th>
+                                    <th>Semester</th>
+                                    <th>Grade</th>
+                                    <th>GPA pts</th>
+                                    <th>Credits</th>
+                                    <th style="padding-right:24px;"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="records-tbody">
+                                {% for r in records %}
+                                <tr id="rec-{{ r.id }}">
+                                    <td style="padding-left:24px;font-weight:500;">{{ r.course_name }}</td>
+                                    <td>
+                                        <span class="type-badge type-{{ r.course_type|lower }}">{{ r.course_type
+                                            }}</span>
+                                    </td>
+                                    <td>Sem {{ r.semester_taken }}</td>
+                                    <td><strong>{{ r.grade }}</strong></td>
+                                    <td>{{ r.grade_point }}</td>
+                                    <td>{{ r.credit_value }}cr</td>
+                                    <td style="padding-right:24px;">
+                                        <button class="btn-del" onclick="deleteGrade({{ r.id }})" title="Delete">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        {% else %}
+                        <div class="gg-empty" id="records-empty">
+                            <i class="fas fa-book-open"></i>
+                            <p>No grades yet. Add your first course grade above.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+            </div><!-- gg-layout -->
+        </div><!-- dashboard-container -->
     </main>
+
+    <!-- Toast notification -->
+    <div id="gg-toast"><i class="fas fa-check-circle"></i><span id="gg-toast-msg"></span></div>
+
+    <script>
+        // ═══════════════════════════════════════════════════════════
+        //  Helpers
+        // ═══════════════════════════════════════════════════════════
+        function toast(msg, err = false) {
+            const el = document.getElementById('gg-toast');
+            el.className = 'show' + (err ? ' err' : '');
+            document.getElementById('gg-toast-msg').textContent = msg;
+            clearTimeout(el._t);
+            el._t = setTimeout(() => el.classList.remove('show', 'err'), 3200);
+        }
+
+        async function api(url, body = null) {
+            const r = await fetch(url, {
+                method: body !== null ? 'POST' : 'GET',
+                headers: { 'Content-Type': 'application/json' },
+                body: body !== null ? JSON.stringify(body) : undefined,
+            });
+            return r.json();
+        }
+
+        function setLoading(btn, on) {
+            if (!btn) return;
+            btn.disabled = on;
+            if (on) btn.dataset.orig = btn.innerHTML, btn.innerHTML = '<i class="fas fa-circle-notch spin"></i>';
+            else btn.innerHTML = btn.dataset.orig;
+        }
+
+        // Track existing skill names for suggestion chips
+        let existingSkillNames = new Set([
+            {% for ss in student_skills %}"{{ ss.skill_name }}", {% endfor %}
+]);
+
+        // ═══════════════════════════════════════════════════════════
+        //  Department selector
+        // ═══════════════════════════════════════════════════════════
+        document.getElementById('dept-select').addEventListener('change', function () {
+            const dept = this.value;
+            if (!dept) {
+                document.getElementById('dept-careers').classList.remove('show');
+                document.getElementById('dept-skills').classList.remove('show');
+                return;
+            }
+            fetch(`/api/department-data?dept=${encodeURIComponent(dept)}`)
+                .then(r => r.json())
+                .then(d => {
+                    buildCareerPills(d.careers || []);
+                    buildSkillChips(d.skills || []);
+                });
+        });
+
+        function buildCareerPills(careers) {
+            const grid = document.getElementById('career-pills');
+            const sec = document.getElementById('dept-careers');
+            grid.innerHTML = '';
+            careers.forEach(c => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'c-chip';
+                btn.innerHTML = `<i class="fas fa-briefcase"></i> ${c}`;
+                btn.onclick = () => {
+                    const sel = document.getElementById('manual-career-select');
+                    let found = false;
+                    for (let i = 0; i < sel.options.length; i++) {
+                        if (sel.options[i].text.toLowerCase().trim() === c.toLowerCase().trim()) {
+                            sel.selectedIndex = i;
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found) {
+                        toast(`"${c}" not in official catalog`, true);
+                    }
+                    window.scrollTo({ top: document.getElementById('manual-career-select').offsetTop - 150, behavior: 'smooth' });
+                    sel.classList.add('highlight-flash');
+                    setTimeout(() => sel.classList.remove('highlight-flash'), 2000);
+                };
+                grid.appendChild(btn);
+            });
+            sec.classList.toggle('show', careers.length > 0);
+        }
+
+        function buildSkillChips(skills) {
+            const grid = document.getElementById('skill-pills');
+            const sec = document.getElementById('dept-skills');
+            grid.innerHTML = '';
+            skills.forEach(s => {
+                const added = existingSkillNames.has(s);
+                const ch = document.createElement('button');
+                ch.type = 'button';
+                ch.className = 's-chip' + (added ? ' s-added' : '');
+                ch.innerHTML = added ? `<i class="fas fa-check"></i> ${s}` : `<i class="fas fa-plus"></i> ${s}`;
+                ch.title = added ? 'Already in your skills' : `Add "${s}"`;
+                if (!added) ch.onclick = () => quickAddSkill(s, ch);
+                grid.appendChild(ch);
+            });
+            sec.classList.toggle('show', skills.length > 0);
+        }
+
+        // Auto-load on page open if dept is pre-selected
+        (function () {
+            const sel = document.getElementById('dept-select');
+            if (sel.value) sel.dispatchEvent(new Event('change'));
+        })();
+
+        // ═══════════════════════════════════════════════════════════
+        //  Skills
+        // ═══════════════════════════════════════════════════════════
+        async function addSkill() {
+            const inp = document.getElementById('skill-input');
+            const name = inp.value.trim();
+            if (!name) { inp.focus(); return; }
+            const d = await api('/api/gg/skill/add', { skill_name: name });
+            if (!d.ok) { toast(d.msg || 'Error', true); return; }
+            inp.value = '';
+            refreshSkillTags(d.skills);
+            toast(`✓ "${name}" added`);
+            // Update dept chips
+            const chips = document.querySelectorAll('#skill-pills .s-chip');
+            chips.forEach(ch => {
+                if (ch.textContent.trim() === name || ch.textContent.trim().slice(2) === name) {
+                    ch.className = 's-chip s-added';
+                    ch.innerHTML = `<i class="fas fa-check"></i> ${name}`;
+                    ch.onclick = null;
+                }
+            });
+        }
+
+        async function quickAddSkill(name, chipEl) {
+            chipEl.classList.add('s-added');
+            chipEl.innerHTML = `<i class="fas fa-check"></i> ${name}`;
+            chipEl.onclick = null;
+            const d = await api('/api/gg/skill/add', { skill_name: name });
+            if (!d.ok) { toast(d.msg || 'Error', true); return; }
+            refreshSkillTags(d.skills);
+            toast(`✓ "${name}" added`);
+        }
+
+        async function deleteSkill(skillId, btn) {
+            setLoading(btn, true);
+            const d = await api(`/api/gg/skill/${skillId}/delete`);
+            if (!d.ok) { toast('Error removing skill', true); setLoading(btn, false); return; }
+            refreshSkillTags(d.skills);
+            toast('Skill removed');
+        }
+
+        function refreshSkillTags(skills) {
+            existingSkillNames = new Set(skills.map(s => s.name));
+            const area = document.getElementById('skill-tags-area');
+            area.innerHTML = '';
+            if (skills.length === 0) {
+                area.innerHTML = '<div class="gg-empty" style="padding:12px 0;"><p>No skills yet.</p></div>';
+                return;
+            }
+            skills.forEach(s => {
+                const div = document.createElement('div');
+                div.className = 'sk-tag'; div.dataset.skillId = s.id;
+                div.innerHTML = `<i class="fas fa-check" style="font-size:10px;"></i> ${s.name}
+            <button onclick="deleteSkill(${s.id}, this)" title="Remove">
+                <i class="fas fa-times"></i>
+            </button>`;
+                area.appendChild(div);
+            });
+            // Refresh chip states
+            document.querySelectorAll('#skill-pills .s-chip').forEach(ch => {
+                const label = ch.textContent.trim().replace(/^[✓+]\s*/, '');
+                const added = existingSkillNames.has(label);
+                ch.className = 's-chip' + (added ? ' s-added' : '');
+                ch.innerHTML = added ? `<i class="fas fa-check"></i> ${label}` : `<i class="fas fa-plus"></i> ${label}`;
+                ch.onclick = added ? null : () => quickAddSkill(label, ch);
+            });
+        }
+
+        document.getElementById('skill-input').addEventListener('keydown', e => {
+            if (e.key === 'Enter') addSkill();
+        });
+
+        // ═══════════════════════════════════════════════════════════
+        //  Target CGPA
+        // ═══════════════════════════════════════════════════════════
+        async function saveTargetCgpa() {
+            const val = parseFloat(document.getElementById('target-cgpa-input').value);
+            if (isNaN(val) || val < 0 || val > 4.0) { toast('Enter a valid CGPA (0–4.0)', true); return; }
+            const d = await api('/api/gg/target-cgpa', { target_cgpa: val });
+            if (!d.ok) { toast('Error saving', true); return; }
+            const st = document.getElementById('cgpa-save-status');
+            st.style.opacity = 1;
+            setTimeout(() => { st.style.opacity = 0; }, 2000);
+            toast('Target CGPA saved!');
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //  Manual Career Goal
+        // ═══════════════════════════════════════════════════════════
+        async function addManualGoal() {
+            const careerId = document.getElementById('manual-career-select').value;
+            const goalType = document.getElementById('manual-goal-type').value;
+            if (!careerId) { toast('Please select a career', true); return; }
+            const d = await api('/api/gg/goal/add', { career_id: parseInt(careerId), goal_type: goalType });
+            if (!d.ok) { toast(d.msg || 'Error', true); return; }
+            document.getElementById('manual-career-select').value = '';
+            toast('Goal added!');
+            refreshState();
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //  Goals
+        // ═══════════════════════════════════════════════════════════
+        async function addGoal(careerId) {
+            const typeEl = document.getElementById(`gt-${careerId}`);
+            const goalType = typeEl ? typeEl.value : 'Long Term';
+            const d = await api('/api/gg/goal/add', { career_id: careerId, goal_type: goalType });
+            if (!d.ok) { toast(d.msg || 'Error', true); return; }
+            // Swap button area to "Remove" immediately
+            const row = document.getElementById(`cr-${careerId}`);
+            if (row) {
+                const actions = row.querySelector('.career-actions');
+                const h4 = row.querySelector('h4');
+                // Remove old badge if any, add ADDED badge
+                const existing = h4.querySelector('.badge-added');
+                if (!existing) h4.insertAdjacentHTML('beforeend', '<span class="badge-added">ADDED</span>');
+                actions.innerHTML = `<button class="btn-rm-g" onclick="deleteGoal(null, ${careerId})">
+            <i class="fas fa-times"></i> Remove</button>`;
+            }
+            toast('Goal added!');
+            refreshGoalsTable();
+        }
+
+        async function deleteGoal(goalId, careerId) {
+            let id = goalId;
+            if (!id) {
+                // Find goal id by careerId from table
+                const match = document.querySelector(`[data-career-id="${careerId}"]`);
+                if (match) id = match.dataset.goalId;
+            }
+            if (!id) {
+                // Trigger full state refresh
+                refreshState(); return;
+            }
+            const d = await api(`/api/gg/goal/${id}/delete`);
+            if (!d.ok) { toast('Error', true); return; }
+            // Remove from goals table
+            const row = document.getElementById(`goal-row-${id}`);
+            if (row) row.remove();
+            // Swap career row back to Add button
+            if (careerId) {
+                const cRow = document.getElementById(`cr-${careerId}`);
+                if (cRow) {
+                    const badge = cRow.querySelector('.badge-added');
+                    if (badge) badge.remove();
+                    cRow.querySelector('.career-actions').innerHTML = `
+                <select class="goal-type-sel" id="gt-${careerId}">
+                    <option value="Long Term">Long Term</option>
+                    <option value="Short Term">Short Term</option>
+                </select>
+                <button class="btn-add-g" onclick="addGoal(${careerId})">
+                    <i class="fas fa-plus"></i> Add
+                </button>`;
+                }
+            }
+            toast('Goal removed');
+        }
+
+        async function setPrimary(goalId) {
+            const d = await api(`/api/gg/goal/${goalId}/primary`);
+            if (!d.ok) { toast('Error', true); return; }
+            // Refresh only the priority column
+            document.querySelectorAll('#goals-tbody tr').forEach(tr => {
+                const id = parseInt(tr.id.replace('goal-row-', ''));
+                const td = tr.cells[2];
+                if (id === goalId) {
+                    td.innerHTML = '<span class="badge-primary">PRIMARY</span>';
+                } else {
+                    if (td.querySelector('.badge-primary')) {
+                        td.innerHTML = `<button class="btn-set-primary" onclick="setPrimary(${id})">Set Primary</button>`;
+                    }
+                }
+            });
+            toast('Primary goal updated!');
+        }
+
+        async function refreshGoalsTable() {
+            const d = await api('/api/gg/state');
+            if (!d.ok) return;
+            const tbody = document.getElementById('goals-tbody');
+            if (!tbody) return;
+            if (!d.goals.length) { tbody.innerHTML = ''; return; }
+            tbody.innerHTML = d.goals.map(g => `
+        <tr id="goal-row-${g.id}">
+            <td><strong>${g.career_title}</strong></td>
+            <td>${g.goal_type}</td>
+            <td>${g.is_primary
+                    ? '<span class="badge-primary">PRIMARY</span>'
+                    : `<button class="btn-set-primary" onclick="setPrimary(${g.id})">Set Primary</button>`}</td>
+            <td><button class="btn-del" onclick="deleteGoal(${g.id}, null)" title="Delete">
+                <i class="fas fa-trash"></i></button></td>
+        </tr>`).join('');
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //  Grades
+        // ═══════════════════════════════════════════════════════════
+        async function addGrade() {
+            const course = document.getElementById('g-course').value.trim();
+            const type = document.getElementById('g-type').value;
+            const credits = parseInt(document.getElementById('g-credits').value);
+            const sem = parseInt(document.getElementById('g-sem').value);
+            const grade = document.getElementById('g-grade').value;
+            const btn = document.getElementById('add-grade-btn');
+
+            if (!course) { toast('Course name required', true); return; }
+            if (!grade) { toast('Select a grade', true); return; }
+
+            setLoading(btn, true);
+            const d = await api('/api/gg/grade/add', {
+                course_name: course, course_type: type,
+                credit_value: credits, semester: sem, grade: grade,
+            });
+            setLoading(btn, false);
+
+            if (!d.ok) { toast(d.msg || 'Error adding grade', true); return; }
+
+            // Clear form
+            document.getElementById('g-course').value = '';
+            document.getElementById('g-grade').value = '';
+
+            // Update live CGPA
+            updateCgpaDisplay(d.new_cgpa);
+            toast(`Grade added! CGPA → ${d.new_cgpa ?? '—'}`);
+
+            // Reload records from server
+            const state = await api('/api/gg/state');
+            if (state.ok) renderRecords(state.records);
+        }
+
+        async function deleteGrade(recordId) {
+            const d = await api(`/api/gg/grade/${recordId}/delete`);
+            if (!d.ok) { toast('Error deleting grade', true); return; }
+            const row = document.getElementById(`rec-${recordId}`);
+            if (row) row.style.cssText = 'opacity:0;transition:opacity .25s;';
+            setTimeout(() => { if (row) row.remove(); }, 260);
+            updateCgpaDisplay(d.new_cgpa);
+            toast(`Grade removed. CGPA → ${d.new_cgpa ?? '—'}`);
+        }
+
+        function updateCgpaDisplay(val) {
+            const display = val !== null && val !== undefined ? val : 'N/A';
+            document.getElementById('live-cgpa').textContent = display;
+            document.getElementById('cgpa-chip-val').textContent = display;
+        }
+
+        const TYPE_STYLE = { Core: 'type-core', GED: 'type-ged', Elective: 'type-elective' };
+
+        function renderRecords(records) {
+            const tbody = document.getElementById('records-tbody');
+            const empty = document.getElementById('records-empty');
+            if (!tbody) return;
+            if (!records.length) {
+                if (empty) empty.style.display = '';
+                tbody.innerHTML = ''; return;
+            }
+            if (empty) empty.style.display = 'none';
+            tbody.innerHTML = records.map(r => `
+        <tr id="rec-${r.id}">
+            <td style="padding-left:24px;font-weight:500;">${r.course_name}</td>
+            <td><span class="type-badge ${TYPE_STYLE[r.course_type] || ''}">${r.course_type}</span></td>
+            <td>Sem ${r.semester_taken}</td>
+            <td><strong>${r.grade}</strong></td>
+            <td>${r.grade_point}</td>
+            <td>${r.credit_value}cr</td>
+            <td style="padding-right:24px;">
+                <button class="btn-del" onclick="deleteGrade(${r.id})" title="Delete">
+                    <i class="fas fa-trash"></i></button>
+            </td>
+        </tr>`).join('');
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //  Full state refresh (fallback)
+        // ═══════════════════════════════════════════════════════════
+        async function refreshState() {
+            const d = await api('/api/gg/state');
+            if (!d.ok) return;
+            updateCgpaDisplay(d.current_cgpa);
+            refreshSkillTags(d.skills);
+            renderRecords(d.records);
+            refreshGoalsTable();
+        }
+    </script>
 </body>
 
 </html>

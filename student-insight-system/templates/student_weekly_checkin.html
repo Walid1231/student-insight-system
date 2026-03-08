@@ -1,416 +1,814 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="preload">
 
 <head>
     <meta charset="UTF-8">
     <title>Weekly Check-in | Student Insight</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Preconnect -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+
+    <!-- FOUC Prevention -->
+    <style>
+        html.preload body {
+            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+
+        body {
+            opacity: 1;
+            visibility: visible;
+            transition: opacity 0.3s ease-in;
+        }
+    </style>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/unified_styles.css') }}?v=3">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/unified_styles.css') }}?v=3">
-    <style>
-        .checkin-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 24px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
 
-        @media(max-width:900px) {
-            .checkin-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .checkin-card {
-            background: var(--bg-surface, #fff);
-            border: 1px solid var(--border-light, #e5e7eb);
-            border-radius: 14px;
-            padding: 24px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, .04);
-        }
-
-        .checkin-card-title {
-            font-size: 16px;
-            font-weight: 700;
-            color: var(--text-dark, #111827);
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .checkin-card-title i {
-            color: var(--primary-navy, #3b82f6);
-            font-size: 18px;
-        }
-
-        /* Star rating */
-        .star-group {
-            display: flex;
-            gap: 6px;
-            margin-bottom: 6px;
-        }
-
-        .star-btn {
-            background: none;
-            border: none;
-            font-size: 28px;
-            cursor: pointer;
-            color: var(--border-light, #d1d5db);
-            transition: color 0.15s, transform 0.15s;
-            padding: 0;
-        }
-
-        .star-btn:hover,
-        .star-btn.active {
-            color: #f59e0b;
-            transform: scale(1.15);
-        }
-
-        /* Emoji mood */
-        .mood-group {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 6px;
-        }
-
-        .mood-btn {
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
-            border: 2px solid var(--border-light, #e5e7eb);
-            background: var(--bg-surface, #fff);
-            font-size: 24px;
-            cursor: pointer;
-            transition: all 0.15s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .mood-btn:hover {
-            border-color: var(--primary-navy, #3b82f6);
-            transform: translateY(-2px);
-        }
-
-        .mood-btn.active {
-            border-color: #3b82f6;
-            background: rgba(59, 130, 246, 0.08);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
-        }
-
-        /* Difficulty pills */
-        .diff-group {
-            display: flex;
-            gap: 8px;
-        }
-
-        .diff-btn {
-            padding: 8px 20px;
-            border-radius: 8px;
-            border: 2px solid var(--border-light, #e5e7eb);
-            background: var(--bg-surface, #fff);
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.15s;
-            font-family: 'Inter', sans-serif;
-            color: var(--text-dark, #374151);
-        }
-
-        .diff-btn:hover {
-            border-color: var(--primary-navy, #3b82f6);
-        }
-
-        .diff-btn.active {
-            border-color: #3b82f6;
-            background: rgba(59, 130, 246, 0.08);
-            color: #3b82f6;
-        }
-
-        .field-label {
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--text-dark, #374151);
-            margin-bottom: 8px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .field-hint {
-            font-size: 12px;
-            color: var(--text-muted, #9ca3af);
-            margin-top: 4px;
-        }
-
-        .field-group {
-            margin-bottom: 20px;
-        }
-
-        textarea.form-input {
-            min-height: 80px;
-            resize: vertical;
-        }
-
-        /* History cards */
-        .history-item {
-            background: var(--bg-body, #f9fafb);
-            border: 1px solid var(--border-light, #e5e7eb);
-            border-radius: 10px;
-            padding: 16px;
-            margin-bottom: 12px;
-        }
-
-        .history-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-
-        .history-date {
-            font-size: 13px;
-            font-weight: 700;
-            color: var(--text-dark, #111827);
-        }
-
-        .history-status {
-            font-size: 11px;
-            font-weight: 600;
-            padding: 3px 10px;
-            border-radius: 20px;
-        }
-
-        .status-on-track {
-            background: #dcfce7;
-            color: #16a34a;
-        }
-
-        .status-needs-attention {
-            background: #fef3c7;
-            color: #d97706;
-        }
-
-        .status-at-risk {
-            background: #fee2e2;
-            color: #dc2626;
-        }
-
-        .history-metrics {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-        }
-
-        .history-metric {
-            text-align: center;
-        }
-
-        .history-metric-value {
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--primary-navy, #3b82f6);
-        }
-
-        .history-metric-label {
-            font-size: 11px;
-            color: var(--text-muted, #9ca3af);
-        }
-
-        /* Dark theme */
-        html[data-theme="dark"] .checkin-card {
-            background: #1a1d27;
-            border-color: #2d3241;
-        }
-
-        html[data-theme="dark"] .checkin-card-title {
-            color: #e5e7eb;
-        }
-
-        html[data-theme="dark"] .field-label {
-            color: #d1d5db;
-        }
-
-        html[data-theme="dark"] .star-btn {
-            color: #4b5563;
-        }
-
-        html[data-theme="dark"] .mood-btn {
-            border-color: #2d3241;
-            background: #141720;
-        }
-
-        html[data-theme="dark"] .diff-btn {
-            border-color: #2d3241;
-            background: #141720;
-            color: #d1d5db;
-        }
-
-        html[data-theme="dark"] .history-item {
-            background: #141720;
-            border-color: #2d3241;
-        }
-
-        html[data-theme="dark"] .history-date {
-            color: #e5e7eb;
-        }
-
-        html[data-theme="dark"] .status-on-track {
-            background: #064e3b;
-            color: #34d399;
-        }
-
-        html[data-theme="dark"] .status-needs-attention {
-            background: #78350f;
-            color: #fbbf24;
-        }
-
-        html[data-theme="dark"] .status-at-risk {
-            background: #7f1d1d;
-            color: #f87171;
-        }
-    </style>
+    <!-- Anti-FOUC Script -->
+    <script>
+        (function () {
+            const safetyTimer = setTimeout(function () {
+                document.documentElement.classList.remove('preload');
+            }, 3000);
+            Promise.all([
+                document.fonts.ready,
+                new Promise(resolve => {
+                    if (document.readyState === 'loading') {
+                        document.addEventListener('DOMContentLoaded', resolve);
+                    } else { resolve(); }
+                })
+            ]).then(() => {
+                clearTimeout(safetyTimer);
+                requestAnimationFrame(() => {
+                    document.documentElement.classList.remove('preload');
+                });
+            });
+        })();
+    </script>
 </head>
 
-<body class="preload">
+<body>
     {% set active_page = 'checkin' %}
     {% include 'components/sidebar.html' %}
 
     <main class="main-content">
-        <div class="dashboard-container">
+        <style>
+            /* ===== LAYOUT ===== */
+            .checkin-layout {
+                max-width: 1200px;
+                margin: 0 auto;
+                display: flex;
+                flex-direction: column;
+                gap: 20px;
+            }
 
+            .checkin-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 24px;
+            }
+
+            @media(max-width: 900px) {
+                .checkin-grid {
+                    grid-template-columns: 1fr;
+                }
+            }
+
+            /* ===== SNAPSHOT ROW ===== */
+            .snapshot-row {
+                display: grid;
+                grid-template-columns: repeat(5, 1fr);
+                gap: 14px;
+            }
+
+            @media(max-width: 900px) {
+                .snapshot-row {
+                    grid-template-columns: repeat(3, 1fr);
+                }
+            }
+
+            @media(max-width: 480px) {
+                .snapshot-row {
+                    grid-template-columns: repeat(2, 1fr);
+                }
+            }
+
+            .snap-card {
+                background: var(--bg-surface, #fff);
+                border: 1px solid var(--border-light, #e5e7eb);
+                border-radius: 12px;
+                padding: 16px;
+                text-align: center;
+                box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+                transition: transform 0.15s ease, box-shadow 0.15s ease;
+            }
+
+            .snap-card:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+            }
+
+            .snap-icon {
+                width: 36px;
+                height: 36px;
+                border-radius: 10px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 15px;
+                margin-bottom: 8px;
+            }
+
+            .snap-icon.purple {
+                background: rgba(99, 102, 241, 0.1);
+                color: #6366f1;
+            }
+
+            .snap-icon.green {
+                background: rgba(34, 197, 94, 0.1);
+                color: #22c55e;
+            }
+
+            .snap-icon.amber {
+                background: rgba(245, 158, 11, 0.1);
+                color: #f59e0b;
+            }
+
+            .snap-icon.blue {
+                background: rgba(59, 130, 246, 0.1);
+                color: #3b82f6;
+            }
+
+            .snap-icon.red {
+                background: rgba(239, 68, 68, 0.1);
+                color: #ef4444;
+            }
+
+            .snap-value {
+                font-size: 22px;
+                font-weight: 800;
+                color: var(--text-dark, #111827);
+                line-height: 1.2;
+            }
+
+            .snap-label {
+                font-size: 11px;
+                font-weight: 600;
+                color: var(--text-muted, #9ca3af);
+                text-transform: uppercase;
+                letter-spacing: 0.4px;
+                margin-top: 2px;
+            }
+
+            /* ===== SUBMITTED BANNER ===== */
+            .submitted-banner {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                padding: 10px 16px;
+                background: rgba(34, 197, 94, 0.08);
+                border: 1px solid rgba(34, 197, 94, 0.2);
+                border-radius: 10px;
+                margin-bottom: 16px;
+                font-size: 13px;
+                font-weight: 600;
+                color: #16a34a;
+            }
+
+            .submitted-banner i {
+                font-size: 16px;
+            }
+
+            /* ===== CARD ===== */
+            .checkin-card {
+                background: var(--bg-surface, #fff);
+                border: 1px solid var(--border-light, #e5e7eb);
+                border-radius: 14px;
+                padding: 24px;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, .04);
+            }
+
+            .checkin-card-title {
+                font-size: 16px;
+                font-weight: 700;
+                color: var(--text-dark, #111827);
+                margin-bottom: 20px;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+
+            .checkin-card-title i {
+                color: var(--primary-navy, #3b82f6);
+                font-size: 18px;
+            }
+
+            /* ===== STAR RATING ===== */
+            .star-group {
+                display: flex;
+                gap: 6px;
+                margin-bottom: 6px;
+            }
+
+            .star-btn {
+                background: none;
+                border: none;
+                font-size: 28px;
+                cursor: pointer;
+                color: var(--border-light, #d1d5db);
+                transition: color 0.15s, transform 0.15s;
+                padding: 0;
+            }
+
+            .star-btn:hover,
+            .star-btn.active {
+                color: #f59e0b;
+                transform: scale(1.15);
+            }
+
+            /* ===== MOOD ===== */
+            .mood-group {
+                display: flex;
+                gap: 8px;
+                margin-bottom: 6px;
+            }
+
+            .mood-btn {
+                width: 48px;
+                height: 48px;
+                border-radius: 12px;
+                border: 2px solid var(--border-light, #e5e7eb);
+                background: var(--bg-surface, #fff);
+                font-size: 24px;
+                cursor: pointer;
+                transition: all 0.15s;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .mood-btn:hover {
+                border-color: var(--primary-navy, #3b82f6);
+                transform: translateY(-2px);
+            }
+
+            .mood-btn.active {
+                border-color: #3b82f6;
+                background: rgba(59, 130, 246, 0.08);
+                box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+            }
+
+            /* ===== DIFFICULTY ===== */
+            .diff-group {
+                display: flex;
+                gap: 8px;
+                flex-wrap: wrap;
+            }
+
+            .diff-btn {
+                padding: 8px 20px;
+                border-radius: 8px;
+                border: 2px solid var(--border-light, #e5e7eb);
+                background: var(--bg-surface, #fff);
+                font-size: 13px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.15s;
+                font-family: 'Inter', sans-serif;
+                color: var(--text-dark, #374151);
+            }
+
+            .diff-btn:hover {
+                border-color: var(--primary-navy, #3b82f6);
+            }
+
+            .diff-btn.active {
+                border-color: #3b82f6;
+                background: rgba(59, 130, 246, 0.08);
+                color: #3b82f6;
+            }
+
+            /* ===== FIELD HELPERS ===== */
+            .field-label {
+                font-size: 13px;
+                font-weight: 600;
+                color: var(--text-dark, #374151);
+                margin-bottom: 8px;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .field-hint {
+                font-size: 12px;
+                color: var(--text-muted, #9ca3af);
+                margin-top: 4px;
+            }
+
+            .field-group {
+                margin-bottom: 20px;
+            }
+
+            .field-error {
+                font-size: 12px;
+                color: #ef4444;
+                margin-top: 4px;
+                display: none;
+            }
+
+            .field-group.has-error .field-error {
+                display: block;
+            }
+
+            .field-group.has-error .star-btn,
+            .field-group.has-error .mood-btn,
+            .field-group.has-error .diff-btn {
+                animation: shake 0.3s ease;
+            }
+
+            @keyframes shake {
+
+                0%,
+                100% {
+                    transform: translateX(0);
+                }
+
+                25% {
+                    transform: translateX(-4px);
+                }
+
+                75% {
+                    transform: translateX(4px);
+                }
+            }
+
+            textarea.form-input {
+                min-height: 80px;
+                resize: vertical;
+            }
+
+            /* ===== SPARKLINE ===== */
+            .sparkline {
+                display: inline-flex;
+                align-items: flex-end;
+                gap: 3px;
+                height: 18px;
+                margin-left: auto;
+            }
+
+            .spark-bar {
+                width: 6px;
+                border-radius: 2px;
+                background: rgba(99, 102, 241, 0.3);
+                transition: height 0.3s ease;
+            }
+
+            .spark-bar.filled {
+                background: #6366f1;
+            }
+
+            .spark-bar.mood-fill {
+                background: #f59e0b;
+            }
+
+            /* ===== HISTORY ===== */
+            .history-item {
+                background: var(--bg-body, #f9fafb);
+                border: 1px solid var(--border-light, #e5e7eb);
+                border-radius: 10px;
+                padding: 16px;
+                margin-bottom: 12px;
+                transition: border-color 0.15s ease;
+            }
+
+            .history-item:hover {
+                border-color: var(--primary-navy, #3b82f6);
+            }
+
+            .history-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 10px;
+            }
+
+            .history-date {
+                font-size: 13px;
+                font-weight: 700;
+                color: var(--text-dark, #111827);
+            }
+
+            .history-status {
+                font-size: 11px;
+                font-weight: 600;
+                padding: 3px 10px;
+                border-radius: 20px;
+            }
+
+            .status-on-track {
+                background: #dcfce7;
+                color: #16a34a;
+            }
+
+            .status-needs-attention {
+                background: #fef3c7;
+                color: #d97706;
+            }
+
+            .status-at-risk {
+                background: #fee2e2;
+                color: #dc2626;
+            }
+
+            .history-metrics {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 10px;
+            }
+
+            .history-metric {
+                text-align: center;
+            }
+
+            .history-metric-value {
+                font-size: 18px;
+                font-weight: 700;
+                color: var(--primary-navy, #3b82f6);
+            }
+
+            .history-metric-label {
+                font-size: 11px;
+                color: var(--text-muted, #9ca3af);
+            }
+
+            .history-goals {
+                margin-top: 10px;
+                padding-top: 10px;
+                border-top: 1px solid var(--border-light, #e5e7eb);
+                font-size: 12px;
+                color: var(--text-muted, #6b7280);
+                line-height: 1.5;
+            }
+
+            .history-goals i {
+                color: var(--primary-navy, #3b82f6);
+                margin-right: 4px;
+                font-size: 11px;
+            }
+
+            .history-diff-badge {
+                display: inline-block;
+                font-size: 10px;
+                font-weight: 600;
+                padding: 2px 8px;
+                border-radius: 4px;
+                background: rgba(99, 102, 241, 0.08);
+                color: #6366f1;
+                margin-top: 8px;
+            }
+
+            /* ===== EMPTY STATE ===== */
+            .empty-state-box {
+                text-align: center;
+                color: var(--text-muted, #9ca3af);
+                padding: 48px 20px;
+            }
+
+            .empty-state-box i {
+                font-size: 36px;
+                margin-bottom: 14px;
+                display: block;
+                opacity: 0.5;
+            }
+
+            .empty-state-box p {
+                font-size: 14px;
+                line-height: 1.5;
+            }
+
+            /* ===== DARK THEME ===== */
+            html[data-theme="dark"] .snap-card {
+                background: #1a1d27;
+                border-color: #2d3241;
+            }
+
+            html[data-theme="dark"] .snap-value {
+                color: #e5e7eb;
+            }
+
+            html[data-theme="dark"] .checkin-card {
+                background: #1a1d27;
+                border-color: #2d3241;
+            }
+
+            html[data-theme="dark"] .checkin-card-title {
+                color: #e5e7eb;
+            }
+
+            html[data-theme="dark"] .field-label {
+                color: #d1d5db;
+            }
+
+            html[data-theme="dark"] .star-btn {
+                color: #4b5563;
+            }
+
+            html[data-theme="dark"] .mood-btn {
+                border-color: #2d3241;
+                background: #141720;
+            }
+
+            html[data-theme="dark"] .diff-btn {
+                border-color: #2d3241;
+                background: #141720;
+                color: #d1d5db;
+            }
+
+            html[data-theme="dark"] .submitted-banner {
+                background: rgba(34, 197, 94, 0.08);
+                border-color: rgba(34, 197, 94, 0.15);
+                color: #4ade80;
+            }
+
+            html[data-theme="dark"] .history-item {
+                background: #141720;
+                border-color: #2d3241;
+            }
+
+            html[data-theme="dark"] .history-date {
+                color: #e5e7eb;
+            }
+
+            html[data-theme="dark"] .history-goals {
+                border-top-color: #2d3241;
+                color: #9ca3af;
+            }
+
+            html[data-theme="dark"] .history-diff-badge {
+                background: rgba(129, 140, 248, 0.12);
+                color: #818cf8;
+            }
+
+            html[data-theme="dark"] .status-on-track {
+                background: #064e3b;
+                color: #34d399;
+            }
+
+            html[data-theme="dark"] .status-needs-attention {
+                background: #78350f;
+                color: #fbbf24;
+            }
+
+            html[data-theme="dark"] .status-at-risk {
+                background: #7f1d1d;
+                color: #f87171;
+            }
+
+            html[data-theme="dark"] .spark-bar {
+                background: rgba(129, 140, 248, 0.2);
+            }
+
+            html[data-theme="dark"] .spark-bar.filled {
+                background: #818cf8;
+            }
+
+            html[data-theme="dark"] .spark-bar.mood-fill {
+                background: #fbbf24;
+            }
+        </style>
+
+        <div class="dashboard-container">
             <div class="welcome-header">
                 <h1><i class="fas fa-clipboard-check"></i> Weekly Check-in</h1>
                 <p>Reflect on your week to keep your dashboard insights fresh and accurate.</p>
             </div>
 
-            <div class="checkin-grid">
+            <div class="checkin-layout">
 
-                <!-- LEFT: Check-in Form -->
-                <div class="checkin-card">
-                    <div class="checkin-card-title">
-                        <i class="fas fa-edit"></i>
-                        This Week's Reflection
+                <!-- ===== SNAPSHOT ROW ===== -->
+                {% if snapshot %}
+                <div class="snapshot-row">
+                    <div class="snap-card">
+                        <div class="snap-icon purple"><i class="fas fa-clock"></i></div>
+                        <div class="snap-value">{{ snapshot.hours }}h</div>
+                        <div class="snap-label">Hours Studied</div>
                     </div>
-
-                    <form method="POST" action="{{ url_for('dashboard.submit_weekly_checkin') }}" id="checkinForm">
-
-                        <!-- Productivity Rating -->
-                        <div class="field-group">
-                            <div class="field-label">Productivity Rating</div>
-                            <div class="star-group" id="starGroup">
-                                {% for i in range(1, 6) %}
-                                <button type="button" class="star-btn" data-value="{{ i }}" onclick="setStars({{ i }})">
-                                    <i class="fas fa-star"></i>
-                                </button>
-                                {% endfor %}
-                            </div>
-                            <input type="hidden" name="productivity_rating" id="productivityInput"
-                                value="{{ current_productivity or '' }}">
-                            <div class="field-hint">How productive were you this week?</div>
+                    <div class="snap-card">
+                        <div class="snap-icon green"><i class="fas fa-chart-line"></i></div>
+                        <div class="snap-value">{{ snapshot.consistency }}%</div>
+                        <div class="snap-label">Consistency</div>
+                    </div>
+                    <div class="snap-card">
+                        <div
+                            class="snap-icon {{ 'green' if snapshot.burnout < 40 else 'amber' if snapshot.burnout < 70 else 'red' }}">
+                            <i class="fas fa-fire"></i>
                         </div>
-
-                        <!-- Mood -->
-                        <div class="field-group">
-                            <div class="field-label">Mood / Stress Level</div>
-                            <div class="mood-group" id="moodGroup">
-                                <button type="button" class="mood-btn" data-value="1" onclick="setMood(1)">😫</button>
-                                <button type="button" class="mood-btn" data-value="2" onclick="setMood(2)">😟</button>
-                                <button type="button" class="mood-btn" data-value="3" onclick="setMood(3)">😐</button>
-                                <button type="button" class="mood-btn" data-value="4" onclick="setMood(4)">🙂</button>
-                                <button type="button" class="mood-btn" data-value="5" onclick="setMood(5)">😄</button>
-                            </div>
-                            <input type="hidden" name="mood_score" id="moodInput" value="{{ current_mood or '' }}">
-                            <div class="field-hint">1 = Very stressed, 5 = Feeling great</div>
-                        </div>
-
-                        <!-- Difficulty -->
-                        <div class="field-group">
-                            <div class="field-label">Overall Difficulty</div>
-                            <div class="diff-group" id="diffGroup">
-                                <button type="button" class="diff-btn" data-value="Easy"
-                                    onclick="setDiff('Easy')">Easy</button>
-                                <button type="button" class="diff-btn" data-value="Medium"
-                                    onclick="setDiff('Medium')">Medium</button>
-                                <button type="button" class="diff-btn" data-value="Hard"
-                                    onclick="setDiff('Hard')">Hard</button>
-                            </div>
-                            <input type="hidden" name="difficulty_rating" id="diffInput"
-                                value="{{ current_difficulty or '' }}">
-                            <div class="field-hint">How challenging was this week's workload?</div>
-                        </div>
-
-                        <!-- Goals achieved -->
-                        <div class="field-group">
-                            <div class="field-label">Goals Achieved This Week</div>
-                            <textarea name="goals_achieved" class="form-input"
-                                placeholder="e.g., Finished ML assignment, studied 15hrs, started Docker project...">{{ current_goals or '' }}</textarea>
-                            <div class="field-hint">What did you accomplish? (optional)</div>
-                        </div>
-
-                        <div class="form-actions">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-check"></i> Submit Check-in
-                            </button>
-                        </div>
-                    </form>
+                        <div class="snap-value">{{ snapshot.burnout }}%</div>
+                        <div class="snap-label">Burnout Risk</div>
+                    </div>
+                    <div class="snap-card">
+                        <div class="snap-icon blue"><i class="fas fa-bullseye"></i></div>
+                        <div class="snap-value">{{ snapshot.goal_prob }}%</div>
+                        <div class="snap-label">Goal Prob.</div>
+                    </div>
+                    <div class="snap-card">
+                        <div class="snap-icon amber"><i class="fas fa-fire-flame-curved"></i></div>
+                        <div class="snap-value">{{ streak }}🔥</div>
+                        <div class="snap-label">Week Streak</div>
+                    </div>
                 </div>
+                {% elif streak > 0 %}
+                <div class="snapshot-row">
+                    <div class="snap-card">
+                        <div class="snap-icon amber"><i class="fas fa-fire-flame-curved"></i></div>
+                        <div class="snap-value">{{ streak }}🔥</div>
+                        <div class="snap-label">Week Streak</div>
+                    </div>
+                </div>
+                {% endif %}
 
-                <!-- RIGHT: History -->
-                <div class="checkin-card">
-                    <div class="checkin-card-title">
-                        <i class="fas fa-history"></i>
-                        Past Check-ins
+                <!-- ===== MAIN GRID ===== -->
+                <div class="checkin-grid">
+
+                    <!-- LEFT: Form -->
+                    <div class="checkin-card">
+                        <div class="checkin-card-title">
+                            <i class="fas fa-edit"></i>
+                            This Week's Reflection
+                        </div>
+
+                        {% if already_submitted %}
+                        <div class="submitted-banner">
+                            <i class="fas fa-check-circle"></i>
+                            <span>Submitted this week — update your reflections below</span>
+                        </div>
+                        {% endif %}
+
+                        <form method="POST" action="{{ url_for('dashboard.submit_weekly_checkin') }}" id="checkinForm"
+                            onsubmit="return validateCheckin()">
+
+                            <!-- Productivity Rating -->
+                            <div class="field-group" id="prodField">
+                                <div class="field-label">
+                                    Productivity Rating
+                                    {% if trend %}
+                                    <div class="sparkline" title="Last {{ trend|length }} weeks">
+                                        {% for t in trend %}
+                                        <div class="spark-bar {{ 'filled' if t.prod else '' }}"
+                                            style="height: {{ (t.prod or 0) * 20 }}%"></div>
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <div class="star-group" id="starGroup">
+                                    {% for i in range(1, 6) %}
+                                    <button type="button" class="star-btn" data-value="{{ i }}"
+                                        onclick="setStars({{ i }})">
+                                        <i class="fas fa-star"></i>
+                                    </button>
+                                    {% endfor %}
+                                </div>
+                                <input type="hidden" name="productivity_rating" id="productivityInput"
+                                    value="{{ current_productivity or '' }}">
+                                <div class="field-hint">How productive were you this week?</div>
+                                <div class="field-error" id="prodError">Please rate your productivity</div>
+                            </div>
+
+                            <!-- Mood -->
+                            <div class="field-group" id="moodField">
+                                <div class="field-label">
+                                    Mood / Stress Level
+                                    {% if trend %}
+                                    <div class="sparkline" title="Last {{ trend|length }} weeks">
+                                        {% for t in trend %}
+                                        <div class="spark-bar mood-fill {{ 'mood-fill' if t.mood else '' }}"
+                                            style="height: {{ (t.mood or 0) * 20 }}%"></div>
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <div class="mood-group" id="moodGroup">
+                                    <button type="button" class="mood-btn" data-value="1"
+                                        onclick="setMood(1)">😫</button>
+                                    <button type="button" class="mood-btn" data-value="2"
+                                        onclick="setMood(2)">😟</button>
+                                    <button type="button" class="mood-btn" data-value="3"
+                                        onclick="setMood(3)">😐</button>
+                                    <button type="button" class="mood-btn" data-value="4"
+                                        onclick="setMood(4)">🙂</button>
+                                    <button type="button" class="mood-btn" data-value="5"
+                                        onclick="setMood(5)">😄</button>
+                                </div>
+                                <input type="hidden" name="mood_score" id="moodInput" value="{{ current_mood or '' }}">
+                                <div class="field-hint">1 = Very stressed, 5 = Feeling great</div>
+                                <div class="field-error" id="moodError">Please select your mood</div>
+                            </div>
+
+                            <!-- Difficulty -->
+                            <div class="field-group" id="diffField">
+                                <div class="field-label">Overall Difficulty</div>
+                                <div class="diff-group" id="diffGroup">
+                                    <button type="button" class="diff-btn" data-value="Easy"
+                                        onclick="setDiff('Easy')">Easy</button>
+                                    <button type="button" class="diff-btn" data-value="Medium"
+                                        onclick="setDiff('Medium')">Medium</button>
+                                    <button type="button" class="diff-btn" data-value="Hard"
+                                        onclick="setDiff('Hard')">Hard</button>
+                                </div>
+                                <input type="hidden" name="difficulty_rating" id="diffInput"
+                                    value="{{ current_difficulty or '' }}">
+                                <div class="field-hint">How challenging was this week's workload?</div>
+                            </div>
+
+                            <!-- Goals Achieved -->
+                            <div class="field-group">
+                                <div class="field-label">Goals Achieved This Week</div>
+                                <textarea name="goals_achieved" class="form-input"
+                                    placeholder="e.g., Finished ML assignment, studied 15hrs, started Docker project...">{{ current_goals or '' }}</textarea>
+                                <div class="field-hint">What did you accomplish? (optional)</div>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary" id="submitBtn">
+                                    <i class="fas fa-check"></i>
+                                    {{ 'Update Check-in' if already_submitted else 'Submit Check-in' }}
+                                </button>
+                            </div>
+                        </form>
                     </div>
 
-                    {% if history %}
-                    {% for h in history %}
-                    <div class="history-item">
-                        <div class="history-header">
-                            <div class="history-date">Week of {{ h.week_start_date.strftime('%b %d, %Y') }}</div>
-                            {% if h.status_label %}
-                            <span
-                                class="history-status 
-                                    {{ 'status-on-track' if h.status_label == 'On Track' else 'status-needs-attention' if h.status_label == 'Needs Attention' else 'status-at-risk' }}">
-                                {{ h.status_label }}
+                    <!-- RIGHT: History -->
+                    <div class="checkin-card">
+                        <div class="checkin-card-title">
+                            <i class="fas fa-history"></i>
+                            Past Check-ins
+                        </div>
+
+                        {% if history %}
+                        {% for h in history %}
+                        <div class="history-item">
+                            <div class="history-header">
+                                <div class="history-date">Week of {{ h.week_start_date.strftime('%b %d, %Y') }}</div>
+                                {% if h.status_label %}
+                                <span
+                                    class="history-status 
+                                        {{ 'status-on-track' if h.status_label == 'On Track' else 'status-needs-attention' if h.status_label == 'Needs Attention' else 'status-at-risk' }}">
+                                    {{ h.status_label }}
+                                </span>
+                                {% endif %}
+                            </div>
+                            <div class="history-metrics">
+                                <div class="history-metric">
+                                    <div class="history-metric-value">{{ h.total_hours_studied or 0 }}h</div>
+                                    <div class="history-metric-label">Study Hours</div>
+                                </div>
+                                <div class="history-metric">
+                                    <div class="history-metric-value">
+                                        {% if h.productivity_rating %}
+                                        {{ '★' * h.productivity_rating }}
+                                        {% else %}—{% endif %}
+                                    </div>
+                                    <div class="history-metric-label">Productivity</div>
+                                </div>
+                                <div class="history-metric">
+                                    <div class="history-metric-value">
+                                        {% if h.mood_score %}
+                                        {{ ['😫','😟','😐','🙂','😄'][h.mood_score - 1] }}
+                                        {% else %}—{% endif %}
+                                    </div>
+                                    <div class="history-metric-label">Mood</div>
+                                </div>
+                            </div>
+                            {% if h.difficulty_rating %}
+                            <span class="history-diff-badge">
+                                <i class="fas fa-signal"></i> {{ h.difficulty_rating }}
                             </span>
                             {% endif %}
+                            {% if h.goals_achieved %}
+                            <div class="history-goals">
+                                <i class="fas fa-trophy"></i> {{ h.goals_achieved }}
+                            </div>
+                            {% endif %}
                         </div>
-                        <div class="history-metrics">
-                            <div class="history-metric">
-                                <div class="history-metric-value">{{ h.total_hours_studied or 0 }}h</div>
-                                <div class="history-metric-label">Study Hours</div>
-                            </div>
-                            <div class="history-metric">
-                                <div class="history-metric-value">
-                                    {% if h.productivity_rating %}
-                                    {{ '★' * h.productivity_rating }}
-                                    {% else %}—{% endif %}
-                                </div>
-                                <div class="history-metric-label">Productivity</div>
-                            </div>
-                            <div class="history-metric">
-                                <div class="history-metric-value">
-                                    {% if h.mood_score %}
-                                    {{ ['😫','😟','😐','🙂','😄'][h.mood_score - 1] }}
-                                    {% else %}—{% endif %}
-                                </div>
-                                <div class="history-metric-label">Mood</div>
-                            </div>
+                        {% endfor %}
+                        {% else %}
+                        <div class="empty-state-box">
+                            <i class="fas fa-inbox"></i>
+                            <p>No check-ins yet. Submit your first one to start tracking your weekly progress!</p>
                         </div>
+                        {% endif %}
                     </div>
-                    {% endfor %}
-                    {% else %}
-                    <div style="text-align:center;color:var(--text-muted);padding:40px 0;">
-                        <i class="fas fa-inbox" style="font-size:32px;margin-bottom:12px;display:block;"></i>
-                        <p>No check-ins yet. Submit your first one!</p>
-                    </div>
-                    {% endif %}
-                </div>
 
+                </div>
             </div>
         </div>
 
@@ -423,23 +821,23 @@
         {% endif %}
 
         <script>
-            // Star rating
+            // ===== SELECTORS =====
             function setStars(val) {
                 document.getElementById('productivityInput').value = val;
                 document.querySelectorAll('#starGroup .star-btn').forEach(function (btn) {
                     btn.classList.toggle('active', parseInt(btn.dataset.value) <= val);
                 });
+                clearError('prodField');
             }
 
-            // Mood selector
             function setMood(val) {
                 document.getElementById('moodInput').value = val;
                 document.querySelectorAll('#moodGroup .mood-btn').forEach(function (btn) {
                     btn.classList.toggle('active', parseInt(btn.dataset.value) === val);
                 });
+                clearError('moodField');
             }
 
-            // Difficulty selector
             function setDiff(val) {
                 document.getElementById('diffInput').value = val;
                 document.querySelectorAll('#diffGroup .diff-btn').forEach(function (btn) {
@@ -447,7 +845,28 @@
                 });
             }
 
-            // Restore state on load
+            // ===== VALIDATION =====
+            function clearError(fieldId) {
+                document.getElementById(fieldId).classList.remove('has-error');
+            }
+
+            function validateCheckin() {
+                let valid = true;
+                const prod = document.getElementById('productivityInput').value;
+                const mood = document.getElementById('moodInput').value;
+
+                if (!prod) {
+                    document.getElementById('prodField').classList.add('has-error');
+                    valid = false;
+                }
+                if (!mood) {
+                    document.getElementById('moodField').classList.add('has-error');
+                    valid = false;
+                }
+                return valid;
+            }
+
+            // ===== RESTORE STATE ON LOAD =====
             (function () {
                 var prod = document.getElementById('productivityInput').value;
                 if (prod) setStars(parseInt(prod));

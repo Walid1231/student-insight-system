@@ -1,223 +1,24 @@
-<!-- MOBILE TOGGLE -->
-<!-- MOBILE TOGGLE -->
-<button class="mobile-toggle" onclick="toggleSidebar()">
-    <i class="fas fa-bars"></i>
-</button>
-
-<aside class="sidebar" id="sidebar">
+<!-- MOBILE TOGGLE --><button class="mobile-toggle" onclick="toggleSidebar()" aria-label="Open navigation"> <i
+        class="fas fa-bars"></i></button>
+<aside class="sidebar" id="sidebar" role="navigation" aria-label="Main navigation">
     <div class="sidebar-header">
-        <div class="sidebar-logo">Student Insight</div>
-        <button class="sidebar-toggle-btn" id="sidebarToggle" title="Toggle Sidebar">
-            <i class="fas fa-bars"></i>
-        </button>
+        <div class="sidebar-logo">Student Insight</div> <button class="sidebar-toggle-btn" id="sidebarToggle"
+            title="Toggle Sidebar" aria-expanded="true"> <i class="fas fa-bars"></i> </button>
     </div>
-
-    <div class="nav-items">
-        <a href="/student/profile" class="nav-link {{ 'active' if active_page == 'profile' }}">
-            <i class="fas fa-user"></i> <span>Profile</span>
-        </a>
-        <a href="/student/dashboard"
-            class="nav-link {{ 'active' if active_page == 'dashboard' or active_page == 'legacy' }}">
-            <i class="fas fa-chart-line"></i> <span>Dashboard</span>
-        </a>
-        <a href="/student/weekly-routine" class="nav-link {{ 'active' if active_page == 'routine' }}">
-            <i class="fas fa-calendar-alt"></i> <span>Weekly Routine</span>
-        </a>
-        <a href="/student/weekly-checkin" class="nav-link {{ 'active' if active_page == 'checkin' }}">
-            <i class="fas fa-clipboard-check"></i> <span>Weekly Check-in</span>
-        </a>
-        <a href="/student/goals-grades" class="nav-link {{ 'active' if active_page == 'goals' }}">
-            <i class="fas fa-bullseye"></i> <span>Goals & Grades</span>
-        </a>
-        <a href="/student/settings" class="nav-link {{ 'active' if active_page == 'settings' }}">
-            <i class="fas fa-cog"></i> <span>Settings</span>
-        </a>
-        <!-- Logout should always be a full reload to clear state properly -->
-        <a href="#" onclick="logout()" class="nav-link logout-link" hx-boost="false">
-            <i class="fas fa-sign-out-alt"></i> <span>Log Out</span>
-        </a>
-    </div>
+    <div class="nav-items"> <a href="/student/profile" class="nav-link {{ 'active' if active_page == 'profile' }}"
+            data-label="Profile"> <i class="fas fa-user"></i> <span>Profile</span> </a> <a href="/student/dashboard"
+            class="nav-link {{ 'active' if active_page == 'dashboard' or active_page == 'legacy' }}"
+            data-label="Dashboard"> <i class="fas fa-chart-line"></i> <span>Dashboard</span> </a> <a
+            href="/student/weekly-routine" class="nav-link {{ 'active' if active_page == 'routine' }}"
+            data-label="Weekly Routine"> <i class="fas fa-calendar-alt"></i> <span>Weekly Routine</span> </a> <a
+            href="/student/weekly-checkin" class="nav-link {{ 'active' if active_page == 'checkin' }}"
+            data-label="Weekly Check-in"> <i class="fas fa-clipboard-check"></i> <span>Weekly Check-in</span> </a> <a
+            href="/student/goals-grades" class="nav-link {{ 'active' if active_page == 'goals' }}"
+            data-label="Goals & Grades"> <i class="fas fa-bullseye"></i> <span>Goals &amp; Grades</span> </a> <a
+            href="/student/settings" class="nav-link {{ 'active' if active_page == 'settings' }}" data-label="Settings">
+            <i class="fas fa-cog"></i> <span>Settings</span> </a>
+        <!-- Logout should always be a full reload to clear state properly --> <a href="#" onclick="logout()"
+            class="nav-link logout-link" hx-boost="false" data-label="Log Out"> <i class="fas fa-sign-out-alt"></i>
+            <span>Log Out</span> </a> </div>
 </aside>
-
-<script>
-    // ============================================
-    // THEME MANAGER (runs on every page via sidebar include)
-    // ============================================
-    const ThemeManager = {
-        STORAGE_KEY: 'theme_preference',
-
-        init() {
-            const stored = localStorage.getItem(this.STORAGE_KEY) || 'light';
-            this.apply(stored);
-
-            // Listen for system preference changes (for "system" mode)
-            if (window.matchMedia) {
-                window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-                    if (localStorage.getItem(this.STORAGE_KEY) === 'system') {
-                        this.apply('system');
-                    }
-                });
-            }
-        },
-
-        setTheme(value) {
-            localStorage.setItem(this.STORAGE_KEY, value);
-            this.apply(value);
-        },
-
-        apply(preference) {
-            let theme;
-            if (preference === 'system') {
-                theme = window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-            } else {
-                theme = preference;
-            }
-
-            if (theme === 'dark') {
-                document.documentElement.setAttribute('data-theme', 'dark');
-            } else {
-                document.documentElement.removeAttribute('data-theme');
-            }
-
-            // Sync the theme select on settings page if present
-            const sel = document.getElementById('themeSelect');
-            if (sel) sel.value = preference;
-        },
-
-        getCurrent() {
-            return localStorage.getItem(this.STORAGE_KEY) || 'light';
-        }
-    };
-
-    // Initialize immediately
-    ThemeManager.init();
-
-    // Sidebar Toggle Logic
-    const toggleBtn = document.getElementById('sidebarToggle');
-
-    // Check if event listener is already attached to avoid duplicates if re-included
-    if (toggleBtn && !toggleBtn.dataset.hasListener) {
-        toggleBtn.addEventListener('click', () => {
-            const isCollapsed = document.documentElement.classList.toggle('sidebar-is-collapsed');
-            // Set Cookie for Server-Side Rendering (Path=/ ensures it works everywhere)
-            document.cookie = `sidebar_collapsed=${isCollapsed}; path=/; max-age=31536000`;
-            // Keep localStorage as backup/sync if needed, though cookie is primary now
-            localStorage.setItem('sidebarCollapsed', isCollapsed);
-        });
-        toggleBtn.dataset.hasListener = 'true';
-    }
-
-    // ANTI-JUMP: Immediately disable transitions on load, then enable them
-    document.body.classList.add('preload');
-    window.addEventListener('load', () => {
-        setTimeout(() => {
-            document.body.classList.remove('preload');
-        }, 100);
-    });
-
-    // Toggle on mobile
-    function toggleSidebar() {
-        document.getElementById('sidebar').classList.toggle('active');
-    }
-
-    // Close mobile sidebar when clicking outside
-    document.addEventListener('click', function (event) {
-        const sidebar = document.getElementById('sidebar');
-        const toggle = document.querySelector('.mobile-toggle');
-        const desktopToggle = document.getElementById('sidebarToggle');
-
-        if (window.innerWidth <= 768 && sidebar.classList.contains('active')) {
-            // Ignore clicks on the sidebar itself or the toggle buttons
-            if (!sidebar.contains(event.target) && !toggle.contains(event.target) && (!desktopToggle || !desktopToggle.contains(event.target))) {
-                sidebar.classList.remove('active');
-            }
-        }
-    });
-
-    // CLIENT-SIDE NAVIGATION (Prevent Page Blink)
-    // Helper: Sync stylesheets from fetched page into current <head>
-    function syncStylesheets(newDoc) {
-        const currentLinks = new Set(
-            Array.from(document.querySelectorAll('link[rel="stylesheet"]'))
-                .map(l => l.getAttribute('href')?.split('?')[0]) // Ignore cache-busting params
-        );
-        newDoc.querySelectorAll('link[rel="stylesheet"]').forEach(newLink => {
-            const href = newLink.getAttribute('href');
-            const baseHref = href?.split('?')[0];
-            if (baseHref && !currentLinks.has(baseHref)) {
-                const link = document.createElement('link');
-                link.rel = 'stylesheet';
-                link.href = href;
-                document.head.appendChild(link);
-            }
-        });
-    }
-
-    document.addEventListener('click', function (e) {
-        const link = e.target.closest('a.nav-link');
-        if (!link || link.classList.contains('logout-link')) return;
-
-        e.preventDefault();
-        const url = link.href;
-
-        // Update active state immediately for instant feedback
-        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-        link.classList.add('active');
-
-        // Fetch and swap content
-        fetch(url)
-            .then(res => res.text())
-            .then(html => {
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(html, 'text/html');
-                const newContent = doc.querySelector('.main-content');
-                const oldContent = document.querySelector('.main-content');
-
-                if (newContent && oldContent) {
-                    // Sync any missing stylesheets from the new page
-                    syncStylesheets(doc);
-
-                    oldContent.innerHTML = newContent.innerHTML;
-
-                    // Re-execute scripts in the new content
-                    oldContent.querySelectorAll('script').forEach(oldScript => {
-                        const newScript = document.createElement('script');
-                        Array.from(oldScript.attributes).forEach(attr =>
-                            newScript.setAttribute(attr.name, attr.value)
-                        );
-                        newScript.textContent = oldScript.textContent;
-                        oldScript.parentNode.replaceChild(newScript, oldScript);
-                    });
-
-                    // Remove anti-FOUC preload class if present
-                    document.documentElement.classList.remove('preload');
-
-                    // Update page title
-                    const newTitle = doc.querySelector('title');
-                    if (newTitle) document.title = newTitle.textContent;
-
-                    // Update URL
-                    history.pushState({}, '', url);
-
-                    // Scroll to top
-                    window.scrollTo(0, 0);
-                }
-            })
-            .catch(err => {
-                console.error('Navigation failed:', err);
-                window.location.href = url; // Fallback to full reload
-            });
-    });
-
-    // Handle browser back/forward buttons
-    window.addEventListener('popstate', function () {
-        location.reload();
-    });
-
-    function logout() {
-        document.cookie = "access_token_cookie=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-        window.location.href = "{{ url_for('auth.logout') }}"; // Use Flask route if available, or /login
-        // Fallback if url_for not rendered in JS context (though it is in HTML)
-
-    }
-</script>
+<script>    /* ── Theme Manager ─────────────────────────────────────────── */    const ThemeManager = { STORAGE_KEY: 'theme_preference', init() { this.apply(localStorage.getItem(this.STORAGE_KEY) || 'light'); window.matchMedia?.('(prefers-color-scheme: dark)').addEventListener('change', () => { if (localStorage.getItem(this.STORAGE_KEY) === 'system') this.apply('system'); }); }, setTheme(v) { localStorage.setItem(this.STORAGE_KEY, v); this.apply(v); }, apply(pref) { const dark = pref === 'system' ? window.matchMedia?.('(prefers-color-scheme: dark)').matches : pref === 'dark'; document.documentElement[dark ? 'setAttribute' : 'removeAttribute']('data-theme', 'dark'); const sel = document.getElementById('themeSelect'); if (sel) sel.value = pref; }, getCurrent() { return localStorage.getItem(this.STORAGE_KEY) || 'light'; } }; ThemeManager.init();    /* ── Sidebar collapse (flex-child width drives the push) ───── */    (function () { const html = document.documentElement; const btn = document.getElementById('sidebarToggle'); if (!btn || btn.dataset.init) return; btn.dataset.init = '1';        /* Restore persisted state before transitions activate */        const collapsed = localStorage.getItem('sidebarCollapsed') === 'true'; if (collapsed) html.classList.add('sidebar-is-collapsed'); btn.addEventListener('click', () => { const now = html.classList.toggle('sidebar-is-collapsed'); localStorage.setItem('sidebarCollapsed', now); document.cookie = `sidebar_collapsed=${now}; path=/; max-age=31536000`; }); })();    /* ── Anti-flicker: suppress transitions on first paint ──────── */    document.body.classList.add('preload'); requestAnimationFrame(() => requestAnimationFrame(() => document.body.classList.remove('preload')));    /* ── Mobile sidebar ─────────────────────────────────────────── */    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('active'); } document.addEventListener('click', e => { const sb = document.getElementById('sidebar'); const mb = document.querySelector('.mobile-toggle'); if (window.innerWidth <= 768 && sb?.classList.contains('active')) { if (!sb.contains(e.target) && !mb?.contains(e.target)) sb.classList.remove('active'); } });    /* ── Client-side navigation (no page blink) ─────────────────── */    function syncStylesheets(doc) { const cur = new Set(Array.from(document.querySelectorAll('link[rel="stylesheet"]')).map(l => l.getAttribute('href')?.split('?')[0])); doc.querySelectorAll('link[rel="stylesheet"]').forEach(nl => { const base = nl.getAttribute('href')?.split('?')[0]; if (base && !cur.has(base)) { const lk = document.createElement('link'); lk.rel = 'stylesheet'; lk.href = nl.getAttribute('href'); document.head.appendChild(lk); } }); } document.addEventListener('click', e => { const link = e.target.closest('a.nav-link'); if (!link || link.classList.contains('logout-link')) return; e.preventDefault(); const url = link.href; document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active')); link.classList.add('active'); fetch(url, { redirect: 'follow' }).then(r => { if (r.redirected) { const dest = r.url.toLowerCase(); if (dest.endsWith('/') || dest.includes('#auth') || dest.includes('/logout') || dest.includes('/login')) { window.location.href = r.url; return null; } } if (r.status === 401 || r.status === 403) { window.location.href = '/logout'; return null; } if (!r.ok) { window.location.href = url; return null; } return r.text(); }).then(html => { if (!html) return; const doc = new DOMParser().parseFromString(html, 'text/html'); const nmc = doc.querySelector('.main-content'); const omc = document.querySelector('.main-content'); if (!nmc || !omc) { window.location.href = url; return; } syncStylesheets(doc); omc.innerHTML = nmc.innerHTML; omc.querySelectorAll('script').forEach(os => { const ns = document.createElement('script');[...os.attributes].forEach(a => ns.setAttribute(a.name, a.value)); ns.textContent = os.textContent; os.parentNode.replaceChild(ns, os); }); const nt = doc.querySelector('title'); if (nt) document.title = nt.textContent; history.pushState({}, '', url); window.scrollTo(0, 0); if (typeof initStudentDashboardCharts === 'function') initStudentDashboardCharts(); }).catch(() => window.location.href = url); }); window.addEventListener('popstate', () => location.reload()); function logout() { window.location.href = "{{ url_for('auth.logout') }}"; }</script>

@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Students | Student Insight</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="{{ url_for('static', filename='css/dashboard.css') }}" rel="stylesheet">
+</head>
+
+<body>
+    <!-- Sidebar Toggle Button -->
+    <button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle Sidebar" id="sidebarToggle">
+        <i data-lucide="menu"></i>
+    </button>
+    <!-- Mobile Backdrop -->
+    <div id="sidebarBackdrop" onclick="closeSidebar()"
+        style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1999;"></div>
+
+    <nav class="sidebar">
+        <div class="logo">Teacher Dashboard</div>
+        <div class="nav-links">
+            <a href="/teacher/dashboard" class="nav-item">
+                <span class="nav-icon"><i data-lucide="layout-dashboard"></i></span> Dashboard
+            </a>
+            <a href="/teacher/students" class="nav-item active">
+                <span class="nav-icon"><i data-lucide="users"></i></span> Students
+            </a>
+            <a href="/teacher/alerts" class="nav-item">
+                <span class="nav-icon"><i data-lucide="bell"></i></span> Alerts
+                {% if overview.alerts_count > 0 %}
+                <span
+                    style="margin-left:auto; background:var(--danger); color:white; padding:2px 6px; border-radius:10px; font-size:10px;">{{
+                    overview.alerts_count }}</span>
+                {% endif %}
+            </a>
+            <a href="#" class="nav-item">
+                <span class="nav-icon"><i data-lucide="file-text"></i></span> My Notes
+            </a>
+        </div>
+        <div class="sidebar-footer">
+            <a href="/logout" class="nav-item" style="color: var(--danger);">
+                <span class="nav-icon"><i data-lucide="log-out"></i></span> Logout
+            </a>
+        </div>
+    </nav>
+
+    <div class="main-content">
+        <div class="header">
+            <div>
+                <h1>My Students</h1>
+                <p style="color:var(--gray-500)">Manage your assigned students and add new ones.</p>
+            </div>
+            <div style="font-size:14px; color:var(--gray-500)">
+                {{ now_date }}
+            </div>
+        </div>
+
+        <!-- Student List -->
+        <div class="card">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+                <h3 style="margin:0;">Assigned Students <span id="assignedCount"
+                        style="font-size:13px; color:var(--text-secondary); font-weight:500;"></span></h3>
+                <button class="open-assign-btn" onclick="openAssignModal()">
+                    <i data-lucide="user-plus" style="width:15px;height:15px;"></i> Assign Student
+                </button>
+            </div>
+            <div class="table-container">
+                <table id="assignedTable">
+                    <thead>
+                        <tr>
+                            <th>Student Name</th>
+                            <th>Class</th>
+                            <th>CGPA</th>
+                            <th>Status</th>
+                            <th>Last Active</th>
+                            <th>View</th>
+                            <th>Remove</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for student in students %}
+                        <tr data-student-id="{{ student.id }}">
+                            <td>
+                                <div style="font-weight:600">{{ student.full_name }}</div>
+                            </td>
+                            <td>{{ student.class_level }}-{{ student.section }}</td>
+                            <td>{{ "%.2f"|format(student.current_cgpa) if student.current_cgpa else '--' }}</td>
+                            <td>
+                                <span class="status-badge status-{{ student.performance_status }}">
+                                    {{ student.performance_status }}
+                                </span>
+                            </td>
+                            <td>
+                                {{ student.last_activity.strftime('%b %d') if student.last_activity else '--' }}
+                            </td>
+                            <td>
+                                <a href="/teacher/student/{{ student.id }}" class="btn-sm"
+                                    style="text-decoration:none; color:inherit;">View</a>
+                            </td>
+                            <td>
+                                <button class="btn-remove"
+                                    onclick="removeStudent({{ student.id }}, this)">Remove</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Assignment Modal ── -->
+    <div class="modal-overlay" id="assignModal" onclick="handleOverlayClick(event)">
+        <div class="modal-glass">
+            <div class="modal-header">
+                <h3>➕ Assign Student</h3>
+                <button class="modal-close" onclick="closeAssignModal()">✕</button>
+            </div>
+            <input class="modal-search" id="studentSearch" type="text"
+                placeholder="Search by name, department, or class…" oninput="filterStudents(this.value)" />
+            <div class="modal-list" id="unassignedList">
+                <div class="modal-empty">Loading students…</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sidebar Toggle — viewport-aware
+        function toggleSidebar() {
+            const isMobile = window.innerWidth <= 768;
+            const sidebar = document.querySelector('nav.sidebar');
+            const backdrop = document.getElementById('sidebarBackdrop');
+
+            if (isMobile) {
+                const isOpen = sidebar.classList.toggle('open');
+                if (backdrop) backdrop.style.display = isOpen ? 'block' : 'none';
+            } else {
+                const mainContent = document.querySelector('.main-content');
+                const isCollapsed = sidebar.classList.toggle('collapsed');
+                document.body.classList.toggle('sidebar-collapsed', isCollapsed);
+                if (mainContent) mainContent.classList.toggle('expanded', isCollapsed);
+                localStorage.setItem('sidebarCollapsed', isCollapsed);
+            }
+        }
+
+        function closeSidebar() {
+            const sidebar = document.querySelector('nav.sidebar');
+            const backdrop = document.getElementById('sidebarBackdrop');
+            if (sidebar) { sidebar.classList.remove('open'); }
+            if (backdrop) { backdrop.style.display = 'none'; }
+        }
+
+        // Restore desktop collapsed state on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            if (window.innerWidth > 768) {
+                const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+                if (isCollapsed) {
+                    const sidebar = document.querySelector('nav.sidebar');
+                    const mainContent = document.querySelector('.main-content');
+                    if (sidebar) sidebar.classList.add('collapsed');
+                    if (mainContent) mainContent.classList.add('expanded');
+                    document.body.classList.add('sidebar-collapsed');
+                }
+            }
+        });
+
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // ── Assignment Management ──────────────────────────────────
+        let _unassignedCache = [];
+
+        // Update the assigned count badge
+        function updateAssignedCount() {
+            const rows = document.querySelectorAll('#assignedTable tbody tr[data-student-id]');
+            const el = document.getElementById('assignedCount');
+            if (el) el.textContent = `(${rows.length})`;
+        }
+
+        // Open modal and fetch unassigned students
+        async function openAssignModal() {
+            document.getElementById('assignModal').classList.add('active');
+            document.getElementById('studentSearch').value = '';
+            const listEl = document.getElementById('unassignedList');
+            listEl.innerHTML = '<div class="modal-empty">Loading…</div>';
+            try {
+                const res = await fetch('/api/teacher/unassigned-students');
+                if (!res.ok) throw new Error('Failed to load');
+                _unassignedCache = await res.json();
+                renderUnassignedList(_unassignedCache);
+            } catch (e) {
+                listEl.innerHTML = '<div class="modal-empty">Could not load students. Please retry.</div>';
+                console.error(e);
+            }
+        }
+
+        function closeAssignModal() {
+            document.getElementById('assignModal').classList.remove('active');
+        }
+
+        function handleOverlayClick(e) {
+            if (e.target === document.getElementById('assignModal')) closeAssignModal();
+        }
+
+        // Render the filtered list inside the modal
+        function renderUnassignedList(students) {
+            const listEl = document.getElementById('unassignedList');
+            if (!students.length) {
+                listEl.innerHTML = '<div class="modal-empty">No unassigned students found.</div>';
+                return;
+            }
+            listEl.innerHTML = students.map(s => {
+                const cgpa = s.current_cgpa != null ? s.current_cgpa.toFixed(2) : '--';
+                const statusClass = s.performance_status ? `badge-status-${s.performance_status}` : '';
+                return `
+                <div class="assign-row" data-id="${s.id}" data-name="${s.full_name.toLowerCase()}">
+                    <div class="assign-row-info">
+                        <h4>${s.full_name}</h4>
+                        <div class="assign-row-meta">
+                            <span>${s.department}</span>
+                            <span>Class ${s.class_level}-${s.section}</span>
+                        </div>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
+                        <span class="badge-cgpa">${cgpa}</span>
+                        <span class="${statusClass}">${s.performance_status || ''}</span>
+                        <button class="btn-assign" onclick="assignStudent(${s.id}, this, '${s.full_name.replace(/'/g, "&apos;")}')">
+                            Assign
+                        </button>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        // Live client-side search filter
+        function filterStudents(query) {
+            const q = query.toLowerCase().trim();
+            const filtered = q
+                ? _unassignedCache.filter(s =>
+                    s.full_name.toLowerCase().includes(q) ||
+                    (s.department || '').toLowerCase().includes(q) ||
+                    (s.class_level || '').toLowerCase().includes(q)
+                )
+                : _unassignedCache;
+            renderUnassignedList(filtered);
+        }
+
+        // POST assign
+        async function assignStudent(studentId, btn, fullName) {
+            btn.disabled = true;
+            btn.textContent = '…';
+            try {
+                const res = await fetch('/api/teacher/assign-student', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ student_id: studentId })
+                });
+                if (!res.ok) {
+                    const err = await res.json();
+                    alert(err.msg || 'Assignment failed.');
+                    btn.disabled = false;
+                    btn.textContent = 'Assign';
+                    return;
+                }
+                const data = await res.json();
+                const s = data.assigned_student;
+
+                // Remove from modal cache & list
+                _unassignedCache = _unassignedCache.filter(x => x.id !== studentId);
+                const row = document.querySelector(`.assign-row[data-id="${studentId}"]`);
+                if (row) row.remove();
+                if (!_unassignedCache.length) {
+                    document.getElementById('unassignedList').innerHTML =
+                        '<div class="modal-empty">All students are now assigned.</div>';
+                }
+
+                // Append new row to assigned students table
+                const tbody = document.querySelector('#assignedTable tbody');
+                const cgpa = s.current_cgpa != null ? parseFloat(s.current_cgpa).toFixed(2) : '--';
+                const newTr = document.createElement('tr');
+                newTr.setAttribute('data-student-id', s.id);
+                newTr.innerHTML = `
+                    <td><div style="font-weight:600">${s.full_name}</div></td>
+                    <td>${s.class_level}-${s.section}</td>
+                    <td>${cgpa}</td>
+                    <td><span class="status-badge status-${s.performance_status}">${s.performance_status}</span></td>
+                    <td>—</td>
+                    <td><a href="/teacher/student/${s.id}" class="btn-sm" style="text-decoration:none;color:inherit;">View</a></td>
+                    <td><button class="btn-remove" onclick="removeStudent(${s.id}, this)">Remove</button></td>`;
+                tbody.appendChild(newTr);
+                updateAssignedCount();
+
+            } catch (e) {
+                console.error(e);
+                btn.disabled = false;
+                btn.textContent = 'Assign';
+            }
+        }
+
+        // DELETE unassign
+        async function removeStudent(studentId, btn) {
+            if (!confirm('Remove this student from your class?')) return;
+            btn.disabled = true;
+            try {
+                const res = await fetch('/api/teacher/unassign-student', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ student_id: studentId })
+                });
+                if (!res.ok) {
+                    const err = await res.json();
+                    alert(err.msg || 'Could not remove student.');
+                    btn.disabled = false;
+                    return;
+                }
+                // Remove table row
+                const tr = btn.closest('tr');
+                if (tr) tr.remove();
+                updateAssignedCount();
+            } catch (e) {
+                console.error(e);
+                btn.disabled = false;
+            }
+        }
+
+        // Keyboard: Escape closes modal
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') closeAssignModal();
+        });
+
+        // Init assigned count on page load
+        updateAssignedCount();
+
+        // Close sidebar on resize to desktop viewport
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 768) {
+                const sidebar = document.querySelector('nav.sidebar');
+                if (sidebar) sidebar.classList.remove('open');
+                const backdrop = document.getElementById('sidebarBackdrop');
+                if (backdrop) backdrop.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+
+</html>

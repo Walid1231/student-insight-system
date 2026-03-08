@@ -1,9 +1,32 @@
+"""
+auth/routes.py — Thin controllers for authentication.
+
+Business logic extracted to services/auth_service.py.
+"""
+
 from flask import Blueprint, render_template, request, redirect, url_for, jsonify, make_response
-from flask_jwt_extended import create_access_token, set_access_cookies, unset_jwt_cookies
-from werkzeug.security import generate_password_hash, check_password_hash
-from models import db, User, TeacherProfile, StudentProfile, UserToken
+from flask_jwt_extended import set_access_cookies, unset_jwt_cookies, verify_jwt_in_request, get_jwt
+
+from services.auth_service import AuthService
+from core.errors import ConflictError, AuthorizationError, ValidationError
 
 auth_bp = Blueprint("auth", __name__)
+
+
+def _redirect_if_authenticated():
+    """If the user has a valid JWT, redirect to their dashboard. Returns None if not authenticated."""
+    try:
+        verify_jwt_in_request(optional=True)
+        claims = get_jwt()
+        role = claims.get("role")
+        if role == "student":
+            return redirect(url_for("dashboard.student_dashboard"))
+        elif role == "teacher":
+            return redirect(url_for("teacher.teacher_dashboard"))
+    except Exception:
+        pass
+    return None
+
 
 @auth_bp.route("/register", methods=["GET", "POST"])
 def register():
@@ -14,34 +37,20 @@ def register():
         role = request.form.get("role")
 
         if not email or not password or not role:
-             return jsonify({"msg": "Missing fields"}), 400
+            return jsonify({"msg": "Missing fields"}), 400
 
-        if User.query.filter_by(email=email).first():
-            return jsonify({"msg": "User already exists"}), 400
-
-        # Create User
         try:
-            hashed_password = generate_password_hash(password)
-            new_user = User(email=email, password_hash=hashed_password, role=role)
-            db.session.add(new_user)
-            db.session.commit()
+            result = AuthService.register_user(name, email, password, role)
+            return jsonify(result)
+        except ConflictError:
+            return jsonify({"msg": "User already exists"}), 400
+        except ValidationError as e:
+            return jsonify({"msg": e.message}), 500
 
-            # Create Profile based on role
-            if role == 'teacher':
-                new_teacher = TeacherProfile(user_id=new_user.id, full_name=name)
-                db.session.add(new_teacher)
-            elif role == 'student':
-                new_student = StudentProfile(user_id=new_user.id, full_name=name)
-                db.session.add(new_student)
-            
-            db.session.commit()
-        except Exception as e:
-            db.session.rollback()
-            return jsonify({"msg": f"Registration error: {str(e)}"}), 500
-
-        return jsonify({"msg": "Registration successful", "email": email})
-
-    # For GET requests, redirect to home page with auth anchor
+    # GET — redirect authenticated users to their dashboard
+    redir = _redirect_if_authenticated()
+    if redir:
+        return redir
     return redirect(url_for('home', _anchor='auth'))
 
 
@@ -50,41 +59,28 @@ def login():
     if request.method == "POST":
         email = request.form.get("email")
         password = request.form.get("password")
-        # role is not strictly needed for lookup as email is unique, but verification is good?
-        
-        user = User.query.filter_by(email=email).first()
-        
-        # Verify user exists and password is correct
-        if not user or not check_password_hash(user.password_hash, password):
-            return jsonify({"msg": "Invalid credentials"}), 401
-
-        # Verify role matches
         requested_role = request.form.get("role")
-        if requested_role and user.role != requested_role:
-            return jsonify({"msg": f"Access denied. You are registered as a {user.role}, please login with the correct role."}), 403
 
-        # Create Token
-        access_token = create_access_token(
-            identity=str(user.id), # Use User ID as identity
-            additional_claims={"role": user.role}
-        )
+        try:
+            result = AuthService.login_user(email, password, requested_role)
+        except AuthorizationError as e:
+            status = 401 if "Invalid" in e.message else 403
+            return jsonify({"msg": e.message}), status
 
-        # Store Token in DB
-        new_token = UserToken(user_id=user.id, access_token=access_token)
-        db.session.add(new_token)
-        db.session.commit()
-
-        resp = jsonify({"msg": "Login successful", "role": user.role})
-        set_access_cookies(resp, access_token)
+        resp = jsonify({"msg": "Login successful", "role": result["role"]})
+        set_access_cookies(resp, result["access_token"])
         return resp
 
-    # For GET requests, redirect to home page with auth anchor
+    # GET — redirect authenticated users to their dashboard
+    redir = _redirect_if_authenticated()
+    if redir:
+        return redir
     return redirect(url_for('home', _anchor='auth'))
 
 
 @auth_bp.route("/logout")
 def logout():
-    """Clear JWT cookies and redirect to login page"""
-    resp = make_response(redirect(url_for('auth.login', _anchor='login')))
+    """Clear JWT cookies and redirect to home page."""
+    resp = make_response(redirect(url_for('home')))
     unset_jwt_cookies(resp)
     return resp

@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alerts | Student Insight</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="{{ url_for('static', filename='css/dashboard.css') }}" rel="stylesheet">
+    <style>
+        .alerts-page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .filter-bar {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 18px;
+        }
+
+        .filter-btn {
+            padding: 7px 16px;
+            border-radius: 8px;
+            border: 1px solid #d1d5db;
+            background: #ffffff;
+            color: #374151;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all .2s;
+        }
+
+        .filter-btn:hover {
+            border-color: #6366f1;
+            color: #6366f1;
+            background: #eef2ff;
+        }
+
+        .filter-btn.active {
+            background: #6366f1;
+            border-color: #6366f1;
+            color: #fff;
+        }
+
+        .alert-full-card {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            padding: 16px;
+            border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.06));
+            transition: background .15s;
+        }
+
+        .alert-full-card:last-child {
+            border-bottom: none;
+        }
+
+        .alert-full-card:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .alert-severity-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-top: 5px;
+            flex-shrink: 0;
+        }
+
+        .alert-severity-dot.high,
+        .alert-severity-dot.critical {
+            background: var(--danger, #ef4444);
+        }
+
+        .alert-severity-dot.medium,
+        .alert-severity-dot.warning {
+            background: var(--warning, #f59e0b);
+        }
+
+        .alert-severity-dot.low,
+        .alert-severity-dot.info {
+            background: var(--success, #10b981);
+        }
+
+        .alert-body {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .alert-message {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            line-height: 1.4;
+        }
+
+        .alert-meta {
+            font-size: 12px;
+            color: var(--text-secondary, #8a8a9a);
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .alert-actions {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+            align-items: center;
+        }
+
+        .btn-resolve {
+            padding: 5px 12px;
+            border-radius: 6px;
+            border: 1px solid var(--border, #2a2a2a);
+            background: transparent;
+            color: var(--success, #10b981);
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: all .2s;
+        }
+
+        .btn-resolve:hover {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: var(--success, #10b981);
+        }
+
+        .btn-resolve:disabled {
+            opacity: .5;
+            cursor: not-allowed;
+        }
+
+        .resolved-label {
+            font-size: 12px;
+            color: var(--text-secondary, #8a8a9a);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary, #8a8a9a);
+        }
+
+        .empty-state i {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 12px;
+            opacity: .5;
+        }
+
+        .alert-count-badge {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-left: 6px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Sidebar Toggle Button -->
+    <button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle Sidebar" id="sidebarToggle">
+        <i data-lucide="menu"></i>
+    </button>
+    <!-- Mobile Backdrop -->
+    <div id="sidebarBackdrop" onclick="closeSidebar()"
+        style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1999;"></div>
+
+    <nav class="sidebar">
+        <div class="logo">Teacher Dashboard</div>
+        <div class="nav-links">
+            <a href="/teacher/dashboard" class="nav-item">
+                <span class="nav-icon"><i data-lucide="layout-dashboard"></i></span> Dashboard
+            </a>
+            <a href="/teacher/students" class="nav-item">
+                <span class="nav-icon"><i data-lucide="users"></i></span> Students
+            </a>
+            <a href="/teacher/alerts" class="nav-item active">
+                <span class="nav-icon"><i data-lucide="bell"></i></span> Alerts
+                {% if total_alerts > 0 %}
+                <span
+                    style="margin-left:auto; background:var(--danger); color:white; padding:2px 6px; border-radius:10px; font-size:10px;">{{
+                    total_alerts }}</span>
+                {% endif %}
+            </a>
+            <a href="#" class="nav-item">
+                <span class="nav-icon"><i data-lucide="file-text"></i></span> My Notes
+            </a>
+        </div>
+        <div class="sidebar-footer">
+            <a href="/logout" class="nav-item" style="color: var(--danger);">
+                <span class="nav-icon"><i data-lucide="log-out"></i></span> Logout
+            </a>
+        </div>
+    </nav>
+
+    <div class="main-content">
+        <div class="header">
+            <div>
+                <h1>Alerts <span class="alert-count-badge" id="alertCountBadge">({{ alerts|length }})</span></h1>
+                <p style="color:var(--gray-500)">Review and manage student alerts.</p>
+            </div>
+            <div style="font-size:14px; color:var(--gray-500)">
+                {{ now_date }}
+            </div>
+        </div>
+
+        <!-- Severity Filters -->
+        <div class="filter-bar">
+            <button class="filter-btn active" data-filter="all" onclick="filterAlerts('all', this)">All</button>
+            <button class="filter-btn" data-filter="critical" onclick="filterAlerts('critical', this)">Critical</button>
+            <button class="filter-btn" data-filter="high" onclick="filterAlerts('high', this)">High</button>
+            <button class="filter-btn" data-filter="medium" onclick="filterAlerts('medium', this)">Medium</button>
+            <button class="filter-btn" data-filter="warning" onclick="filterAlerts('warning', this)">Warning</button>
+            <button class="filter-btn" data-filter="low" onclick="filterAlerts('low', this)">Low</button>
+            <button class="filter-btn" data-filter="info" onclick="filterAlerts('info', this)">Info</button>
+        </div>
+
+        <!-- Alerts List -->
+        <div class="card" id="alertsContainer">
+            {% for alert in alerts %}
+            <div class="alert-full-card" data-alert-id="{{ alert.id }}" data-severity="{{ alert.severity }}">
+                <div class="alert-severity-dot {{ alert.severity }}"></div>
+                <div class="alert-body">
+                    <div class="alert-message">{{ alert.message }}</div>
+                    <div class="alert-meta">
+                        <span><strong>{{ alert.student.full_name }}</strong></span>
+                        <span>{{ alert.type }}</span>
+                        <span>{{ alert.created_at.strftime('%b %d, %Y') }}</span>
+                        <span class="alert-badge {{ alert.severity }}">{{ alert.severity }}</span>
+                    </div>
+                </div>
+                <div class="alert-actions">
+                    {% if not alert.is_resolved %}
+                    <button class="btn-resolve" onclick="resolveAlert({{ alert.id }}, this)">
+                        <i data-lucide="check" style="width:13px; height:13px;"></i> Resolve
+                    </button>
+                    {% else %}
+                    <span class="resolved-label">
+                        <i data-lucide="check-circle" style="width:13px; height:13px; color:var(--success);"></i>
+                        Resolved
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i data-lucide="bell-off"></i>
+                <p>No alerts to show.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <script>
+        // Sidebar Toggle — viewport-aware
+        function toggleSidebar() {
+            const isMobile = window.innerWidth <= 768;
+            const sidebar = document.querySelector('nav.sidebar');
+            const backdrop = document.getElementById('sidebarBackdrop');
+
+            if (isMobile) {
+                const isOpen = sidebar.classList.toggle('open');
+                if (backdrop) backdrop.style.display = isOpen ? 'block' : 'none';
+            } else {
+                const mainContent = document.querySelector('.main-content');
+                const isCollapsed = sidebar.classList.toggle('collapsed');
+                document.body.classList.toggle('sidebar-collapsed', isCollapsed);
+                if (mainContent) mainContent.classList.toggle('expanded', isCollapsed);
+                localStorage.setItem('sidebarCollapsed', isCollapsed);
+            }
+        }
+
+        function closeSidebar() {
+            const sidebar = document.querySelector('nav.sidebar');
+            const backdrop = document.getElementById('sidebarBackdrop');
+            if (sidebar) { sidebar.classList.remove('open'); }
+            if (backdrop) { backdrop.style.display = 'none'; }
+        }
+
+        // Restore desktop collapsed state on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            if (window.innerWidth > 768) {
+                const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+                if (isCollapsed) {
+                    const sidebar = document.querySelector('nav.sidebar');
+                    const mainContent = document.querySelector('.main-content');
+                    if (sidebar) sidebar.classList.add('collapsed');
+                    if (mainContent) mainContent.classList.add('expanded');
+                    document.body.classList.add('sidebar-collapsed');
+                }
+            }
+        });
+
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // ── Severity Filter ────────────────────────────────────────
+        function filterAlerts(severity, btn) {
+            // Update active button
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            // Filter cards
+            const cards = document.querySelectorAll('.alert-full-card');
+            let visibleCount = 0;
+            cards.forEach(card => {
+                if (severity === 'all' || card.dataset.severity === severity) {
+                    card.style.display = '';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            // Update count badge
+            const badge = document.getElementById('alertCountBadge');
+            if (badge) badge.textContent = `(${visibleCount})`;
+        }
+
+        // ── Resolve Alert ──────────────────────────────────────────
+        async function resolveAlert(alertId, btn) {
+            if (!confirm('Mark this alert as resolved?')) return;
+            btn.disabled = true;
+            try {
+                const res = await fetch(`/api/teacher/alerts/${alertId}/resolve`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                if (res.ok) {
+                    // Replace button with resolved label
+                    const actionsDiv = btn.parentElement;
+                    actionsDiv.innerHTML = `
+                        <span class="resolved-label">
+                            <i data-lucide="check-circle" style="width:13px; height:13px; color:var(--success);"></i>
+                            Resolved
+                        </span>`;
+                    lucide.createIcons();
+                } else {
+                    alert('Failed to resolve alert.');
+                    btn.disabled = false;
+                }
+            } catch (e) {
+                console.error('Error:', e);
+                btn.disabled = false;
+            }
+        }
+
+        // Close sidebar on resize to desktop viewport
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 768) {
+                const sidebar = document.querySelector('nav.sidebar');
+                if (sidebar) sidebar.classList.remove('open');
+                const backdrop = document.getElementById('sidebarBackdrop');
+                if (backdrop) backdrop.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+
+</html>

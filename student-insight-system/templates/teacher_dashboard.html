@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -6,7 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Teacher Dashboard | Student Insight</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- defer: downloads in parallel, executes after HTML parse, before DOMContentLoaded -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link href="{{ url_for('static', filename='css/dashboard.css') }}" rel="stylesheet">
 
@@ -14,9 +15,13 @@
 
 <body>
     <!-- Sidebar Toggle Button -->
-    <button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle Sidebar">
+    <button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle Sidebar" id="sidebarToggle">
         <i data-lucide="menu"></i>
     </button>
+    <!-- Mobile Backdrop -->
+    <div id="sidebarBackdrop" onclick="closeSidebar()"
+        style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1999;"></div>
+
 
     <nav class="sidebar">
         <div class="logo">Teacher Dashboard</div>
@@ -24,10 +29,10 @@
             <a href="#" class="nav-item active">
                 <span class="nav-icon"><i data-lucide="layout-dashboard"></i></span> Dashboard
             </a>
-            <a href="#" class="nav-item">
+            <a href="/teacher/students" class="nav-item">
                 <span class="nav-icon"><i data-lucide="users"></i></span> Students
             </a>
-            <a href="#" class="nav-item">
+            <a href="/teacher/alerts" class="nav-item">
                 <span class="nav-icon"><i data-lucide="bell"></i></span> Alerts
                 {% if overview.alerts_count > 0 %}
                 <span
@@ -95,126 +100,122 @@
             </div>
         </div>
 
-        <div class="grid-2">
-            <!-- Functional Performance Chart -->
-            <div class="card">
+        <!-- Charts + Alerts: Performance spans full width; Heatmap & Alerts share the row below -->
+        <div class="dash-section-grid">
+
+            <!-- Row 1: Performance Distribution (full width) -->
+            <div class="card dash-area-chart">
                 <h3>Performance Distribution</h3>
                 <div class="chart-container">
                     <canvas id="performanceChart"></canvas>
                 </div>
             </div>
 
-            <!-- RISK HEATMAP -->
-            <div class="card">
+            <!-- Row 2, Left: Risk Heatmap -->
+            <div class="card dash-area-heatmap">
                 <h3>Class Skill Risk Heatmap</h3>
-                <div id="heatmapContainer" style="overflow-x:auto; margin-top:15px; max-height: 300px;">
+                <div id="heatmapContainer" style="overflow-x:auto; margin-top:12px; max-height:260px;">
                     <div style="text-align:center; color:var(--text-secondary);">Loading Risk Data...</div>
                 </div>
             </div>
 
-            <!-- Alerts Panel -->
-            <div class="card">
-                <div style="display:flex; justify-content:space-between; margin-bottom:16px;">
-                    <h3>Recent Alerts</h3>
-                    <a href="#" style="font-size:12px; color:var(--primary);">View All</a>
+            <!-- Row 2, Right: Alerts Panel -->
+            <div class="card dash-area-alerts">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+                    <h3 style="margin:0;">Recent Alerts</h3>
+                    <a href="/teacher/alerts" style="font-size:12px; color:var(--primary);">View All</a>
                 </div>
 
                 <div class="alerts-list">
                     {% for alert in alerts[:5] %}
                     <div class="alert-item" id="alert-{{ alert.id }}">
-                        <div>
-                            <div style="font-size:14px; font-weight:600;">{{ alert.message }}</div>
-                            <div style="font-size:12px; color:var(--gray-500);">
+                        <div style="min-width:0; flex:1;">
+                            <div style="font-size:13px; font-weight:600; white-space:normal;">{{ alert.message }}</div>
+                            <div style="font-size:11px; color:var(--text-secondary); margin-top:2px;">
                                 {{ alert.student.full_name }} • {{ alert.created_at.strftime('%Y-%m-%d') }}
                             </div>
                         </div>
-                        <div>
+                        <div style="display:flex; gap:6px; align-items:center; flex-shrink:0;">
                             <span class="alert-badge {{ alert.severity }}">{{ alert.severity }}</span>
-                            <button class="btn-sm" onclick="resolveAlert({{ alert.id }})"><i data-lucide="check"
-                                    style="width:14px; height:14px;"></i></button>
+                            <button class="btn-sm" onclick="resolveAlert({{ alert.id }})">
+                                <i data-lucide="check" style="width:13px; height:13px;"></i>
+                            </button>
                         </div>
                     </div>
                     {% else %}
-                    <div style="color:var(--gray-500); text-align:center; padding:20px;">No active alerts</div>
+                    <div style="color:var(--text-secondary); text-align:center; padding:20px;">No active alerts</div>
                     {% endfor %}
                 </div>
             </div>
+
         </div>
 
-        <!-- Student List -->
-        <div class="card">
-            <h3>Assigned Students</h3>
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Student Name</th>
-                            <th>Class</th>
-                            <th>CGPA</th>
-                            <th>Status</th>
-                            <th>Last Active</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for student in students %}
-                        <tr>
-                            <td>
-                                <div style="font-weight:600">{{ student.full_name }}</div>
-                            </td>
-                            <td>{{ student.class_level }}-{{ student.section }}</td>
-                            <td>{{ "%.2f"|format(student.current_cgpa) if student.current_cgpa else '--' }}</td>
-                            <td>
-                                <span class="status-badge status-{{ student.performance_status }}">
-                                    {{ student.performance_status }}
-                                </span>
-                            </td>
-                            <td>
-                                {{ student.last_activity.strftime('%b %d') if student.last_activity else '--' }}
-                            </td>
-                            <td>
-                                <a href="/teacher/student/{{ student.id }}" class="btn-sm"
-                                    style="text-decoration:none; color:inherit;">View Profile</a>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
     </div>
 
     <script>
-        // Sidebar Toggle Function
+        // Sidebar Toggle — viewport-aware
+        // Desktop (>768px): collapses to icon-only rail (.collapsed + .expanded)
+        // Mobile  (≤768px): slides in as full overlay (.open + backdrop)
         function toggleSidebar() {
-            const sidebar = document.querySelector('.sidebar');
-            const mainContent = document.querySelector('.main-content');
+            const isMobile = window.innerWidth <= 768;
+            const sidebar = document.querySelector('nav.sidebar');
+            const backdrop = document.getElementById('sidebarBackdrop');
 
-            sidebar.classList.toggle('collapsed');
-            mainContent.classList.toggle('expanded');
-
-            // Save state to localStorage
-            const isCollapsed = sidebar.classList.contains('collapsed');
-            localStorage.setItem('sidebarCollapsed', isCollapsed);
+            if (isMobile) {
+                const isOpen = sidebar.classList.toggle('open');
+                if (backdrop) backdrop.style.display = isOpen ? 'block' : 'none';
+            } else {
+                const mainContent = document.querySelector('.main-content');
+                const isCollapsed = sidebar.classList.toggle('collapsed');
+                // Sync body class so `body.sidebar-collapsed button.sidebar-toggle`
+                // CSS rule fires and the hamburger slides in sync with the sidebar
+                document.body.classList.toggle('sidebar-collapsed', isCollapsed);
+                if (mainContent) mainContent.classList.toggle('expanded', isCollapsed);
+                localStorage.setItem('sidebarCollapsed', isCollapsed);
+            }
         }
 
-        // Restore sidebar state on page load
+        function closeSidebar() {
+            const sidebar = document.querySelector('nav.sidebar');
+            const backdrop = document.getElementById('sidebarBackdrop');
+            if (sidebar) { sidebar.classList.remove('open'); }
+            if (backdrop) { backdrop.style.display = 'none'; }
+        }
+
+        // Restore desktop collapsed state on page load (mobile ignores this)
         window.addEventListener('DOMContentLoaded', () => {
-            const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
-            if (isCollapsed) {
-                document.querySelector('.sidebar').classList.add('collapsed');
-                document.querySelector('.main-content').classList.add('expanded');
+            if (window.innerWidth > 768) {
+                const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+                if (isCollapsed) {
+                    const sidebar = document.querySelector('nav.sidebar');
+                    const mainContent = document.querySelector('.main-content');
+                    if (sidebar) sidebar.classList.add('collapsed');
+                    if (mainContent) mainContent.classList.add('expanded');
+                    // Restore hamburger position too
+                    document.body.classList.add('sidebar-collapsed');
+                }
             }
         });
 
-        // Initialize Chart with glassmorphism styling
-        const ctx = document.getElementById('performanceChart').getContext('2d');
-        new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Good', 'Average', 'At Risk'],
-                datasets: [{
-                    data: [{{ overview.good_count }}, {{ overview.average_count }}, {{ overview.at_risk_count }}],
+        // ── DOMContentLoaded guard: Chart.js (deferred) is guaranteed ready here ──
+        document.addEventListener('DOMContentLoaded', function () {
+            if (typeof Chart === 'undefined') {
+                console.warn('[Dashboard] Chart.js failed to load — skipping chart init');
+                return;
+            }
+            // Safe Jinja → JS bridge: | default(0) | int prevents None/null in array literal
+            var ctxEl = document.getElementById('performanceChart');
+            if (!ctxEl) return;
+            new Chart(ctxEl.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Good', 'Average', 'At Risk'],
+                    datasets: [{
+                        data: [
+                            {{ overview.good_count | default(0) | int }},
+                            {{ overview.average_count | default(0) | int }},
+            {{ overview.at_risk_count | default(0) | int }}
+                        ],
             backgroundColor: [
             'rgba(16, 185, 129, 0.8)',
             'rgba(245, 158, 11, 0.8)',
@@ -226,8 +227,8 @@
             'rgba(239, 68, 68, 1)'
         ],
             borderWidth: 2
-                }]
-            },
+                    }]
+                },
             options: {
             responsive: true,
             maintainAspectRatio: false,
@@ -237,16 +238,15 @@
                     position: 'bottom',
                     labels: {
                         color: 'rgba(255, 255, 255, 0.9)',
-                        font: {
-                            size: 13,
-                            weight: '600'
-                        },
+                        font: { size: 13, weight: '600' },
                         padding: 15
                     }
                 }
             }
         }
-        });
+            });
+        }); // end DOMContentLoaded
+
 
         // Resolve Alert Function
         async function resolveAlert(alertId) {
@@ -331,6 +331,21 @@
 
         // Initialize Lucide icons
         lucide.createIcons();
+
+        // ─────────────────────────────────────────────────────────
+
+        // Close sidebar on resize to desktop viewport
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 768) {
+                // On desktop resize: close mobile overlay-style open, keep collapsed state
+                const sidebar = document.querySelector('nav.sidebar');
+                if (sidebar) sidebar.classList.remove('open');
+                const backdrop = document.getElementById('sidebarBackdrop');
+                if (backdrop) backdrop.style.display = 'none';
+            }
+        });
+        // ─────────────────────────────────────────────────────────
+
     </script>
 </body>
 
