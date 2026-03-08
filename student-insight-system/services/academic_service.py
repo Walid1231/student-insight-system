@@ -124,6 +124,9 @@ class AcademicService:
             'credit_value': c.credit_value,
         } for r, c in records_raw]
 
+        # All careers for manual selection
+        all_career_paths = CareerPath.query.order_by(CareerPath.title).all()
+
         return {
             "student": student,
             "all_skills": all_skills,
@@ -134,6 +137,7 @@ class AcademicService:
             "goal_career_ids": goal_career_ids,
             "goals": goals,
             "records": records,
+            "all_careers": all_career_paths,
         }
 
     # ── Grade Management ──────────────────────────────────────

@@ -24,6 +24,464 @@ from services.analytics_service import AnalyticsService
 
 dashboard_bp = Blueprint("dashboard", __name__)
 
+# =============================================================
+# DEPARTMENT → CAREERS & SKILLS REFERENCE DATA
+# =============================================================
+
+DEPT_CAREERS_SKILLS = {
+    "Computer Science & Engineering (CSE)": {
+        "careers": [
+            "Software Developer", "Web Developer", "Mobile App Developer",
+            "Data Scientist", "AI / Machine Learning Engineer",
+            "Cybersecurity Specialist", "Cloud Engineer", "DevOps Engineer",
+            "Game Developer", "Database Administrator", "Systems Analyst",
+            "IT Project Manager", "University Lecturer / Researcher",
+        ],
+        "skills": [
+            "Python", "Java", "C++", "JavaScript", "SQL", "HTML/CSS",
+            "React", "Node.js", "Git", "Docker", "Linux",
+            "Data Structures", "Algorithms", "Machine Learning",
+            "Data Analysis", "Cloud Computing", "Web Development",
+            "Cybersecurity", "REST APIs", "Databases",
+        ],
+    },
+    "Software Engineering": {
+        "careers": [
+            "Software Developer", "Web Developer", "Mobile App Developer",
+            "Data Scientist", "AI / Machine Learning Engineer",
+            "Cybersecurity Specialist", "Cloud Engineer", "DevOps Engineer",
+            "Game Developer", "Database Administrator", "Systems Analyst",
+            "IT Project Manager", "University Lecturer / Researcher",
+        ],
+        "skills": [
+            "Python", "Java", "C#", "JavaScript", "TypeScript", "SQL",
+            "React", "Spring Boot", "Docker", "Kubernetes", "Git",
+            "Agile / Scrum", "REST APIs", "System Design", "Testing",
+        ],
+    },
+    "Electrical & Electronic Engineering (EEE)": {
+        "careers": [
+            "Electrical Engineer", "Power System Engineer", "Electronics Engineer",
+            "Telecommunications Engineer", "Embedded Systems Engineer",
+            "Robotics Engineer", "Automation Engineer", "Renewable Energy Engineer",
+            "Research Engineer", "Engineering Consultant",
+        ],
+        "skills": [
+            "Circuit Analysis", "MATLAB", "Control Systems", "Embedded Systems",
+            "Arduino", "Signal Processing", "Power Systems", "PCB Design",
+            "PLC Programming", "AutoCAD Electrical", "VHDL", "Microcontrollers",
+            "Communication", "Problem Solving", "Critical Thinking",
+        ],
+    },
+    "Civil Engineering": {
+        "careers": [
+            "Structural Engineer", "Construction Engineer", "Transportation Engineer",
+            "Urban Planner", "Environmental Engineer", "Geotechnical Engineer",
+            "Project Manager (Construction)", "Site Engineer", "Government Engineer",
+        ],
+        "skills": [
+            "AutoCAD Civil", "Structural Analysis", "Revit", "Surveying", "GIS",
+            "Concrete Design", "Project Scheduling", "Construction Management",
+            "Geotechnical Analysis", "ETABS", "Highway Design",
+            "Environmental Engineering", "Problem Solving", "Project Management",
+        ],
+    },
+    "Mechanical Engineering": {
+        "careers": [
+            "Mechanical Engineer", "Manufacturing Engineer", "Automotive Engineer",
+            "Aerospace Engineer", "Energy Systems Engineer", "Robotics Engineer",
+            "Maintenance Engineer", "Product Design Engineer",
+        ],
+        "skills": [
+            "AutoCAD", "SolidWorks", "ANSYS", "Thermodynamics", "Fluid Mechanics",
+            "CNC Machining", "MATLAB", "3D Modeling", "Materials Science",
+            "Manufacturing Processes", "FEA Analysis", "Robot Programming",
+            "Problem Solving", "Critical Thinking",
+        ],
+    },
+    "Information Technology (IT)": {
+        "careers": [
+            "IT Support Specialist", "Network Administrator", "Systems Administrator",
+            "Cloud Engineer", "Cybersecurity Analyst", "Database Administrator",
+            "IT Project Manager", "Business Analyst",
+        ],
+        "skills": [
+            "Networking", "Cybersecurity", "Windows Server", "Linux",
+            "Cloud Computing", "Virtualization", "IT Support",
+            "Database Administration", "Active Directory",
+            "Cisco Networking", "Python", "PowerShell",
+        ],
+    },
+    "Industrial & Production Engineering (IPE)": {
+        "careers": [
+            "Industrial Engineer", "Production Manager", "Quality Assurance Engineer",
+            "Supply Chain Analyst", "Operations Manager", "Process Improvement Engineer",
+        ],
+        "skills": [
+            "Lean Manufacturing", "Six Sigma", "AutoCAD", "MATLAB", "ERP Systems",
+            "Project Management", "Supply Chain Management", "Quality Control",
+            "Operations Research", "Simulation Tools", "Teamwork",
+        ],
+    },
+    "Business Administration (BBA)": {
+        "careers": [
+            "Business Manager", "Marketing Manager", "Financial Analyst",
+            "HR Manager", "Operations Manager", "Business Consultant",
+            "Entrepreneur / Startup Founder", "Supply Chain Manager",
+            "Corporate Executive",
+        ],
+        "skills": [
+            "Business Strategy", "Marketing", "Sales", "Supply Chain",
+            "Excel Advanced", "Business Communication", "Economics",
+            "Market Research", "SAP ERP", "Digital Marketing",
+            "Leadership", "Project Management", "Teamwork",
+        ],
+    },
+    "Accounting": {
+        "careers": [
+            "Accountant", "Auditor", "Financial Analyst", "Investment Banker",
+            "Tax Consultant", "Chartered Accountant", "Risk Analyst", "Banking Officer",
+        ],
+        "skills": [
+            "Financial Analysis", "Accounting", "Bloomberg Terminal",
+            "Excel Advanced", "Corporate Finance", "Financial Reporting",
+            "QuickBooks", "Taxation", "Auditing", "Cost Accounting",
+            "Communication", "Critical Thinking",
+        ],
+    },
+    "Finance": {
+        "careers": [
+            "Accountant", "Auditor", "Financial Analyst", "Investment Banker",
+            "Tax Consultant", "Chartered Accountant", "Risk Analyst", "Banking Officer",
+        ],
+        "skills": [
+            "Financial Modelling", "Accounting", "Bloomberg Terminal",
+            "Investment Analysis", "Risk Management", "Excel Advanced",
+            "Corporate Finance", "Derivatives", "Portfolio Management",
+            "Financial Reporting", "QuickBooks",
+        ],
+    },
+    "Marketing": {
+        "careers": [
+            "Marketing Manager", "Digital Marketing Specialist", "Brand Manager",
+            "Content Strategist", "SEO Specialist", "Social Media Manager",
+            "Market Research Analyst", "Product Manager",
+        ],
+        "skills": [
+            "Digital Marketing", "SEO / SEM", "Content Marketing", "Social Media",
+            "Google Analytics", "Market Research", "Branding", "Copywriting",
+            "Email Marketing", "CRM Tools", "Communication", "Creativity",
+        ],
+    },
+    "Management": {
+        "careers": [
+            "Operations Manager", "Project Manager", "Consultant",
+            "HR Manager", "General Manager", "Team Lead",
+            "Entrepreneur / Startup Founder",
+        ],
+        "skills": [
+            "Leadership", "Project Management", "Teamwork", "Communication",
+            "Problem Solving", "Strategic Planning", "Decision Making",
+            "Negotiation", "Microsoft Office", "Time Management",
+        ],
+    },
+    "Human Resource Management (HRM)": {
+        "careers": [
+            "HR Manager", "Recruiter", "Talent Acquisition Specialist",
+            "Training & Development Manager", "Compensation & Benefits Analyst",
+            "HR Business Partner", "Organizational Development Specialist",
+        ],
+        "skills": [
+            "Recruitment", "Employee Relations", "Performance Management",
+            "Training & Development", "HR Analytics", "Labor Law",
+            "Communication", "Leadership", "Microsoft Office", "Teamwork",
+        ],
+    },
+    "Mathematics": {
+        "careers": [
+            "Data Analyst", "Data Scientist", "Statistician",
+            "Actuary", "University Lecturer", "Research Scientist",
+            "Operations Research Analyst", "Financial Analyst",
+        ],
+        "skills": [
+            "Python", "R", "MATLAB", "Statistics", "Linear Algebra",
+            "Calculus", "Numerical Methods", "Machine Learning",
+            "Data Analysis", "Problem Solving", "Critical Thinking", "Research",
+        ],
+    },
+    "Physics": {
+        "careers": [
+            "Research Scientist", "University Lecturer / Researcher",
+            "Medical Physicist", "Data Analyst", "Optics Engineer",
+            "Semiconductor Engineer",
+        ],
+        "skills": [
+            "MATLAB", "Python", "Research", "Laboratory Skills",
+            "Data Analysis", "Quantum Mechanics", "Electromagnetism",
+            "Problem Solving", "Critical Thinking", "Mathematics",
+        ],
+    },
+    "Chemistry": {
+        "careers": [
+            "Research Chemist", "Chemical Engineer", "Quality Control Analyst",
+            "Pharmaceutical Researcher", "Environmental Chemist",
+            "University Lecturer / Researcher",
+        ],
+        "skills": [
+            "Laboratory Skills", "Research", "Analytical Chemistry",
+            "Organic Chemistry", "Mass Spectrometry", "Python",
+            "Data Analysis", "Problem Solving", "Critical Thinking",
+        ],
+    },
+    "Statistics": {
+        "careers": [
+            "Data Analyst", "Data Scientist", "Statistician",
+            "Machine Learning Engineer", "Business Intelligence Analyst",
+            "Risk Analyst",
+        ],
+        "skills": [
+            "Python", "R", "SQL", "Machine Learning", "Deep Learning",
+            "Statistics", "Data Visualization", "Pandas", "NumPy",
+            "Power BI", "Tableau", "Research",
+        ],
+    },
+    "Biotechnology": {
+        "careers": [
+            "Biotechnologist", "Research Scientist", "Bioinformatician",
+            "Pharmaceutical Researcher", "Quality Control Scientist",
+            "University Lecturer / Researcher",
+        ],
+        "skills": [
+            "Molecular Biology", "Genetics", "Bioinformatics",
+            "Laboratory Skills", "Python", "R", "Research",
+            "Data Analysis", "Critical Thinking", "Communication",
+        ],
+    },
+    "Environmental Science": {
+        "careers": [
+            "Environmental Consultant", "Environmental Engineer",
+            "Policy Analyst", "Research Scientist", "Government Advisor",
+            "NGO Specialist",
+        ],
+        "skills": [
+            "GIS", "Environmental Impact Assessment", "Research",
+            "Data Analysis", "Policy Writing", "Laboratory Skills",
+            "Communication", "Project Management",
+        ],
+    },
+    "English": {
+        "careers": [
+            "Teacher / Lecturer", "Journalist", "Content Writer",
+            "Editor / Publisher", "Public Relations Specialist",
+            "Translator", "Media Professional",
+        ],
+        "skills": [
+            "Creative Writing", "Academic Writing", "Research",
+            "Public Speaking", "Editing", "Translation",
+            "Communication", "Presentation", "Critical Thinking",
+        ],
+    },
+    "Bangla": {
+        "careers": [
+            "Teacher / Lecturer", "Journalist", "Author / Writer",
+            "Editor", "Cultural Researcher", "Translator",
+        ],
+        "skills": [
+            "Creative Writing", "Research", "Journalism",
+            "Communication", "Editing", "Presentation",
+            "Critical Thinking", "Leadership",
+        ],
+    },
+    "History": {
+        "careers": [
+            "Historian", "University Lecturer / Researcher", "Museum Curator",
+            "Archivist", "Policy Analyst", "Journalist",
+        ],
+        "skills": [
+            "Research", "Academic Writing", "Critical Thinking",
+            "Communication", "Presentation", "Data Analysis",
+        ],
+    },
+    "Philosophy": {
+        "careers": [
+            "University Lecturer / Researcher", "Ethicist", "Policy Analyst",
+            "Writer / Author", "Human Rights Advocate",
+        ],
+        "skills": [
+            "Critical Thinking", "Academic Writing", "Research",
+            "Communication", "Leadership", "Presentation",
+        ],
+    },
+    "Economics": {
+        "careers": [
+            "Economist", "Policy Analyst", "Research Analyst",
+            "Financial Analyst", "Development Specialist",
+            "Data Analyst", "Government Economic Advisor",
+        ],
+        "skills": [
+            "Economic Modelling", "R", "Python", "Statistics",
+            "Research", "Data Analysis", "Policy Writing",
+            "Excel Advanced", "Communication", "Critical Thinking",
+        ],
+    },
+    "Sociology": {
+        "careers": [
+            "Sociologist", "Social Worker", "NGO Specialist",
+            "Policy Analyst", "Research Analyst", "Community Developer",
+        ],
+        "skills": [
+            "Research", "Data Analysis", "Communication",
+            "Community Outreach", "Presentation", "Critical Thinking",
+            "Project Management",
+        ],
+    },
+    "Political Science": {
+        "careers": [
+            "Political Analyst", "Policy Advisor", "Government Officer",
+            "Diplomat", "Journalist", "NGO Specialist",
+            "University Lecturer / Researcher",
+        ],
+        "skills": [
+            "Research", "Policy Writing", "Communication",
+            "Critical Thinking", "Presentation", "Data Analysis",
+            "Leadership",
+        ],
+    },
+    "International Relations": {
+        "careers": [
+            "Diplomat", "Foreign Service Officer", "Policy Analyst",
+            "International Development Specialist", "NGO Specialist",
+            "Journalist", "University Lecturer / Researcher",
+        ],
+        "skills": [
+            "Research", "Policy Writing", "Communication",
+            "Negotiation", "Cross-Cultural Communication", "Languages",
+            "Presentation", "Critical Thinking", "Leadership",
+        ],
+    },
+    "Public Administration": {
+        "careers": [
+            "Government Officer", "Policy Analyst", "Public Administrator",
+            "NGO Manager", "Civil Servant", "Development Specialist",
+        ],
+        "skills": [
+            "Public Policy", "Administration", "Leadership",
+            "Communication", "Research", "Project Management",
+            "Microsoft Office", "Teamwork",
+        ],
+    },
+    "Pharmacy": {
+        "careers": [
+            "Pharmacist", "Drug Research Scientist",
+            "Pharmaceutical Industry Manager", "Clinical Researcher",
+            "Regulatory Affairs Specialist", "Quality Control Analyst",
+        ],
+        "skills": [
+            "Pharmacology", "Biochemistry", "Laboratory Skills",
+            "Clinical Research", "Regulatory Affairs", "Quality Control",
+            "Research", "Communication", "Critical Thinking", "Data Analysis",
+        ],
+    },
+    "Public Health": {
+        "careers": [
+            "Public Health Officer", "Epidemiologist", "Health Policy Analyst",
+            "NGO Health Specialist", "Community Health Worker",
+            "Research Scientist",
+        ],
+        "skills": [
+            "Epidemiology", "Research", "Data Analysis", "Policy Writing",
+            "Community Outreach", "Communication", "Microsoft Office",
+            "Project Management",
+        ],
+    },
+    "Nursing": {
+        "careers": [
+            "Registered Nurse", "Clinical Nurse Specialist",
+            "Nurse Educator", "Healthcare Administrator",
+            "Community Health Nurse",
+        ],
+        "skills": [
+            "Clinical Skills", "Patient Care", "First Aid",
+            "Communication", "Teamwork", "Critical Thinking",
+            "Medical Ethics", "EMR Systems",
+        ],
+    },
+    "Law (LLB)": {
+        "careers": [
+            "Lawyer / Advocate", "Legal Consultant", "Judge",
+            "Corporate Legal Advisor", "Public Prosecutor",
+            "Legal Researcher", "Human Rights Lawyer",
+        ],
+        "skills": [
+            "Legal Research", "Case Analysis", "Contract Law",
+            "Communication", "Negotiation", "Critical Thinking",
+            "Academic Writing", "Presentation", "Leadership",
+        ],
+    },
+}
+
+# Grouped for the HTML <optgroup> select
+DEPT_GROUPS = [
+    ("💻 Engineering & Technology", [
+        "Computer Science & Engineering (CSE)",
+        "Electrical & Electronic Engineering (EEE)",
+        "Civil Engineering",
+        "Mechanical Engineering",
+        "Software Engineering",
+        "Information Technology (IT)",
+        "Industrial & Production Engineering (IPE)",
+    ]),
+    ("📊 Business & Management", [
+        "Business Administration (BBA)",
+        "Accounting",
+        "Finance",
+        "Marketing",
+        "Management",
+        "Human Resource Management (HRM)",
+    ]),
+    ("🔬 Science", [
+        "Mathematics",
+        "Physics",
+        "Chemistry",
+        "Statistics",
+        "Biotechnology",
+        "Environmental Science",
+    ]),
+    ("📚 Arts & Humanities", [
+        "English",
+        "Bangla",
+        "History",
+        "Philosophy",
+    ]),
+    ("🌍 Social Science", [
+        "Economics",
+        "Sociology",
+        "Political Science",
+        "International Relations",
+        "Public Administration",
+    ]),
+    ("⚕️ Health & Pharmacy", [
+        "Pharmacy",
+        "Public Health",
+        "Nursing",
+    ]),
+    ("⚖️ Law", [
+        "Law (LLB)",
+    ]),
+]
+
+
+# =============================================================
+# API: Department → Careers & Skills
+# =============================================================
+
+@dashboard_bp.route("/api/department-data")
+@require_role("student")
+def api_department_data():
+    dept = request.args.get("dept", "").strip()
+    data = DEPT_CAREERS_SKILLS.get(dept, {"careers": [], "skills": []})
+    return jsonify(data)
+
 
 # =============================================================
 # STUDENT DASHBOARD
@@ -366,6 +824,8 @@ def goals_grades():
     data = AcademicService.get_goals_grades_data(user_id)
     data["success"] = request.args.get('success', False)
     data["success_msg"] = request.args.get('msg', '')
+    data["dept_groups"] = DEPT_GROUPS
+    data["dept_keys"] = list(DEPT_CAREERS_SKILLS.keys())
     return render_template("student_goals_grades.html", **data)
 
 
@@ -453,9 +913,147 @@ def add_grade():
                             msg='Grade added! CGPA updated.'))
 
 
+
 @dashboard_bp.route("/student/goals-grades/grade/<int:record_id>/delete", methods=["POST"])
 @require_role("student")
 def delete_grade(record_id):
     user_id = get_jwt_identity()
     AcademicService.delete_grade(user_id, record_id)
     return redirect(url_for('dashboard.goals_grades'))
+
+
+# =============================================================
+# JSON AJAX ENDPOINTS — Goals & Grades (no page refresh)
+# =============================================================
+
+@dashboard_bp.route("/api/gg/skill/add", methods=["POST"])
+@require_role("student")
+def api_gg_add_skill():
+    user_id = get_jwt_identity()
+    data = request.get_json(silent=True) or {}
+    name = data.get("skill_name", "").strip()
+    if not name:
+        return jsonify({"ok": False, "msg": "Skill name required"}), 400
+    AcademicService.add_skill(user_id, name)
+    from models import StudentSkill, StudentProfile
+    student = StudentProfile.query.filter_by(user_id=int(user_id)).first()
+    skills = StudentSkill.query.filter_by(student_id=student.id).all()
+    return jsonify({
+        "ok": True,
+        "skills": [{"id": s.id, "name": s.skill_name} for s in skills],
+    })
+
+
+@dashboard_bp.route("/api/gg/skill/<int:skill_id>/delete", methods=["POST"])
+@require_role("student")
+def api_gg_delete_skill(skill_id):
+    user_id = get_jwt_identity()
+    AcademicService.remove_skill(user_id, skill_id)
+    from models import StudentSkill, StudentProfile
+    student = StudentProfile.query.filter_by(user_id=int(user_id)).first()
+    skills = StudentSkill.query.filter_by(student_id=student.id).all()
+    return jsonify({
+        "ok": True,
+        "skills": [{"id": s.id, "name": s.skill_name} for s in skills],
+    })
+
+
+@dashboard_bp.route("/api/gg/goal/add", methods=["POST"])
+@require_role("student")
+def api_gg_add_goal():
+    user_id = get_jwt_identity()
+    data = request.get_json(silent=True) or {}
+    career_id = data.get("career_id")
+    goal_type = data.get("goal_type", "Long Term")
+    if not career_id:
+        return jsonify({"ok": False, "msg": "career_id required"}), 400
+    AcademicService.add_goal(user_id, int(career_id), goal_type)
+    return jsonify({"ok": True})
+
+
+@dashboard_bp.route("/api/gg/goal/<int:goal_id>/delete", methods=["POST"])
+@require_role("student")
+def api_gg_delete_goal(goal_id):
+    user_id = get_jwt_identity()
+    AcademicService.delete_goal(user_id, goal_id)
+    return jsonify({"ok": True})
+
+
+@dashboard_bp.route("/api/gg/goal/<int:goal_id>/primary", methods=["POST"])
+@require_role("student")
+def api_gg_set_primary(goal_id):
+    user_id = get_jwt_identity()
+    AcademicService.set_primary_goal(user_id, goal_id)
+    return jsonify({"ok": True})
+
+
+@dashboard_bp.route("/api/gg/target-cgpa", methods=["POST"])
+@require_role("student")
+def api_gg_save_target_cgpa():
+    user_id = get_jwt_identity()
+    data = request.get_json(silent=True) or {}
+    target = data.get("target_cgpa")
+    if target is None:
+        return jsonify({"ok": False, "msg": "target_cgpa required"}), 400
+    AcademicService.save_target_cgpa(user_id, float(target))
+    return jsonify({"ok": True})
+
+
+@dashboard_bp.route("/api/gg/grade/add", methods=["POST"])
+@require_role("student")
+def api_gg_add_grade():
+    from schemas.academic import GradeInput
+    user_id = get_jwt_identity()
+    data = request.get_json(silent=True) or {}
+    try:
+        payload = GradeInput(
+            course_name=data.get("course_name", ""),
+            course_type=data.get("course_type", "Core"),
+            credit_value=int(data.get("credit_value", 3)),
+            semester=int(data.get("semester", 1)),
+            grade=data.get("grade", ""),
+        )
+    except Exception as e:
+        return jsonify({"ok": False, "msg": str(e)}), 400
+    AcademicService.add_grade(user_id, payload)
+    from models import StudentProfile
+    student = StudentProfile.query.filter_by(user_id=int(user_id)).first()
+    return jsonify({"ok": True, "new_cgpa": student.current_cgpa})
+
+
+@dashboard_bp.route("/api/gg/grade/<int:record_id>/delete", methods=["POST"])
+@require_role("student")
+def api_gg_delete_grade(record_id):
+    user_id = get_jwt_identity()
+    AcademicService.delete_grade(user_id, record_id)
+    from models import StudentProfile
+    student = StudentProfile.query.filter_by(user_id=int(user_id)).first()
+    return jsonify({"ok": True, "new_cgpa": student.current_cgpa})
+
+
+@dashboard_bp.route("/api/gg/state", methods=["GET"])
+@require_role("student")
+def api_gg_state():
+    """Return full current state for Goals & Grades page (for re-render after actions)."""
+    user_id = get_jwt_identity()
+    data = AcademicService.get_goals_grades_data(user_id)
+    student = data["student"]
+    return jsonify({
+        "ok": True,
+        "current_cgpa": student.current_cgpa,
+        "target_cgpa": student.target_cgpa,
+        "skills": [{"id": s.id, "name": s.skill_name} for s in data["student_skills"]],
+        "goals": data["goals"],
+        "records": data["records"],
+        "matching_careers": [
+            {
+                "id": c["id"],
+                "title": c["title"],
+                "field_category": c["field_category"],
+                "match_count": c["match_count"],
+                "goal_id": c["goal_id"],
+            }
+            for c in data["matching_careers"]
+        ],
+    })
+
