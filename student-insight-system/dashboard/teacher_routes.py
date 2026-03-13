@@ -384,6 +384,7 @@ def api_teacher_students():
     class_filter   = request.args.get("class")
     section_filter = request.args.get("section")
     status_filter  = request.args.get("status")
+    search_query   = (request.args.get("search") or "").strip()
 
     query = (
         db.session.query(StudentProfile)
@@ -394,6 +395,14 @@ def api_teacher_students():
         query = query.filter(StudentProfile.class_level == class_filter)
     if section_filter:
         query = query.filter(StudentProfile.section == section_filter)
+    if search_query:
+        like_term = f"%{search_query}%"
+        query = query.filter(
+            db.or_(
+                StudentProfile.student_code.ilike(like_term),
+                StudentProfile.full_name.ilike(like_term),
+            )
+        )
 
     students = query.distinct().all()
     result = []
@@ -401,13 +410,14 @@ def api_teacher_students():
         if status_filter and s.performance_status != status_filter:
             continue
         result.append({
-            "id":          s.id,
-            "name":        s.full_name,
-            "class_level": s.class_level,
-            "section":     s.section,
-            "cgpa":        s.current_cgpa,
-            "status":      s.performance_status,
-            "last_active": s.last_active.isoformat() if hasattr(s, "last_active") and s.last_active else None,
+            "id":           s.id,
+            "name":         s.full_name,
+            "student_code": s.student_code,
+            "class_level":  s.class_level,
+            "section":      s.section,
+            "cgpa":         s.current_cgpa,
+            "status":       s.performance_status,
+            "last_active":  s.last_active.isoformat() if hasattr(s, "last_active") and s.last_active else None,
         })
     return jsonify(result)
 
@@ -529,6 +539,7 @@ def api_unassigned_students():
         {
             "id":                 s.id,
             "full_name":          s.full_name,
+            "student_code":       s.student_code,
             "department":         s.department or "—",
             "class_level":        s.class_level or "—",
             "section":            s.section or "—",
@@ -573,6 +584,7 @@ def api_assign_student():
         "assigned_student": {
             "id":                 student.id,
             "full_name":          student.full_name,
+            "student_code":       student.student_code,
             "department":         student.department or "—",
             "class_level":        student.class_level or "—",
             "section":            student.section or "—",

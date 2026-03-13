@@ -81,6 +81,7 @@ STUDENTS = [
         "skills": [("Python", 90, 0.10), ("Data Analysis", 80, 0.20), ("SQL", 75, 0.25)],
         "weekly_hrs": 30, "burnout": 0.15, "goal_prob": 0.90,
         "status": "On Track", "alert": None,
+        "student_code": "1000000000000001",
     },
     {
         "name": "Fatima Noor", "email": "fatima.noor@student.edu",
@@ -91,6 +92,7 @@ STUDENTS = [
         "weekly_hrs": 22, "burnout": 0.40, "goal_prob": 0.60,
         "status": "Needs Attention",
         "alert": ("performance", "medium", "GPA dropped below target — needs academic support"),
+        "student_code": "1000000000000002",
     },
     {
         "name": "Khalid Mansour", "email": "khalid.mansour@student.edu",
@@ -101,6 +103,7 @@ STUDENTS = [
         "weekly_hrs": 12, "burnout": 0.75, "goal_prob": 0.25,
         "status": "At Risk",
         "alert": ("performance", "high", "Critically low CGPA — at risk of academic probation"),
+        "student_code": "1000000000000003",
     },
     {
         "name": "Sara Hussain", "email": "sara.hussain@student.edu",
@@ -110,6 +113,7 @@ STUDENTS = [
         "skills": [("Communication", 85, 0.15), ("Project Management", 70, 0.35), ("Teamwork", 88, 0.12)],
         "weekly_hrs": 25, "burnout": 0.20, "goal_prob": 0.82,
         "status": "On Track", "alert": None,
+        "student_code": "1000000000000004",
     },
     {
         "name": "Omar Qureshi", "email": "omar.qureshi@student.edu",
@@ -120,6 +124,7 @@ STUDENTS = [
         "weekly_hrs": 8, "burnout": 0.88, "goal_prob": 0.15,
         "status": "Critical",
         "alert": ("attendance", "high", "Missed 30%+ of classes this semester"),
+        "student_code": "1000000000000005",
     },
     {
         "name": "Layla Ibrahim", "email": "layla.ibrahim@student.edu",
@@ -129,6 +134,7 @@ STUDENTS = [
         "skills": [("Machine Learning", 92, 0.05), ("Python", 95, 0.05), ("Data Analysis", 88, 0.10)],
         "weekly_hrs": 35, "burnout": 0.22, "goal_prob": 0.95,
         "status": "Excellent", "alert": None,
+        "student_code": "1000000000000006",
     },
     {
         "name": "Yusuf Al-Amiri", "email": "yusuf.alamiri@student.edu",
@@ -139,6 +145,7 @@ STUDENTS = [
         "weekly_hrs": 18, "burnout": 0.50, "goal_prob": 0.55,
         "status": "Needs Attention",
         "alert": ("performance", "medium", "GPA trending downward over last 3 semesters"),
+        "student_code": "1000000000000007",
     },
     {
         "name": "Nadia Hassan", "email": "nadia.hassan@student.edu",
@@ -148,6 +155,7 @@ STUDENTS = [
         "skills": [("Problem Solving", 78, 0.22), ("Critical Thinking", 75, 0.25), ("Communication", 72, 0.28)],
         "weekly_hrs": 27, "burnout": 0.30, "goal_prob": 0.72,
         "status": "On Track", "alert": None,
+        "student_code": "1000000000000008",
     },
 ]
 
@@ -286,6 +294,7 @@ def seed_students():
             current_cgpa=s["cgpa"], target_cgpa=s["target"],
             current_semester=s["semester"], completed_credits=s["credits"],
             grading_scale=4.0,
+            student_code=s["student_code"],
             last_activity=datetime.utcnow() - timedelta(days=random.randint(0, 7)),
         )
         db.session.add(profile)
@@ -395,13 +404,13 @@ def seed_teacher():
         print(f"   ↷ Teacher already exists — skipping creation")
 
     CLASSROOM = [
-        {"name": "Alice Smith",    "class": "10", "section": "A", "cgpa": 3.8},
-        {"name": "Bob Jones",      "class": "10", "section": "A", "cgpa": 2.9},
-        {"name": "Charlie Brown",  "class": "10", "section": "A", "cgpa": 2.1},
-        {"name": "Diana Prince",   "class": "10", "section": "B", "cgpa": 3.9},
-        {"name": "Eve Wilson",     "class": "10", "section": "B", "cgpa": 1.8},
-        {"name": "Frank Miller",   "class": "9",  "section": "A", "cgpa": 3.2},
-        {"name": "Grace Hopper",   "class": "9",  "section": "A", "cgpa": 4.0},
+        {"name": "Alice Smith",    "class": "10", "section": "A", "cgpa": 3.8, "student_code": "2000000000000001"},
+        {"name": "Bob Jones",      "class": "10", "section": "A", "cgpa": 2.9, "student_code": "2000000000000002"},
+        {"name": "Charlie Brown",  "class": "10", "section": "A", "cgpa": 2.1, "student_code": "2000000000000003"},
+        {"name": "Diana Prince",   "class": "10", "section": "B", "cgpa": 3.9, "student_code": "2000000000000004"},
+        {"name": "Eve Wilson",     "class": "10", "section": "B", "cgpa": 1.8, "student_code": "2000000000000005"},
+        {"name": "Frank Miller",   "class": "9",  "section": "A", "cgpa": 3.2, "student_code": "2000000000000006"},
+        {"name": "Grace Hopper",   "class": "9",  "section": "A", "cgpa": 4.0, "student_code": "2000000000000007"},
     ]
 
     student_objs = []
@@ -422,6 +431,7 @@ def seed_teacher():
             user_id=u.id, full_name=s_data["name"],
             class_level=s_data["class"], section=s_data["section"],
             current_cgpa=s_data["cgpa"], department="General",
+            student_code=s_data["student_code"],
             last_activity=datetime.utcnow() - timedelta(hours=random.randint(1, 48)),
         )
         db.session.add(p)

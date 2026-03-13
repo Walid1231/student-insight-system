@@ -67,11 +67,18 @@
                     <i data-lucide="user-plus" style="width:15px;height:15px;"></i> Assign Student
                 </button>
             </div>
+            <!-- Search Bar -->
+            <div style="margin-bottom:14px;">
+                <input type="text" id="tableSearch" placeholder="Search by name or student ID…"
+                    style="width:100%;max-width:380px;padding:9px 14px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:#f9fafb;transition:border-color .2s;"
+                    oninput="searchAssignedStudents(this.value)" />
+            </div>
             <div class="table-container">
                 <table id="assignedTable">
                     <thead>
                         <tr>
                             <th>Student Name</th>
+                            <th>Student ID</th>
                             <th>Class</th>
                             <th>CGPA</th>
                             <th>Status</th>
@@ -85,6 +92,9 @@
                         <tr data-student-id="{{ student.id }}">
                             <td>
                                 <div style="font-weight:600">{{ student.full_name }}</div>
+                            </td>
+                            <td>
+                                <span style="font-family:'Menlo','Consolas',monospace;font-size:12px;color:var(--text-secondary);background:#f3f4f6;padding:2px 8px;border-radius:4px;">{{ student.student_code or '—' }}</span>
                             </td>
                             <td>{{ student.class_level }}-{{ student.section }}</td>
                             <td>{{ "%.2f"|format(student.current_cgpa) if student.current_cgpa else '--' }}</td>
@@ -219,6 +229,7 @@
                 <div class="assign-row" data-id="${s.id}" data-name="${s.full_name.toLowerCase()}">
                     <div class="assign-row-info">
                         <h4>${s.full_name}</h4>
+                        ${s.student_code ? `<div style="font-family:'Menlo','Consolas',monospace;font-size:11px;color:var(--text-secondary);margin-bottom:2px;">ID ${s.student_code}</div>` : ''}
                         <div class="assign-row-meta">
                             <span>${s.department}</span>
                             <span>Class ${s.class_level}-${s.section}</span>
@@ -241,6 +252,7 @@
             const filtered = q
                 ? _unassignedCache.filter(s =>
                     s.full_name.toLowerCase().includes(q) ||
+                    (s.student_code || '').toLowerCase().includes(q) ||
                     (s.department || '').toLowerCase().includes(q) ||
                     (s.class_level || '').toLowerCase().includes(q)
                 )
@@ -284,6 +296,7 @@
                 newTr.setAttribute('data-student-id', s.id);
                 newTr.innerHTML = `
                     <td><div style="font-weight:600">${s.full_name}</div></td>
+                    <td><span style="font-family:'Menlo','Consolas',monospace;font-size:12px;color:var(--text-secondary);background:#f3f4f6;padding:2px 8px;border-radius:4px;">${s.student_code || '—'}</span></td>
                     <td>${s.class_level}-${s.section}</td>
                     <td>${cgpa}</td>
                     <td><span class="status-badge status-${s.performance_status}">${s.performance_status}</span></td>
@@ -330,6 +343,29 @@
         document.addEventListener('keydown', e => {
             if (e.key === 'Escape') closeAssignModal();
         });
+
+        // ── Assigned-table search (calls API) ──────────────────
+        let _searchTimer = null;
+        function searchAssignedStudents(query) {
+            clearTimeout(_searchTimer);
+            _searchTimer = setTimeout(async () => {
+                const q = query.trim();
+                if (!q) {
+                    // Show all rows again
+                    document.querySelectorAll('#assignedTable tbody tr').forEach(tr => tr.style.display = '');
+                    return;
+                }
+                try {
+                    const res = await fetch(`/api/teacher/students?search=${encodeURIComponent(q)}`);
+                    if (!res.ok) return;
+                    const data = await res.json();
+                    const matchIds = new Set(data.map(s => String(s.id)));
+                    document.querySelectorAll('#assignedTable tbody tr[data-student-id]').forEach(tr => {
+                        tr.style.display = matchIds.has(tr.dataset.studentId) ? '' : 'none';
+                    });
+                } catch(e) { console.error(e); }
+            }, 300);
+        }
 
         // Init assigned count on page load
         updateAssignedCount();
