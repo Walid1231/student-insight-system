@@ -51,11 +51,25 @@ class AuthService:
     def login_user(email: str, password: str, requested_role: str = None) -> dict:
         """
         Authenticate user and create JWT token.
+        `email` can also be a numeric student_code (students only).
 
         Returns:
             Dict with 'access_token' and 'role'.
         """
-        user = User.query.filter_by(email=email).first()
+        user = None
+
+        # Try student_code lookup if input is purely numeric
+        identifier = (email or "").strip()
+        if identifier.isdigit():
+            profile = StudentProfile.query.filter_by(
+                student_code=identifier
+            ).first()
+            if profile:
+                user = User.query.get(profile.user_id)
+
+        # Fall back to email lookup
+        if user is None:
+            user = User.query.filter_by(email=identifier).first()
 
         if not user or not check_password_hash(user.password_hash, password):
             raise AuthorizationError("Invalid credentials")

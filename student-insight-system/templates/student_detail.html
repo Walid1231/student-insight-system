@@ -622,6 +622,13 @@
             </div>
             <div class="profile-info">
                 <h1>{{ profile_summary.full_name }}</h1>
+                {% if student.student_code %}
+                <div style="margin-bottom:6px;">
+                    <span style="font-family:'Menlo','Consolas',monospace; font-size:12px; color:var(--text-muted); background:#f3f4f6; padding:3px 10px; border-radius:6px; letter-spacing:.5px;">
+                        ID {{ student.student_code }}
+                    </span>
+                </div>
+                {% endif %}
                 <div class="profile-meta">
                     <span><i data-lucide="building-2"></i> {{ profile_summary.department }}</span>
                     <span><i data-lucide="book-open"></i> Class {{ profile_summary.class_level }}-{{

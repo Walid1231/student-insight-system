@@ -8,6 +8,7 @@ class StudentProfile(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     full_name = db.Column(db.String(100), nullable=False)
+    student_code = db.Column(db.String(16), unique=True, nullable=True, index=True)
     department = db.Column(db.String(100))
     class_level = db.Column(db.String(10))
     section = db.Column(db.String(5))
@@ -40,6 +41,7 @@ class StudentProfile(db.Model):
     def to_dict(self):
         return {
             'id': self.id,
+            'student_code': self.student_code,
             'full_name': self.full_name,
             'department': self.department,
             'class_level': self.class_level,

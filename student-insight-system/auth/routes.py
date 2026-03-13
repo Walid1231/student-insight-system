@@ -82,5 +82,12 @@ def login():
 def logout():
     """Clear JWT cookies and redirect to home page."""
     resp = make_response(redirect(url_for('home')))
+    # Explicitly delete the JWT cookie(s) — belt-and-suspenders
     unset_jwt_cookies(resp)
+    resp.delete_cookie("access_token_cookie", path="/")
+    resp.delete_cookie("csrf_access_token", path="/")
+    # Prevent browser from caching the old auth state
+    resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    resp.headers["Pragma"] = "no-cache"
+    resp.headers["Expires"] = "0"
     return resp
