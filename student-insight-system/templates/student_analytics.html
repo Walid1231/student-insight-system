@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -39,10 +39,120 @@
         <!-- ═══════════════════════════════════════════════════════
              PAGE HEADER
              ═══════════════════════════════════════════════════════ -->
-        <header class="page-header">
-            <h1>Analytics Dashboard</h1>
-            <p class="subtitle">Welcome, <span>{{ data.name }}</span> — here's your academic snapshot</p>
+        <header class="page-header" style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px;">
+            <div>
+                <h1>Analytics Dashboard</h1>
+                <p class="subtitle">Welcome, <span>{{ data.name }}</span> — here's your academic snapshot</p>
+            </div>
+
+            <!-- ── Bell Notification Button ── -->
+            <div style="position:relative; flex-shrink:0;">
+                <button id="notifBell"
+                    title="Teacher Notifications"
+                    onclick="toggleNotifCard()"
+                    style="width:40px; height:40px; border-radius:50%;
+                           background:rgba(99,102,241,0.1); border:1px solid rgba(99,102,241,0.25);
+                           color:#6366f1; cursor:pointer; display:inline-flex;
+                           align-items:center; justify-content:center; position:relative;
+                           transition:background .2s;"
+                    onmouseover="this.style.background='rgba(99,102,241,0.2)'"
+                    onmouseout="this.style.background='rgba(99,102,241,0.1)'">
+                    <i class="fas fa-bell" style="font-size:15px;"></i>
+                    <span id="notifBadge"
+                          style="display:none; position:absolute; top:-3px; right:-3px;
+                                 background:#ef4444; color:white; border-radius:50%;
+                                 min-width:17px; height:17px; font-size:9px; font-weight:700;
+                                 align-items:center; justify-content:center;
+                                 border:2px solid #0f1117; padding:0 2px;">0</span>
+                </button>
+
+                <!-- Popup note card -->
+                <div id="notifCard"
+                     style="display:none; position:absolute; top:52px; right:0;
+                            width:300px; background:var(--bg-card,#1a1d2e);
+                            border:1px solid rgba(99,102,241,0.3); border-radius:14px;
+                            box-shadow:0 8px 30px rgba(0,0,0,0.4); z-index:9999;
+                            overflow:hidden; animation:fadeInDown .15s ease;">
+                    <div style="padding:12px 16px; border-bottom:1px solid rgba(255,255,255,0.06);
+                                display:flex; align-items:center; justify-content:space-between;">
+                        <span style="font-weight:700; font-size:13px;">
+                            <i class="fas fa-bell" style="color:#6366f1; margin-right:6px;"></i>
+                            Latest Note
+                        </span>
+                        <a href="/student/notifications"
+                           style="font-size:11px; color:#6366f1; text-decoration:none; font-weight:600;">
+                            See all →
+                        </a>
+                    </div>
+                    <div id="notifCardBody" style="padding:14px 16px; font-size:13px; color:var(--text-secondary,#8a8a9a); line-height:1.6;">
+                        Loading…
+                    </div>
+                </div>
+            </div>
         </header>
+
+        <style>
+            @keyframes fadeInDown {
+                from { opacity:0; transform:translateY(-6px); }
+                to   { opacity:1; transform:translateY(0); }
+            }
+        </style>
+
+        <script>
+            let _notifData = null;
+            let _notifCardOpen = false;
+
+            async function loadNotifData() {
+                if (_notifData) return _notifData;
+                try {
+                    const res = await fetch('/api/student/notifications');
+                    if (!res.ok) return null;
+                    _notifData = await res.json();
+                    // Update badge
+                    const badge = document.getElementById('notifBadge');
+                    if (badge && _notifData.unread_count > 0) {
+                        badge.textContent = _notifData.unread_count > 9 ? '9+' : _notifData.unread_count;
+                        badge.style.display = 'flex';
+                    }
+                    return _notifData;
+                } catch (e) { return null; }
+            }
+
+            async function toggleNotifCard() {
+                const card = document.getElementById('notifCard');
+                const body = document.getElementById('notifCardBody');
+                _notifCardOpen = !_notifCardOpen;
+                card.style.display = _notifCardOpen ? 'block' : 'none';
+
+                if (_notifCardOpen) {
+                    const data = await loadNotifData();
+                    if (!data || data.total === 0) {
+                        body.innerHTML = '<span style="color:var(--text-secondary,#8a8a9a);">No notes from teachers yet.</span>';
+                    } else if (data.latest) {
+                        body.innerHTML = `
+                            <div style="font-weight:600; font-size:12px; color:#e8e8f0; margin-bottom:6px;">
+                                <i class="fas fa-user-tie" style="color:#6366f1; margin-right:5px;"></i>
+                                ${data.latest.teacher_name || 'Teacher'}
+                                <span style="float:right; font-weight:400; font-size:11px; color:var(--text-secondary,#8a8a9a);">${data.latest.created_at}</span>
+                            </div>
+                            <div style="color:var(--text-secondary,#8a8a9a); font-size:13px;">${data.latest.content}</div>
+                            ${data.total > 1 ? `<div style="margin-top:10px; font-size:11px; color:#6366f1;">+${data.total - 1} more note${data.total > 2 ? 's' : ''}</div>` : ''}`;
+                    }
+                }
+            }
+
+            // Close popup when clicking outside
+            document.addEventListener('click', function(e) {
+                if (_notifCardOpen && !e.target.closest('#notifBell') && !e.target.closest('#notifCard')) {
+                    document.getElementById('notifCard').style.display = 'none';
+                    _notifCardOpen = false;
+                }
+            });
+
+            // Load badge count on page load without opening card
+            loadNotifData();
+        </script>
+
 
 
         <!-- ═══════════════════════════════════════════════════════
@@ -333,52 +443,57 @@
             // ── Data Injection (Backend → JS) ──
             window.DASH = {
                 cgpa_labels: {{ data.cgpa_labels | tojson }},
-            cgpa_values: {{ data.cgpa_values | tojson }},
-            radar_labels: {{ data.radar_labels | tojson }},
-            radar_scores: {{ data.radar_scores | tojson }},
-            core_count: {{ data.core_count | tojson }},
-            ged_count: {{ data.ged_count | tojson }},
-            elective_count: {{ data.elective_count | tojson }},
-            weekly_labels: {{ data.weekly_labels | tojson }},
-            weekly_hours: {{ data.weekly_hours | tojson }},
-            effort_labels: {{ data.effort_labels | tojson }},
-            effort_week_a: {{ data.effort_week_a | tojson }},
-            effort_week_b: {{ data.effort_week_b | tojson }},
-            careers: {{ data.careers | tojson }},
-            burnout_pct: {{ data.burnout_pct | tojson }},
-            goal_prob: {{ data.goal_prob | tojson }},
-            target_gpa: {{ data.target_gpa | tojson }},
-            target_career: {{ data.target_career | tojson }}
+                cgpa_values: {{ data.cgpa_values | tojson }},
+                radar_labels: {{ data.radar_labels | tojson }},
+                radar_scores: {{ data.radar_scores | tojson }},
+                core_count: {{ data.core_count | tojson }},
+                ged_count: {{ data.ged_count | tojson }},
+                elective_count: {{ data.elective_count | tojson }},
+                weekly_labels: {{ data.weekly_labels | tojson }},
+                weekly_hours: {{ data.weekly_hours | tojson }},
+                effort_labels: {{ data.effort_labels | tojson }},
+                effort_week_a: {{ data.effort_week_a | tojson }},
+                effort_week_b: {{ data.effort_week_b | tojson }},
+                careers: {{ data.careers | tojson }},
+                burnout_pct: {{ data.burnout_pct | tojson }},
+                goal_prob: {{ data.goal_prob | tojson }},
+                target_gpa: {{ data.target_gpa | tojson }},
+                target_career: {{ data.target_career | tojson }}
             };
 
-            // ── SPA-safe init ──
-            // On full page load, document.readyState is 'loading' here — let
-            // DOMContentLoaded in student_analytics.js handle that case.
-            // On SPA re-injection the DOM is already 'interactive'/'complete' —
-            // call initStudentDashboardCharts() directly (+ load deps if missing).
-            if (document.readyState !== 'loading') {
-                (function () {
-                    function run() {
-                        if (typeof initStudentDashboardCharts === 'function') {
-                            initStudentDashboardCharts();
-                        }}
-                    function loadScript(id, src, cb) {
-                        if (document.getElementById(id)) { cb(); return; }
-                        var s = document.createElement('script');
-                        s.id = id; s.src = src; s.onload = cb;
-                        document.head.appendChild(s);
+            // ── Init charts ──
+            // The SPA router (sidebar.html) calls initStudentDashboardCharts() after
+            // injecting this page's HTML into .main-content. For a hard first load,
+            // student_analytics.js fires on DOMContentLoaded. We only need to ensure
+            // Chart.js is available; if it landed via SPA nav it already is.
+            (function ensureChartsInit() {
+                function tryInit() {
+                    if (typeof initStudentDashboardCharts === 'function') {
+                        initStudentDashboardCharts();
                     }
+                }
+                function loadScript(id, src, cb) {
+                    if (document.getElementById(id)) { cb(); return; }
+                    var s = document.createElement('script');
+                    s.id = id; s.src = src; s.onload = cb;
+                    document.head.appendChild(s);
+                }
+                // Only run in SPA mode (DOM already ready). First-page-load is handled
+                // by the DOMContentLoaded listener in student_analytics.js.
+                if (document.readyState !== 'loading') {
                     if (typeof Chart === 'undefined') {
                         loadScript('_chartjs', 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js', function () {
                             if (typeof initStudentDashboardCharts === 'undefined') {
-                                loadScript('_analyticsjs', '{{ url_for("static", filename="js/student_analytics.js") }}?v=2', run);
-                            } else { run(); }});
-                    } else if (typeof initStudentDashboardCharts === 'undefined') {
-                        loadScript('_analyticsjs', '{{ url_for("static", filename="js/student_analytics.js") }}?v=2', run);
+                                loadScript('_analyticsjs', '{{ url_for("static", filename="js/student_analytics.js") }}?v=11', tryInit);
+                            } else { tryInit(); }
+                        });
                     } else {
-                        run();
-                    }})();
-            }
+                        // Chart.js already loaded — defer one tick so the SPA router's
+                        // own final call doesn't race with us.
+                        setTimeout(tryInit, 0);
+                    }
+                }
+            })();
         </script>
 
     </main>

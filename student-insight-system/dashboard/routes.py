@@ -1,4 +1,4 @@
-﻿"""
+"""
 dashboard/routes.py — Thin controllers for student-facing routes.
 
 All business logic has been extracted into the services/ package.
@@ -1057,3 +1057,83 @@ def api_gg_state():
         ],
     })
 
+
+# =============================================================
+# STUDENT NOTIFICATIONS (notes from teachers)
+# =============================================================
+
+@dashboard_bp.route("/student/notifications")
+@require_role("student")
+def student_notifications():
+    """Page: show all teacher notes received in the last 1 year."""
+    from datetime import timedelta
+    from models import StudentNote, StudentProfile
+    user_id = get_jwt_identity()
+    student = StudentProfile.query.filter_by(user_id=int(user_id)).first()
+    one_year_ago = __import__('datetime').datetime.utcnow() - timedelta(days=365)
+    notes = (
+        StudentNote.query
+        .filter(
+            StudentNote.student_id == student.id,
+            StudentNote.is_private == False,  # noqa: E712
+            StudentNote.created_at >= one_year_ago,
+        )
+        .order_by(StudentNote.created_at.desc())
+        .all()
+    )
+    return render_template("student_notifications.html", notes=notes)
+
+
+@dashboard_bp.route("/api/student/notifications")
+@require_role("student")
+def api_student_notifications():
+    """JSON: return count and list of recent notes for the bell badge."""
+    from datetime import timedelta
+    from models import StudentNote, StudentProfile
+    user_id = get_jwt_identity()
+    student = StudentProfile.query.filter_by(user_id=int(user_id)).first()
+    one_year_ago = __import__('datetime').datetime.utcnow() - timedelta(days=365)
+    notes = (
+        StudentNote.query
+        .filter(
+            StudentNote.student_id == student.id,
+            StudentNote.is_private == False,  # noqa: E712
+            StudentNote.created_at >= one_year_ago,
+        )
+        .order_by(StudentNote.created_at.desc())
+        .all()
+    )
+    unread = [n for n in notes if not n.is_read]
+    return jsonify({
+        "total": len(notes),
+        "unread_count": len(unread),
+        "latest": {
+            "teacher_name": unread[0].teacher.full_name if unread and unread[0].teacher else None,
+            "content": unread[0].content[:80] if unread else None,
+            "created_at": unread[0].created_at.strftime("%b %d") if unread else None,
+        } if unread else None,
+    })
+
+
+@dashboard_bp.route("/api/student/notifications/mark-read", methods=["POST"])
+@require_role("student")
+def api_mark_notes_read():
+    """Mark specific notes as read for the current student."""
+    from models import StudentNote, StudentProfile
+    from core.extensions import db
+    user_id = get_jwt_identity()
+    student = StudentProfile.query.filter_by(user_id=int(user_id)).first()
+    body = request.get_json(silent=True) or {}
+    note_ids = body.get("note_ids", [])
+    if not note_ids:
+        return jsonify({"updated": 0})
+    updated = (
+        StudentNote.query
+        .filter(
+            StudentNote.id.in_(note_ids),
+            StudentNote.student_id == student.id,
+        )
+        .update({"is_read": True}, synchronize_session=False)
+    )
+    db.session.commit()
+    return jsonify({"updated": updated})

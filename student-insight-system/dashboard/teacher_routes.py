@@ -422,34 +422,6 @@ def api_teacher_students():
     return jsonify(result)
 
 
-@teacher_bp.route("/api/teacher/notes", methods=["POST"])
-@jwt_required()
-def api_create_note():
-    teacher, err = _get_teacher_or_403()
-    if err:
-        return err
-
-    body       = request.get_json(silent=True) or {}
-    student_id = body.get("student_id")
-    content    = (body.get("content") or "").strip()
-
-    if not student_id or not content:
-        return jsonify({"msg": "student_id and content are required"}), 400
-
-    assigned = TeacherAssignment.query.filter_by(
-        teacher_id=teacher.id, student_id=int(student_id)
-    ).first()
-    if not assigned:
-        return jsonify({"msg": "Student not in your assignment scope"}), 403
-
-    from models import StudentNote
-    note = StudentNote(
-        student_id=int(student_id), teacher_id=teacher.id,
-        content=content, is_private=True,
-    )
-    db.session.add(note)
-    db.session.commit()
-    return jsonify({"msg": "Note created", "id": note.id})
 
 
 @teacher_bp.route("/api/teacher/alerts/<int:alert_id>/resolve", methods=["POST"])
@@ -616,3 +588,79 @@ def api_unassign_student():
     db.session.delete(assignment)
     db.session.commit()
     return jsonify({"success": True})
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TEACHER NOTES — Page + APIs
+# ─────────────────────────────────────────────────────────────────────────────
+
+@teacher_bp.route("/teacher/notes")
+@jwt_required()
+def teacher_notes_page():
+    """Render the My Notes read-only history page."""
+    teacher, err = _get_teacher_or_403()
+    if err:
+        return err
+    return render_template(
+        "teacher_notes.html",
+        teacher=teacher,
+        now_date=datetime.now().strftime("%d %B, %Y"),
+    )
+
+
+@teacher_bp.route("/api/teacher/notes", methods=["GET"])
+@jwt_required()
+def api_get_teacher_notes():
+    """Return all notes created by the current teacher, newest first."""
+    teacher, err = _get_teacher_or_403()
+    if err:
+        return err
+
+    notes = (
+        StudentNote.query
+        .filter_by(teacher_id=teacher.id)
+        .order_by(StudentNote.created_at.desc())
+        .all()
+    )
+
+    return jsonify([
+        {
+            "id": n.id,
+            "student_name": n.student.full_name if n.student else "Unknown",
+            "student_id": n.student_id,
+            "content": n.content,
+            "is_private": n.is_private,
+            "created_at": n.created_at.strftime("%Y-%m-%d %H:%M"),
+            "created_at_display": n.created_at.strftime("%b %d, %Y"),
+        }
+        for n in notes
+    ])
+
+
+@teacher_bp.route("/api/teacher/notes", methods=["POST"])
+@jwt_required()
+def api_create_note():
+    teacher, err = _get_teacher_or_403()
+    if err:
+        return err
+
+    body       = request.get_json(silent=True) or {}
+    student_id = body.get("student_id")
+    content    = (body.get("content") or "").strip()
+
+    if not student_id or not content:
+        return jsonify({"msg": "student_id and content are required"}), 400
+
+    assigned = TeacherAssignment.query.filter_by(
+        teacher_id=teacher.id, student_id=int(student_id)
+    ).first()
+    if not assigned:
+        return jsonify({"msg": "Student not in your assignment scope"}), 403
+
+    note = StudentNote(
+        student_id=int(student_id), teacher_id=teacher.id,
+        content=content, is_private=False, is_read=False,
+    )
+    db.session.add(note)
+    db.session.commit()
+    return jsonify({"msg": "Note created", "id": note.id})
