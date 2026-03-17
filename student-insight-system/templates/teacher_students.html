@@ -36,7 +36,7 @@
                     overview.alerts_count }}</span>
                 {% endif %}
             </a>
-            <a href="#" class="nav-item">
+            <a href="/teacher/notes" class="nav-item">
                 <span class="nav-icon"><i data-lucide="file-text"></i></span> My Notes
             </a>
         </div>
@@ -84,6 +84,7 @@
                             <th>Status</th>
                             <th>Last Active</th>
                             <th>View</th>
+                            <th>Note</th>
                             <th>Remove</th>
                         </tr>
                     </thead>
@@ -111,6 +112,13 @@
                                     style="text-decoration:none; color:inherit;">View</a>
                             </td>
                             <td>
+                                <button class="btn-sm" title="Send note"
+                                    onclick="openNoteModal({{ student.id }}, '{{ student.full_name | replace("'", "\\'") }}')"
+                                    style="background:transparent; border:1px solid var(--border); color:var(--primary);">
+                                    <i data-lucide="send" style="width:13px;height:13px;"></i>
+                                </button>
+                            </td>
+                            <td>
                                 <button class="btn-remove"
                                     onclick="removeStudent({{ student.id }}, this)">Remove</button>
                             </td>
@@ -133,6 +141,34 @@
                 placeholder="Search by name, department, or class…" oninput="filterStudents(this.value)" />
             <div class="modal-list" id="unassignedList">
                 <div class="modal-empty">Loading students…</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Send Note Modal ── -->
+    <div class="modal-overlay" id="noteModal" onclick="handleNoteOverlayClick(event)">
+        <div class="modal-glass" style="max-width:480px;">
+            <div class="modal-header">
+                <h3 id="noteModalTitle">✉️ Send Note</h3>
+                <button class="modal-close" onclick="closeNoteModal()">✕</button>
+            </div>
+            <div style="padding:0 4px 4px;">
+                <textarea id="noteContent" rows="5"
+                    placeholder="Write your note here…"
+                    style="width:100%; padding:12px 14px; border:1px solid var(--border); border-radius:10px;
+                           font-family:inherit; font-size:13px; resize:vertical; background:#f9fafb;
+                           transition:border-color .2s; box-sizing:border-box;"
+                    onfocus="this.style.borderColor='var(--primary)'" onblur="this.style.borderColor='var(--border)'"
+                ></textarea>
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-top:8px;">
+                    <span id="noteFeedback" style="font-size:12px; color:var(--success); display:none;">✓ Note sent!</span>
+                    <button id="noteSendBtn" onclick="sendNote()"
+                        style="margin-left:auto; padding:9px 22px; background:linear-gradient(90deg,#6366f1,#8b5cf6);
+                               color:white; border:none; border-radius:8px; font-weight:600; font-size:13px; cursor:pointer;
+                               transition:opacity .2s;">
+                        Send
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -302,8 +338,16 @@
                     <td><span class="status-badge status-${s.performance_status}">${s.performance_status}</span></td>
                     <td>—</td>
                     <td><a href="/teacher/student/${s.id}" class="btn-sm" style="text-decoration:none;color:inherit;">View</a></td>
+                    <td>
+                        <button class="btn-sm" title="Send note"
+                            onclick="openNoteModal(${s.id}, '${s.full_name.replace(/'/g, "\\'")}')"
+                            style="background:transparent; border:1px solid var(--border); color:var(--primary);">
+                            <i data-lucide="send" style="width:13px;height:13px;"></i>
+                        </button>
+                    </td>
                     <td><button class="btn-remove" onclick="removeStudent(${s.id}, this)">Remove</button></td>`;
                 tbody.appendChild(newTr);
+                lucide.createIcons();   // re-init so the send icon renders
                 updateAssignedCount();
 
             } catch (e) {
@@ -339,10 +383,61 @@
             }
         }
 
-        // Keyboard: Escape closes modal
+        // Keyboard: Escape closes any open modal
         document.addEventListener('keydown', e => {
-            if (e.key === 'Escape') closeAssignModal();
+            if (e.key === 'Escape') { closeAssignModal(); closeNoteModal(); }
         });
+
+        // ── Send Note Modal ──────────────────────────────────────
+        let _noteTargetId = null;
+
+        function openNoteModal(studentId, studentName) {
+            _noteTargetId = studentId;
+            document.getElementById('noteModalTitle').textContent = `✉️ Note to ${studentName}`;
+            document.getElementById('noteContent').value = '';
+            document.getElementById('noteFeedback').style.display = 'none';
+            document.getElementById('noteSendBtn').disabled = false;
+            document.getElementById('noteModal').classList.add('active');
+            setTimeout(() => document.getElementById('noteContent').focus(), 50);
+        }
+
+        function closeNoteModal() {
+            document.getElementById('noteModal').classList.remove('active');
+            _noteTargetId = null;
+        }
+
+        function handleNoteOverlayClick(e) {
+            if (e.target === document.getElementById('noteModal')) closeNoteModal();
+        }
+
+        async function sendNote() {
+            const content = document.getElementById('noteContent').value.trim();
+            if (!content) { document.getElementById('noteContent').focus(); return; }
+            const btn = document.getElementById('noteSendBtn');
+            btn.disabled = true;
+            btn.textContent = '…';
+            try {
+                const res = await fetch('/api/teacher/notes', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ student_id: _noteTargetId, content }),
+                });
+                if (res.ok) {
+                    document.getElementById('noteFeedback').style.display = '';
+                    document.getElementById('noteContent').value = '';
+                    setTimeout(closeNoteModal, 1200);
+                } else {
+                    const err = await res.json();
+                    alert(err.msg || 'Failed to send note.');
+                    btn.disabled = false;
+                    btn.textContent = 'Send';
+                }
+            } catch (e) {
+                console.error(e);
+                btn.disabled = false;
+                btn.textContent = 'Send';
+            }
+        }
 
         // ── Assigned-table search (calls API) ──────────────────
         let _searchTimer = null;

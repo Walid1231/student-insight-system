@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Notifications | Student Insight</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="{{ url_for('static', filename='css/dashboard.css') }}" rel="stylesheet">
+    <style>
+        body { background: var(--bg-body, #0f1117); color: var(--text-primary, #e8e8f0); min-height: 100vh; padding: 28px; }
+
+        .page-container { max-width: 820px; margin: 0 auto; }
+
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 28px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 8px 16px;
+            border: 1px solid var(--border, rgba(255,255,255,0.1));
+            border-radius: 8px;
+            background: transparent;
+            color: var(--text-secondary, #8a8a9a);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all .2s;
+        }
+
+        .back-btn:hover {
+            border-color: var(--primary, #6366f1);
+            color: var(--primary, #6366f1);
+        }
+        .back-btn i { width: 15px; height: 15px; }
+
+        .page-title { font-size: 22px; font-weight: 700; }
+        .page-subtitle { font-size: 13px; color: var(--text-secondary, #8a8a9a); margin-top: 3px; }
+
+        .notif-card {
+            background: var(--bg-card, #1a1d2e);
+            border: 1px solid var(--border, rgba(255,255,255,0.06));
+            border-radius: 14px;
+            padding: 18px 20px;
+            margin-bottom: 14px;
+            display: flex;
+            gap: 14px;
+            align-items: flex-start;
+            transition: border-color .2s;
+            position: relative;
+        }
+
+        .notif-card:hover { border-color: rgba(99, 102, 241, 0.4); }
+
+        .notif-card.unread { border-left: 3px solid var(--primary, #6366f1); }
+
+        .notif-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .notif-body { flex: 1; min-width: 0; }
+
+        .notif-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+            flex-wrap: wrap;
+        }
+
+        .notif-teacher { font-weight: 700; font-size: 14px; }
+
+        .notif-new-badge {
+            background: var(--primary, #6366f1);
+            color: white;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 99px;
+            letter-spacing: .3px;
+            text-transform: uppercase;
+        }
+
+        .notif-date {
+            margin-left: auto;
+            font-size: 11px;
+            color: var(--text-secondary, #8a8a9a);
+            flex-shrink: 0;
+        }
+
+        .notif-content {
+            font-size: 13px;
+            color: var(--text-secondary, #8a8a9a);
+            line-height: 1.65;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary, #8a8a9a);
+        }
+        .empty-state i { width: 52px; height: 52px; margin-bottom: 14px; opacity: .4; }
+        .empty-state p { font-size: 14px; }
+
+        .year-note {
+            font-size: 12px;
+            color: var(--text-secondary, #8a8a9a);
+            text-align: center;
+            margin-top: 24px;
+            opacity: .7;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="page-container">
+        <div class="page-header">
+            <a href="/student/dashboard" class="back-btn">
+                <i data-lucide="arrow-left"></i> Back to Dashboard
+            </a>
+            <div>
+                <div class="page-title">
+                    <i data-lucide="bell" style="width:20px;height:20px;vertical-align:-3px;color:var(--primary,#6366f1);"></i>
+                    My Notifications
+                </div>
+                <div class="page-subtitle">Notes from your teachers — last 12 months</div>
+            </div>
+        </div>
+
+        {% if notes %}
+            {% for note in notes %}
+            <div class="notif-card {% if not note.is_read %}unread{% endif %}"
+                 data-note-id="{{ note.id }}">
+                <div class="notif-avatar">
+                    {{ note.teacher.full_name[:2].upper() if note.teacher else 'T' }}
+                </div>
+                <div class="notif-body">
+                    <div class="notif-header">
+                        <span class="notif-teacher">
+                            {{ note.teacher.full_name if note.teacher else 'Teacher' }}
+                        </span>
+                        {% if not note.is_read %}
+                        <span class="notif-new-badge">New</span>
+                        {% endif %}
+                        <span class="notif-date">{{ note.created_at.strftime('%b %d, %Y') }}</span>
+                    </div>
+                    <div class="notif-content">{{ note.content }}</div>
+                </div>
+            </div>
+            {% endfor %}
+
+            <p class="year-note">Showing notes from the last 12 months only.</p>
+        {% else %}
+            <div class="empty-state">
+                <i data-lucide="inbox"></i>
+                <p>No notes from teachers yet.</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        // Mark all unread notes as read
+        document.addEventListener('DOMContentLoaded', async () => {
+            const unreadCards = document.querySelectorAll('.notif-card.unread');
+            if (!unreadCards.length) return;
+            const ids = Array.from(unreadCards).map(c => parseInt(c.dataset.noteId));
+            try {
+                await fetch('/api/student/notifications/mark-read', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ note_ids: ids }),
+                });
+                // Remove "New" badges visually after marking read
+                unreadCards.forEach(card => {
+                    const badge = card.querySelector('.notif-new-badge');
+                    if (badge) badge.remove();
+                    card.classList.remove('unread');
+                });
+            } catch (e) {
+                console.error('Mark-read failed:', e);
+            }
+        });
+    </script>
+</body>
+
+</html>
