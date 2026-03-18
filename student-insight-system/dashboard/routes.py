@@ -1107,11 +1107,16 @@ def api_student_notifications():
     return jsonify({
         "total": len(notes),
         "unread_count": len(unread),
-        "latest": {
-            "teacher_name": unread[0].teacher.full_name if unread and unread[0].teacher else None,
-            "content": unread[0].content[:80] if unread else None,
-            "created_at": unread[0].created_at.strftime("%b %d") if unread else None,
-        } if unread else None,
+        "recent": [
+            {
+                "id": n.id,
+                "teacher_name": n.teacher.full_name if n.teacher else "Teacher",
+                "content": n.content,
+                "created_at": n.created_at.strftime("%b %d"),
+                "is_read": n.is_read
+            }
+            for n in notes[:4]
+        ]
     })
 
 
