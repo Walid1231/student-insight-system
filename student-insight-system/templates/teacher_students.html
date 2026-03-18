@@ -90,6 +90,7 @@
                     </thead>
                     <tbody>
                         {% for student in students %}
+                        {% set is_private = student.settings and student.settings.profile_visibility == 'Private' %}
                         <tr data-student-id="{{ student.id }}">
                             <td>
                                 <div style="font-weight:600">{{ student.full_name }}</div>
@@ -98,10 +99,16 @@
                                 <span style="font-family:'Menlo','Consolas',monospace;font-size:12px;color:var(--text-secondary);background:#f3f4f6;padding:2px 8px;border-radius:4px;">{{ student.student_code or '—' }}</span>
                             </td>
                             <td>{{ student.class_level }}-{{ student.section }}</td>
-                            <td>{{ "%.2f"|format(student.current_cgpa) if student.current_cgpa else '--' }}</td>
                             <td>
-                                <span class="status-badge status-{{ student.performance_status }}">
-                                    {{ student.performance_status }}
+                                {% if is_private %}
+                                <i data-lucide="lock" style="width:14px; color:var(--text-muted);" title="Private"></i>
+                                {% else %}
+                                {{ "%.2f"|format(student.current_cgpa) if student.current_cgpa else '--' }}
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="status-badge status-{{ 'Private' if is_private else student.performance_status }}">
+                                    {{ 'Private' if is_private else student.performance_status }}
                                 </span>
                             </td>
                             <td>
@@ -259,8 +266,8 @@
                 return;
             }
             listEl.innerHTML = students.map(s => {
-                const cgpa = s.current_cgpa != null ? s.current_cgpa.toFixed(2) : '--';
-                const statusClass = s.performance_status ? `badge-status-${s.performance_status}` : '';
+                const cgpa = s.current_cgpa != null ? s.current_cgpa.toFixed(2) : (s.performance_status === 'Private' ? '🔒' : '--');
+                const statusClass = s.performance_status ? (s.performance_status === 'Private' ? 'status-unknown badge-status-Private' : `badge-status-${s.performance_status}`) : '';
                 return `
                 <div class="assign-row" data-id="${s.id}" data-name="${s.full_name.toLowerCase()}">
                     <div class="assign-row-info">
@@ -327,7 +334,7 @@
 
                 // Append new row to assigned students table
                 const tbody = document.querySelector('#assignedTable tbody');
-                const cgpa = s.current_cgpa != null ? parseFloat(s.current_cgpa).toFixed(2) : '--';
+                const cgpa = s.current_cgpa != null ? parseFloat(s.current_cgpa).toFixed(2) : (s.performance_status === 'Private' ? '<i data-lucide="lock" style="width:14px; color:var(--text-muted);" title="Private"></i>' : '--');
                 const newTr = document.createElement('tr');
                 newTr.setAttribute('data-student-id', s.id);
                 newTr.innerHTML = `

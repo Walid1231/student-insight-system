@@ -37,6 +37,7 @@ class StudentProfile(db.Model):
     study_sessions = db.relationship('StudySession', backref='student', cascade="all, delete-orphan")
     weekly_updates = db.relationship('WeeklyUpdate', backref='student', cascade="all, delete-orphan")
     chat_history = db.relationship('ChatHistory', backref='student', cascade="all, delete-orphan")
+    settings = db.relationship('StudentSettings', backref='student', uselist=False, cascade="all, delete-orphan")
 
     def to_dict(self):
         return {
@@ -74,3 +75,26 @@ class AcademicMetric(db.Model):
 
     def set_gpas(self, gpas_list):
         self.semester_gpas = json.dumps(gpas_list)
+
+
+class StudentSettings(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    student_id = db.Column(db.Integer, db.ForeignKey('student_profile.id'), nullable=False)
+    
+    # Email Notifications
+    email_weekly_report = db.Column(db.Boolean, default=True)
+    email_new_assignments = db.Column(db.Boolean, default=True)
+    
+    # Appearance
+    compact_sidebar = db.Column(db.Boolean, default=False)
+    
+    # Privacy
+    profile_visibility = db.Column(db.String(50), default='Teachers Only')
+
+    def to_dict(self):
+        return {
+            'email_weekly_report': self.email_weekly_report,
+            'email_new_assignments': self.email_new_assignments,
+            'compact_sidebar': self.compact_sidebar,
+            'profile_visibility': self.profile_visibility
+        }

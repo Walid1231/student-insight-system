@@ -258,20 +258,7 @@ def teacher_student_detail(student_id):
     if not student:
         return jsonify({"msg": "Student not found"}), 404
 
-    from dashboard.student_stats import (
-        calculate_attendance_stats,
-        calculate_assignment_stats,
-        calculate_assessment_stats,
-        calculate_performance_trend,
-    )
-    attendance        = calculate_attendance_stats(student_id)
-    assignments_data  = calculate_assignment_stats(student_id)
-    assessments       = calculate_assessment_stats(student_id)
-    performance_trend = calculate_performance_trend(student_id)
-
-    days_since_active = None
-    if student.last_activity:
-        days_since_active = (datetime.utcnow() - student.last_activity).days
+    is_private = student.settings and student.settings.profile_visibility == 'Private'
 
     notes = StudentNote.query.filter_by(
         student_id=student_id, teacher_id=teacher.id
@@ -283,10 +270,46 @@ def teacher_student_detail(student_id):
         "department":         student.department or "—",
         "class_level":        student.class_level or "—",
         "section":            student.section or "—",
-        "current_cgpa":       student.current_cgpa,
-        "target_cgpa":        student.target_cgpa,
-        "performance_status": student.performance_status,
+        "current_cgpa":       student.current_cgpa if not is_private else None,
+        "target_cgpa":        student.target_cgpa if not is_private else None,
+        "performance_status": student.performance_status if not is_private else "Private",
     }
+
+    days_since_active = None
+    if student.last_activity:
+        days_since_active = (datetime.utcnow() - student.last_activity).days
+
+    if is_private:
+        return render_template(
+            "student_detail.html",
+            teacher=teacher,
+            student=student,
+            is_private=True,
+            attendance=None,
+            assignments=None,
+            assessments=None,
+            performance_trend=None,
+            days_since_active=days_since_active,
+            notes=notes,
+            insight=None,
+            profile_summary=profile_summary,
+            academic_snapshot=None,
+            skill_snapshot=None,
+            weekly_snapshot=None,
+            career_snapshot=None,
+            insight_preview=None,
+        )
+
+    from dashboard.student_stats import (
+        calculate_attendance_stats,
+        calculate_assignment_stats,
+        calculate_assessment_stats,
+        calculate_performance_trend,
+    )
+    attendance        = calculate_attendance_stats(student_id)
+    assignments_data  = calculate_assignment_stats(student_id)
+    assessments       = calculate_assessment_stats(student_id)
+    performance_trend = calculate_performance_trend(student_id)
 
     # B) Academic snapshot
     records_raw = (
@@ -439,14 +462,15 @@ def api_teacher_students():
     for s in students:
         if status_filter and s.performance_status != status_filter:
             continue
+        is_private = s.settings and s.settings.profile_visibility == 'Private'
         result.append({
             "id":           s.id,
             "name":         s.full_name,
             "student_code": s.student_code,
             "class_level":  s.class_level,
             "section":      s.section,
-            "cgpa":         s.current_cgpa,
-            "status":       s.performance_status,
+            "cgpa":         s.current_cgpa if not is_private else None,
+            "status":       s.performance_status if not is_private else "Private",
             "last_active":  s.last_active.isoformat() if hasattr(s, "last_active") and s.last_active else None,
         })
     return jsonify(result)
@@ -635,8 +659,8 @@ def api_unassigned_students():
             "department":         s.department or "—",
             "class_level":        s.class_level or "—",
             "section":            s.section or "—",
-            "current_cgpa":       round(float(s.current_cgpa), 2) if s.current_cgpa else None,
-            "performance_status": s.performance_status,
+            "current_cgpa":       round(float(s.current_cgpa), 2) if s.current_cgpa and not (s.settings and s.settings.profile_visibility == 'Private') else None,
+            "performance_status": s.performance_status if not (s.settings and s.settings.profile_visibility == 'Private') else "Private",
         }
         for s in students
     ])
@@ -680,8 +704,8 @@ def api_assign_student():
             "department":         student.department or "—",
             "class_level":        student.class_level or "—",
             "section":            student.section or "—",
-            "current_cgpa":       round(float(student.current_cgpa), 2) if student.current_cgpa else None,
-            "performance_status": student.performance_status,
+            "current_cgpa":       round(float(student.current_cgpa), 2) if student.current_cgpa and not (student.settings and student.settings.profile_visibility == 'Private') else None,
+            "performance_status": student.performance_status if not (student.settings and student.settings.profile_visibility == 'Private') else "Private",
         },
     }), 201
 
