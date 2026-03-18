@@ -609,15 +609,16 @@
 
         <!-- ── Profile Hero ── -->
         {% set cgpa_val = profile_summary.current_cgpa or 0 %}
-        {% set cgpa_pct = (cgpa_val / 4.0 * 100) | round | int %}
+        {% set cgpa_pct = (cgpa_val / 4.0 * 100) | round | int if not is_private else 0 %}
         <div class="profile-hero">
             <div class="cgpa-ring" style="--pct: {{ cgpa_pct }};">
                 <div class="cgpa-ring-inner">
                     <span class="cgpa-num">
-                        {% if profile_summary.current_cgpa %}{{ "%.2f" | format(profile_summary.current_cgpa) }}{% else
-                        %}N/A{% endif %}
+                        {% if is_private %}
+                        <i data-lucide="lock" style="width:24px; height:24px; color:var(--text-muted);"></i>
+                        {% elif profile_summary.current_cgpa %}{{ "%.2f" | format(profile_summary.current_cgpa) }}{% else %}N/A{% endif %}
                     </span>
-                    <span class="cgpa-label">CGPA</span>
+                    <span class="cgpa-label">{% if is_private %}Private{% else %}CGPA{% endif %}</span>
                 </div>
             </div>
             <div class="profile-info">
@@ -647,6 +648,14 @@
         </div>
 
         <!-- ── KPI Cards ── -->
+        {% if is_private %}
+        <div style="text-align:center; padding: 60px 20px; background:var(--bg-card); border-radius:var(--radius); border:1px solid var(--border); margin-bottom: 24px;">
+            <i data-lucide="lock" style="width:48px; height:48px; color:var(--text-muted); margin-bottom:16px;"></i>
+            <h2 style="font-size:20px; color:var(--text-primary); margin-bottom:8px;">Private Profile</h2>
+            <p style="color:var(--text-secondary); max-width:400px; margin:0 auto;">This student has set their profile visibility to Private. Academic statistics and insights are hidden.</p>
+        </div>
+        <div class="content-grid">
+        {% else %}
         <div class="kpi-grid">
             <!-- Predicted GPA -->
             <div class="kpi-card">
@@ -854,6 +863,7 @@
                     </div>
                     {% endif %}
                 </div>
+                {% endif %}
 
                 <!-- Teacher Notes -->
                 <div class="card full-width">

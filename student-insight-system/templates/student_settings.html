@@ -118,7 +118,7 @@
                         <div class="settings-group">
                             <div class="settings-group-header">
                                 <span class="settings-group-title">Personal Details</span>
-                                <button class="btn btn-outline btn-sm">Edit</button>
+                                <a href="/student/profile" class="btn btn-outline btn-sm">Edit</a>
                             </div>
                             <div class="setting-item">
                                 <form style="width: 100%;">
@@ -167,18 +167,9 @@
                                     <span class="setting-label">Change Password</span>
                                     <span class="setting-desc">Last changed 3 months ago</span>
                                 </div>
-                                <button class="btn btn-outline btn-sm">Update</button>
+                                <button class="btn btn-outline btn-sm" onclick="openPasswordModal()">Update</button>
                             </div>
-                            <div class="setting-item">
-                                <div class="setting-info">
-                                    <span class="setting-label">Two-Factor Authentication</span>
-                                    <span class="setting-desc">Add an extra layer of security to your account.</span>
-                                </div>
-                                <label class="switch">
-                                    <input type="checkbox">
-                                    <span class="slider"></span>
-                                </label>
-                            </div>
+
                         </div>
                     </div>
 
@@ -198,7 +189,7 @@
                                     <span class="setting-desc">Get a summary of your weekly progress.</span>
                                 </div>
                                 <label class="switch">
-                                    <input type="checkbox" checked>
+                                    <input type="checkbox" onchange="updatePref('email_weekly_report', this.checked)" {% if not profile.settings or profile.settings.email_weekly_report %}checked{% endif %}>
                                     <span class="slider"></span>
                                 </label>
                             </div>
@@ -208,7 +199,7 @@
                                     <span class="setting-desc">When a teacher adds a new task.</span>
                                 </div>
                                 <label class="switch">
-                                    <input type="checkbox" checked>
+                                    <input type="checkbox" onchange="updatePref('email_new_assignments', this.checked)" {% if not profile.settings or profile.settings.email_new_assignments %}checked{% endif %}>
                                     <span class="slider"></span>
                                 </label>
                             </div>
@@ -240,7 +231,7 @@
                                     <span class="setting-desc">Make the navigation sidebar smaller.</span>
                                 </div>
                                 <label class="switch">
-                                    <input type="checkbox">
+                                    <input type="checkbox" onchange="updatePref('compact_sidebar', this.checked)" {% if profile.settings and profile.settings.compact_sidebar %}checked{% endif %}>
                                     <span class="slider"></span>
                                 </label>
                             </div>
@@ -259,9 +250,9 @@
                                     <span class="setting-label">Profile Visibility</span>
                                     <span class="setting-desc">Who can see your academic stats?</span>
                                 </div>
-                                <select class="form-select" style="width: auto;">
-                                    <option>Teachers Only (Default)</option>
-                                    <option>Private</option>
+                                <select class="form-select" style="width: auto;" onchange="updatePref('profile_visibility', this.value)">
+                                    <option value="Teachers Only" {% if not profile.settings or profile.settings.profile_visibility == 'Teachers Only' %}selected{% endif %}>Teachers Only (Default)</option>
+                                    <option value="Private" {% if profile.settings and profile.settings.profile_visibility == 'Private' %}selected{% endif %}>Private</option>
                                 </select>
                             </div>
                             <div class="setting-item">
@@ -269,7 +260,7 @@
                                     <span class="setting-label text-red">Danger Zone</span>
                                     <span class="setting-desc">Permanently delete your account and all data.</span>
                                 </div>
-                                <button class="btn btn-danger btn-sm">Delete Account</button>
+                                <button class="btn btn-danger btn-sm" onclick="deleteAccount()">Delete Account</button>
                             </div>
                         </div>
                     </div>
@@ -277,9 +268,88 @@
                 </div>
             </div>
         </div>
+
+        <!-- Password Modal -->
+        <div id="passwordModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
+            <div style="background:var(--bg-surface, #fff); padding:24px; border-radius:12px; width:400px; max-width:90%;">
+                <h3 style="margin-top:0;">Change Password</h3>
+                <div class="form-group">
+                    <label class="form-label">Current Password</label>
+                    <input type="password" id="current_pass" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">New Password</label>
+                    <input type="password" id="new_pass" class="form-input">
+                </div>
+                <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:20px;">
+                    <button class="btn btn-outline" onclick="closePasswordModal()">Cancel</button>
+                    <button class="btn btn-primary" onclick="submitPasswordChange()">Save</button>
+                </div>
+            </div>
+        </div>
+
     </main>
 
     <script>
+        function openPasswordModal() { document.getElementById('passwordModal').style.display = 'flex'; }
+        function closePasswordModal() { 
+            document.getElementById('passwordModal').style.display = 'none'; 
+            document.getElementById('current_pass').value = '';
+            document.getElementById('new_pass').value = '';
+        }
+
+        async function submitPasswordChange() {
+            const current_password = document.getElementById('current_pass').value;
+            const new_password = document.getElementById('new_pass').value;
+            if(!current_password || !new_password) return alert('Please fill in both fields.');
+            
+            try {
+                const res = await fetch('/api/student/change-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ current_password, new_password })
+                });
+                const data = await res.json();
+                if(data.success) {
+                    alert('Password updated successfully!');
+                    closePasswordModal();
+                } else {
+                    alert(data.msg || 'Failed to update password.');
+                }
+            } catch (e) { alert('An error occurred.'); }
+        }
+
+        async function updatePref(key, value) {
+            // Immediately apply UI changes for specific preferences
+            if (key === 'compact_sidebar') {
+                const html = document.documentElement;
+                if (value) {
+                    html.classList.add('sidebar-is-collapsed');
+                } else {
+                    html.classList.remove('sidebar-is-collapsed');
+                }
+                localStorage.setItem('sidebarCollapsed', value);
+                document.cookie = `sidebar_collapsed=${value}; path=/; max-age=31536000`;
+            }
+
+            await fetch('/api/student/settings/preferences', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ [key]: value })
+            });
+        }
+
+        async function deleteAccount() {
+            if(confirm("Are you absolutely sure you want to delete your account? This cannot be undone.")) {
+                try {
+                    const res = await fetch('/student/delete-profile', { method: 'DELETE' });
+                    if(res.ok) {
+                        window.location.href = '/logout';
+                    }
+                } catch(e) { alert('Error deleting account.'); }
+            }
+        }
+
         function switchSection(sectionId) {
             // Hide all sections
             document.querySelectorAll('.settings-section').forEach(el => el.classList.remove('active'));
@@ -304,6 +374,15 @@
             const sel = document.getElementById('themeSelect');
             if (sel && typeof ThemeManager !== 'undefined') {
                 sel.value = ThemeManager.getCurrent();
+            }
+
+            // Sync sidebar state from DB on profile load
+            const dbCompact = {% if profile.settings and profile.settings.compact_sidebar %}true{% else %}false{% endif %};
+            if (localStorage.getItem('sidebarCollapsed') !== String(dbCompact)) {
+                localStorage.setItem('sidebarCollapsed', dbCompact);
+                document.cookie = `sidebar_collapsed=${dbCompact}; path=/; max-age=31536000`;
+                if(dbCompact) document.documentElement.classList.add('sidebar-is-collapsed');
+                else document.documentElement.classList.remove('sidebar-is-collapsed');
             }
         });
     </script>

@@ -734,6 +734,57 @@ def student_settings():
     return render_template("student_settings.html", **data)
 
 
+@dashboard_bp.route("/api/student/change-password", methods=["POST"])
+@require_role("student")
+def change_password():
+    from models import User
+    from werkzeug.security import check_password_hash, generate_password_hash
+    from core.extensions import db
+    user_id = get_jwt_identity()
+    
+    data = request.get_json(silent=True) or {}
+    current_pass = data.get("current_password")
+    new_pass = data.get("new_password")
+    
+    if not current_pass or not new_pass:
+        return jsonify({"success": False, "msg": "Missing passwords"}), 400
+        
+    user = User.query.get(int(user_id))
+    if not user or not check_password_hash(user.password_hash, current_pass):
+        return jsonify({"success": False, "msg": "Invalid current password"}), 401
+        
+    user.password_hash = generate_password_hash(new_pass)
+    db.session.commit()
+    return jsonify({"success": True, "msg": "Password updated successfully"})
+
+
+@dashboard_bp.route("/api/student/settings/preferences", methods=["POST"])
+@require_role("student")
+def update_preferences():
+    from models import StudentSettings, StudentProfile
+    from core.extensions import db
+    user_id = get_jwt_identity()
+    student = StudentProfile.query.filter_by(user_id=int(user_id)).first()
+    
+    if not student.settings:
+        student.settings = StudentSettings(student_id=student.id)
+        db.session.add(student.settings)
+        
+    data = request.get_json(silent=True) or {}
+    
+    if "email_weekly_report" in data:
+        student.settings.email_weekly_report = bool(data["email_weekly_report"])
+    if "email_new_assignments" in data:
+        student.settings.email_new_assignments = bool(data["email_new_assignments"])
+    if "compact_sidebar" in data:
+        student.settings.compact_sidebar = bool(data["compact_sidebar"])
+    if "profile_visibility" in data:
+        student.settings.profile_visibility = data["profile_visibility"]
+        
+    db.session.commit()
+    return jsonify({"success": True})
+
+
 # =============================================================
 # WEEKLY ROUTINE & STUDY SESSIONS
 # =============================================================
