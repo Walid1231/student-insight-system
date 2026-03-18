@@ -18,6 +18,8 @@ from models import (
 )
 from ml.analytics_engine import AnalyticsEngine
 from sqlalchemy import func, case
+from sqlalchemy.orm import selectinload, joinedload
+from core.extensions import cache
 from sqlalchemy.orm import selectinload
 from collections import defaultdict
 from datetime import datetime
@@ -135,13 +137,18 @@ def teacher_students_page():
     if err:
         return err
 
-    students = (
+    page = request.args.get('page', 1, type=int)
+
+    students_query = (
         StudentProfile.query
         .join(TeacherAssignment, TeacherAssignment.student_id == StudentProfile.id)
         .filter(TeacherAssignment.teacher_id == teacher.id)
         .distinct()
-        .all()
     )
+    
+    pagination = students_query.paginate(page=page, per_page=25, error_out=False)
+    students = pagination.items
+
     student_ids = [s.id for s in students]
 
     alerts_count = 0
@@ -156,7 +163,7 @@ def teacher_students_page():
         )
 
     overview_data = {
-        "total_students": len(students),
+        "total_students": pagination.total,
         "alerts_count":   alerts_count,
     }
 
@@ -165,6 +172,7 @@ def teacher_students_page():
         teacher=teacher,
         overview=overview_data,
         students=students,
+        pagination=pagination,
         now_date=datetime.now().strftime("%d %B, %Y"),
     )
 
@@ -196,7 +204,7 @@ def teacher_alerts_page():
             .order_by(StudentAlert.created_at.desc())
             .paginate(page=page, per_page=20, error_out=False)
         )
-    
+
     alerts = alerts_pagination.items if alerts_pagination else []
     
     # Calculate total alerts for sidebar badge
@@ -238,25 +246,30 @@ def teacher_alerts_page():
 def teacher_student_detail(student_id):
     claims = get_jwt()
     if claims.get("role") != "teacher":
-        return jsonify({"msg": "Access denied"}), 403
+        return jsonify({"success": False, "msg": "Access denied"}), 403
     try:
         user_id = int(get_jwt_identity())
     except (ValueError, TypeError):
-        return jsonify({"msg": "Invalid user identity"}), 400
+        return jsonify({"success": False, "msg": "Invalid user identity"}), 400
 
     teacher = TeacherProfile.query.filter_by(user_id=user_id).first()
     if not teacher:
-        return jsonify({"msg": "Teacher profile not found"}), 404
+        return jsonify({"success": False, "msg": "Teacher profile not found"}), 404
 
     assignment = TeacherAssignment.query.filter_by(
         teacher_id=teacher.id, student_id=student_id
     ).first()
     if not assignment:
-        return jsonify({"msg": "You are not assigned to this student"}), 403
+        return jsonify({"success": False, "msg": "You are not assigned to this student"}), 403
 
-    student = StudentProfile.query.get(student_id)
+    student = StudentProfile.query.options(
+        joinedload(StudentProfile.skills),
+        joinedload(StudentProfile.student_goals),
+        joinedload(StudentProfile.weekly_updates)
+    ).get(student_id)
+    
     if not student:
-        return jsonify({"msg": "Student not found"}), 404
+        return jsonify({"success": False, "msg": "Student not found"}), 404
 
     from dashboard.student_stats import (
         calculate_attendance_stats,
@@ -308,10 +321,15 @@ def teacher_student_detail(student_id):
         semester_gpa_trend.append((f"Sem {sem}", sem_gpa))
         total_credits += sem_cr
 
-    try:
-        predicted_gpa = round(analytics_engine.predict_next_gpa(student_id), 2)
-    except Exception:
-        predicted_gpa = None
+    # Cached AI Prediction
+    @cache.memoize(timeout=600)
+    def get_predicted_gpa(sid):
+        try:
+            return round(analytics_engine.predict_next_gpa(sid), 2)
+        except Exception:
+            return None
+
+    predicted_gpa = get_predicted_gpa(student_id)
 
     academic_snapshot = {
         "predicted_next_gpa": predicted_gpa,
@@ -319,14 +337,8 @@ def teacher_student_detail(student_id):
         "semester_trend":     semester_gpa_trend[-3:],
     }
 
-    # C) Skill snapshot — top 3 by highest risk_score
-    top_risk_skills = (
-        StudentSkill.query
-        .filter_by(student_id=student_id)
-        .order_by(StudentSkill.risk_score.desc())
-        .limit(3)
-        .all()
-    )
+    # C) Skill snapshot
+    top_risk_skills = sorted(student.skills, key=lambda s: s.risk_score or 0, reverse=True)[:3]
     skill_snapshot = [
         {
             "skill_name":        s.skill_name,
@@ -337,12 +349,9 @@ def teacher_student_detail(student_id):
     ]
 
     # D) Weekly snapshot
-    latest_update = (
-        WeeklyUpdate.query
-        .filter_by(student_id=student_id)
-        .order_by(WeeklyUpdate.created_at.desc())
-        .first()
-    )
+    latest_update = sorted(student.weekly_updates, key=lambda w: w.created_at, reverse=True)
+    latest_update = latest_update[0] if latest_update else None
+    
     weekly_snapshot = None
     if latest_update:
         weekly_snapshot = {
@@ -353,7 +362,7 @@ def teacher_student_detail(student_id):
         }
 
     # E) Career snapshot
-    primary_goal = StudentGoal.query.filter_by(student_id=student_id, is_primary=True).first()
+    primary_goal = next((g for g in student.student_goals if g.is_primary), None)
     career_snapshot = None
     if primary_goal:
         cp = CareerPath.query.get(primary_goal.career_id)
@@ -434,7 +443,8 @@ def api_teacher_students():
             )
         )
 
-    students = query.distinct().all()
+    pagination = query.distinct().paginate(page=request.args.get('page', 1, type=int), per_page=25, error_out=False)
+    students = pagination.items
     result = []
     for s in students:
         if status_filter and s.performance_status != status_filter:
@@ -449,9 +459,64 @@ def api_teacher_students():
             "status":       s.performance_status,
             "last_active":  s.last_active.isoformat() if hasattr(s, "last_active") and s.last_active else None,
         })
-    return jsonify(result)
+    return jsonify({"success": True, "students": result, "total": pagination.total})
 
 
+@teacher_bp.route("/api/teacher/notes", methods=["POST"])
+@jwt_required()
+def api_teacher_add_note():
+    teacher, err = _get_teacher_or_403()
+    if err:
+        return err
+
+    body       = request.get_json(silent=True) or {}
+    student_id = body.get("student_id")
+    content    = (body.get("content") or "").strip()
+
+    if not student_id or not content:
+        return jsonify({"success": False, "msg": "student_id and content are required"}), 400
+
+    assigned = TeacherAssignment.query.filter_by(
+        teacher_id=teacher.id, student_id=int(student_id)
+    ).first()
+    if not assigned:
+        return jsonify({"success": False, "msg": "Student not in your assignment scope"}), 403
+
+    from models import StudentNote
+    note = StudentNote(
+        student_id=int(student_id), teacher_id=teacher.id,
+        content=content, is_private=True,
+    )
+    db.session.add(note)
+    db.session.commit()
+    
+    return jsonify({
+        "success": True, 
+        "note": {
+            "id": note.id, 
+            "content": note.content, 
+            "created_at": note.created_at.isoformat() if note.created_at else datetime.now().isoformat()
+        }
+    }), 201
+
+@teacher_bp.route("/api/teacher/notes/<int:note_id>", methods=["DELETE"])
+@jwt_required()
+def api_teacher_delete_note(note_id):
+    teacher, err = _get_teacher_or_403()
+    if err:
+        return err
+
+    from models import StudentNote
+    note = StudentNote.query.get(note_id)
+    if not note:
+        return jsonify({"success": False, "msg": "Note not found"}), 404
+
+    if note.teacher_id != teacher.id:
+        return jsonify({"success": False, "msg": "You do not have permission to delete this note"}), 403
+
+    db.session.delete(note)
+    db.session.commit()
+    return jsonify({"success": True, "msg": "Note deleted"})
 
 
 @teacher_bp.route("/api/teacher/alerts/<int:alert_id>/resolve", methods=["POST"])
@@ -480,6 +545,7 @@ def api_resolve_alert(alert_id):
     alert.is_resolved = True
     db.session.commit()
     return jsonify({"success": True, "msg": "Alert resolved"})
+
 
 @teacher_bp.route("/api/teacher/alerts/resolve-batch", methods=["POST"])
 @jwt_required()
@@ -530,6 +596,7 @@ def api_resolve_alerts_batch():
     except Exception as e:
         db.session.rollback()
         return jsonify({"success": False, "msg": "Internal Server Error"}), 500
+
 
 @teacher_bp.route("/api/teacher/alerts/summary", methods=["GET"])
 @jwt_required()
@@ -615,17 +682,28 @@ def api_unassigned_students():
     if err:
         return err
 
+    search_query = (request.args.get("search") or "").strip()
+
     already_assigned = (
         db.session.query(TeacherAssignment.student_id)
         .filter_by(teacher_id=teacher.id)
         .subquery()
     )
-    students = (
-        StudentProfile.query
-        .filter(StudentProfile.id.notin_(already_assigned))
-        .order_by(StudentProfile.full_name)
-        .all()
-    )
+    
+    query = StudentProfile.query.filter(StudentProfile.id.notin_(already_assigned))
+    
+    if search_query:
+        like_term = f"%{search_query}%"
+        query = query.filter(
+            db.or_(
+                StudentProfile.student_code.ilike(like_term),
+                StudentProfile.full_name.ilike(like_term),
+                StudentProfile.department.ilike(like_term),
+                StudentProfile.class_level.ilike(like_term)
+            )
+        )
+        
+    students = query.order_by(StudentProfile.full_name).all()
 
     return jsonify([
         {
@@ -644,7 +722,7 @@ def api_unassigned_students():
 
 @teacher_bp.route("/api/teacher/assign-student", methods=["POST"])
 @jwt_required()
-def api_assign_student():
+def api_teacher_assign_student():
     """Create a TeacherAssignment row linking this teacher to a student."""
     teacher, err = _get_teacher_or_403()
     if err:
@@ -653,17 +731,22 @@ def api_assign_student():
     data       = request.get_json(silent=True) or {}
     student_id = data.get("student_id")
     if not student_id:
-        return jsonify({"msg": "student_id is required"}), 400
+        return jsonify({"success": False, "msg": "student_id is required"}), 400
+
+    # Enforce max 50 students
+    current_count = TeacherAssignment.query.filter_by(teacher_id=teacher.id).count()
+    if current_count >= 50:
+        return jsonify({"success": False, "msg": "Assignment limit of 50 students exceeded"}), 400
 
     student = StudentProfile.query.get(int(student_id))
     if not student:
-        return jsonify({"msg": "Student not found"}), 404
+        return jsonify({"success": False, "msg": "Student not found"}), 404
 
     existing = TeacherAssignment.query.filter_by(
         teacher_id=teacher.id, student_id=student.id
     ).first()
     if existing:
-        return jsonify({"msg": "Student is already assigned to you"}), 409
+        return jsonify({"success": False, "msg": "Student is already assigned to you"}), 409
 
     db.session.add(TeacherAssignment(
         teacher_id=teacher.id, student_id=student.id,
@@ -688,7 +771,7 @@ def api_assign_student():
 
 @teacher_bp.route("/api/teacher/unassign-student", methods=["DELETE"])
 @jwt_required()
-def api_unassign_student():
+def api_teacher_unassign_student():
     """Remove a TeacherAssignment row for the current teacher."""
     teacher, err = _get_teacher_or_403()
     if err:
@@ -697,90 +780,58 @@ def api_unassign_student():
     data       = request.get_json(silent=True) or {}
     student_id = data.get("student_id")
     if not student_id:
-        return jsonify({"msg": "student_id is required"}), 400
+        return jsonify({"success": False, "msg": "student_id is required"}), 400
 
     assignment = TeacherAssignment.query.filter_by(
         teacher_id=teacher.id, student_id=int(student_id)
     ).first()
     if not assignment:
-        return jsonify({"msg": "Assignment not found"}), 404
+        return jsonify({"success": False, "msg": "Assignment not found or does not belong to you"}), 403
 
     db.session.delete(assignment)
     db.session.commit()
-    return jsonify({"success": True})
+    return jsonify({"success": True, "msg": "Student unassigned"})
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# TEACHER NOTES — Page + APIs
-# ─────────────────────────────────────────────────────────────────────────────
-
-@teacher_bp.route("/teacher/notes")
+@teacher_bp.route("/api/teacher/unassign-students-batch", methods=["DELETE"])
 @jwt_required()
-def teacher_notes_page():
-    """Render the My Notes read-only history page."""
-    teacher, err = _get_teacher_or_403()
-    if err:
-        return err
-    return render_template(
-        "teacher_notes.html",
-        teacher=teacher,
-        now_date=datetime.now().strftime("%d %B, %Y"),
-    )
-
-
-@teacher_bp.route("/api/teacher/notes", methods=["GET"])
-@jwt_required()
-def api_get_teacher_notes():
-    """Return all notes created by the current teacher, newest first."""
+def api_teacher_unassign_students_batch():
     teacher, err = _get_teacher_or_403()
     if err:
         return err
 
-    notes = (
-        StudentNote.query
-        .filter_by(teacher_id=teacher.id)
-        .order_by(StudentNote.created_at.desc())
-        .all()
-    )
+    data = request.get_json(silent=True) or {}
+    student_ids = data.get("student_ids", [])
+    
+    if not student_ids or not isinstance(student_ids, list):
+        return jsonify({"success": False, "msg": "Valid 'student_ids' list is required"}), 400
 
-    return jsonify([
-        {
-            "id": n.id,
-            "student_name": n.student.full_name if n.student else "Unknown",
-            "student_id": n.student_id,
-            "content": n.content,
-            "is_private": n.is_private,
-            "created_at": n.created_at.strftime("%Y-%m-%d %H:%M"),
-            "created_at_display": n.created_at.strftime("%b %d, %Y"),
-        }
-        for n in notes
-    ])
-
-
-@teacher_bp.route("/api/teacher/notes", methods=["POST"])
-@jwt_required()
-def api_create_note():
-    teacher, err = _get_teacher_or_403()
-    if err:
-        return err
-
-    body       = request.get_json(silent=True) or {}
-    student_id = body.get("student_id")
-    content    = (body.get("content") or "").strip()
-
-    if not student_id or not content:
-        return jsonify({"msg": "student_id and content are required"}), 400
-
-    assigned = TeacherAssignment.query.filter_by(
-        teacher_id=teacher.id, student_id=int(student_id)
-    ).first()
-    if not assigned:
-        return jsonify({"msg": "Student not in your assignment scope"}), 403
-
-    note = StudentNote(
-        student_id=int(student_id), teacher_id=teacher.id,
-        content=content, is_private=False, is_read=False,
-    )
-    db.session.add(note)
-    db.session.commit()
-    return jsonify({"msg": "Note created", "id": note.id})
+    try:
+        assignments_to_remove = (
+            TeacherAssignment.query
+            .filter(
+                TeacherAssignment.teacher_id == teacher.id,
+                TeacherAssignment.student_id.in_(student_ids)
+            )
+            .all()
+        )
+        
+        removed_count = 0
+        removed_ids = []
+        for assgn in assignments_to_remove:
+            db.session.delete(assgn)
+            removed_ids.append(assgn.student_id)
+            removed_count += 1
+            
+        db.session.commit()
+        
+        failed_ids = list(set(student_ids) - set(removed_ids))
+        
+        return jsonify({
+            "success": True, 
+            "removed_count": removed_count,
+            "failed_ids": failed_ids
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "msg": "Internal Server Error"}), 500
