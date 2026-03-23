@@ -64,6 +64,8 @@
             });
         })();
     </script>
+    <link href="{{ url_for('static', filename='css/ui_alerts.css') }}" rel="stylesheet">
+    <script src="{{ url_for('static', filename='js/ui_alerts.js') }}"></script>
 </head>
 
 <body>
@@ -1194,7 +1196,7 @@
                 const duration = document.getElementById('edit-dur-' + sessionId).value;
                 const skill = document.getElementById('edit-skill-' + sessionId).value.trim();
 
-                if (!topic) { alert('Topic is required'); return; }
+                if (!topic) { showToast('Topic is required', 'error'); return; }
 
                 const btn = document.getElementById('edit-save-' + sessionId);
                 btn.disabled = true;
@@ -1223,13 +1225,13 @@
                             renderCalendar();
                             showToast();
                         } else {
-                            alert(data.error || 'Update failed');
+                            showToast(data.error || 'Update failed', 'error');
                             btn.disabled = false;
                             btn.innerHTML = '<i class="fas fa-check"></i> Save';
                         }
                     })
                     .catch(() => {
-                        alert('Network error');
+                        showToast('Network error', 'error');
                         btn.disabled = false;
                         btn.innerHTML = '<i class="fas fa-check"></i> Save';
                     });
@@ -1237,36 +1239,37 @@
 
             // Delete session via API
             function deleteSession(sessionId, dateStr) {
-                if (!confirm('Delete this session?')) return;
-                const row = document.getElementById('session-row-' + sessionId);
-                if (row) { row.style.opacity = '0.4'; row.style.pointerEvents = 'none'; }
+                showConfirm("Delete Session?", 'Delete this study session?', () => {
+                    const row = document.getElementById('session-row-' + sessionId);
+                    if (row) { row.style.opacity = '0.4'; row.style.pointerEvents = 'none'; }
 
-                fetch('/student/delete-study-session/' + sessionId, { method: 'POST' })
-                    .then(r => r.json())
-                    .then(data => {
-                        if (data.success) {
-                            const arr = sessionsData[dateStr];
-                            if (arr) {
-                                const idx = arr.findIndex(s => s.id === sessionId);
-                                if (idx !== -1) arr.splice(idx, 1);
-                            }
-                            if (!sessionsData[dateStr] || !sessionsData[dateStr].length) {
-                                delete sessionsData[dateStr];
-                                modal.classList.remove('active');
+                    fetch('/student/delete-study-session/' + sessionId, { method: 'POST' })
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.success) {
+                                const arr = sessionsData[dateStr];
+                                if (arr) {
+                                    const idx = arr.findIndex(s => s.id === sessionId);
+                                    if (idx !== -1) arr.splice(idx, 1);
+                                }
+                                if (!sessionsData[dateStr] || !sessionsData[dateStr].length) {
+                                    delete sessionsData[dateStr];
+                                    modal.classList.remove('active');
+                                } else {
+                                    openDayModal(dateStr);
+                                }
+                                renderCalendar();
+                                showToast('Session deleted.', 'success');
                             } else {
-                                openDayModal(dateStr);
+                                showToast(data.error || 'Delete failed', 'error');
+                                if (row) { row.style.opacity = ''; row.style.pointerEvents = ''; }
                             }
-                            renderCalendar();
-                            showToast();
-                        } else {
-                            alert(data.error || 'Delete failed');
+                        })
+                        .catch(() => {
+                            showToast('Network error', 'error');
                             if (row) { row.style.opacity = ''; row.style.pointerEvents = ''; }
-                        }
-                    })
-                    .catch(() => {
-                        alert('Network error');
-                        if (row) { row.style.opacity = ''; row.style.pointerEvents = ''; }
-                    });
+                        });
+                }, "Delete");
             }
 
             function attachEvents() {

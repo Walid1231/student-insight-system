@@ -8,6 +8,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <link href="{{ url_for('static', filename='css/dashboard.css') }}" rel="stylesheet">
+    <script>if(localStorage.getItem('teacher_theme')==='dark')document.documentElement.setAttribute('data-theme','dark');</script>
+    <link href="{{ url_for('static', filename='css/ui_alerts.css') }}" rel="stylesheet">
+    <script src="{{ url_for('static', filename='js/ui_alerts.js') }}"></script>
 </head>
 
 <body>
@@ -39,6 +42,9 @@
             <a href="/teacher/notes" class="nav-item">
                 <span class="nav-icon"><i data-lucide="file-text"></i></span> My Notes
             </a>
+            <a href="/teacher/profile" class="nav-item">
+                <span class="nav-icon"><i data-lucide="user"></i></span> My Profile
+            </a>
         </div>
         <div class="sidebar-footer">
             <a href="/logout" class="nav-item" style="color: var(--danger);">
@@ -53,8 +59,11 @@
                 <h1>My Students</h1>
                 <p style="color:var(--gray-500)">Manage your assigned students and add new ones.</p>
             </div>
-            <div style="font-size:14px; color:var(--gray-500)">
+            <div style="display:flex; align-items:center; gap:12px; font-size:14px; color:var(--gray-500)">
                 {{ now_date }}
+                <button class="dm-toggle" id="dmToggle" onclick="toggleDarkMode()" title="Toggle dark mode">
+                    <i data-lucide="moon" id="dmIcon"></i>
+                </button>
             </div>
         </div>
 
@@ -90,7 +99,6 @@
                     </thead>
                     <tbody>
                         {% for student in students %}
-                        {% set is_private = student.settings and student.settings.profile_visibility == 'Private' %}
                         <tr data-student-id="{{ student.id }}">
                             <td>
                                 <div style="font-weight:600">{{ student.full_name }}</div>
@@ -100,15 +108,11 @@
                             </td>
                             <td>{{ student.class_level }}-{{ student.section }}</td>
                             <td>
-                                {% if is_private %}
-                                <i data-lucide="lock" style="width:14px; color:var(--text-muted);" title="Private"></i>
-                                {% else %}
                                 {{ "%.2f"|format(student.current_cgpa) if student.current_cgpa else '--' }}
-                                {% endif %}
                             </td>
                             <td>
-                                <span class="status-badge status-{{ 'Private' if is_private else student.performance_status }}">
-                                    {{ 'Private' if is_private else student.performance_status }}
+                                <span class="status-badge status-{{ student.performance_status }}">
+                                    {{ student.performance_status }}
                                 </span>
                             </td>
                             <td>
@@ -266,8 +270,8 @@
                 return;
             }
             listEl.innerHTML = students.map(s => {
-                const cgpa = s.current_cgpa != null ? s.current_cgpa.toFixed(2) : (s.performance_status === 'Private' ? '🔒' : '--');
-                const statusClass = s.performance_status ? (s.performance_status === 'Private' ? 'status-unknown badge-status-Private' : `badge-status-${s.performance_status}`) : '';
+                const cgpa = s.current_cgpa != null ? s.current_cgpa.toFixed(2) : '--';
+                const statusClass = s.performance_status ? `badge-status-${s.performance_status}` : '';
                 return `
                 <div class="assign-row" data-id="${s.id}" data-name="${s.full_name.toLowerCase()}">
                     <div class="assign-row-info">
@@ -315,7 +319,7 @@
                 });
                 if (!res.ok) {
                     const err = await res.json();
-                    alert(err.msg || 'Assignment failed.');
+                    showToast(err.msg || 'Assignment failed.', 'error');
                     btn.disabled = false;
                     btn.textContent = 'Assign';
                     return;
@@ -334,7 +338,7 @@
 
                 // Append new row to assigned students table
                 const tbody = document.querySelector('#assignedTable tbody');
-                const cgpa = s.current_cgpa != null ? parseFloat(s.current_cgpa).toFixed(2) : (s.performance_status === 'Private' ? '<i data-lucide="lock" style="width:14px; color:var(--text-muted);" title="Private"></i>' : '--');
+                const cgpa = s.current_cgpa != null ? parseFloat(s.current_cgpa).toFixed(2) : '--';
                 const newTr = document.createElement('tr');
                 newTr.setAttribute('data-student-id', s.id);
                 newTr.innerHTML = `
@@ -366,28 +370,31 @@
 
         // DELETE unassign
         async function removeStudent(studentId, btn) {
-            if (!confirm('Remove this student from your class?')) return;
-            btn.disabled = true;
-            try {
-                const res = await fetch('/api/teacher/unassign-student', {
-                    method: 'DELETE',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ student_id: studentId })
-                });
-                if (!res.ok) {
-                    const err = await res.json();
-                    alert(err.msg || 'Could not remove student.');
+            showConfirm('Remove Student?', 'Are you sure you want to remove this student from your class?', async () => {
+                btn.disabled = true;
+                try {
+                    const res = await fetch('/api/teacher/unassign-student', {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ student_id: studentId })
+                    });
+                    if (!res.ok) {
+                        const err = await res.json();
+                        showToast(err.msg || 'Could not remove student.', 'error');
+                        btn.disabled = false;
+                        return;
+                    }
+                    // Remove table row
+                    const tr = btn.closest('tr');
+                    if (tr) tr.remove();
+                    updateAssignedCount();
+                    showToast('Student removed from class.', 'success');
+                } catch (e) {
+                    console.error(e);
+                    showToast('Could not remove student.', 'error');
                     btn.disabled = false;
-                    return;
                 }
-                // Remove table row
-                const tr = btn.closest('tr');
-                if (tr) tr.remove();
-                updateAssignedCount();
-            } catch (e) {
-                console.error(e);
-                btn.disabled = false;
-            }
+            }, "Remove");
         }
 
         // Keyboard: Escape closes any open modal
@@ -432,15 +439,17 @@
                 if (res.ok) {
                     document.getElementById('noteFeedback').style.display = '';
                     document.getElementById('noteContent').value = '';
+                    showToast('Note sent successfully!', 'success');
                     setTimeout(closeNoteModal, 1200);
                 } else {
                     const err = await res.json();
-                    alert(err.msg || 'Failed to send note.');
+                    showToast(err.msg || 'Failed to send note.', 'error');
                     btn.disabled = false;
                     btn.textContent = 'Send';
                 }
             } catch (e) {
                 console.error(e);
+                showToast('Failed to send note.', 'error');
                 btn.disabled = false;
                 btn.textContent = 'Send';
             }
@@ -480,7 +489,23 @@
                 const backdrop = document.getElementById('sidebarBackdrop');
                 if (backdrop) backdrop.style.display = 'none';
             }
-        });
+
+        // Dark Mode
+        function toggleDarkMode() {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            const newTheme = isDark ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('teacher_theme', newTheme);
+            updateDmIcon(newTheme);
+        }
+        function updateDmIcon(theme) {
+            const icon = document.getElementById('dmIcon');
+            if (!icon) return;
+            icon.setAttribute('data-lucide', theme === 'dark' ? 'sun' : 'moon');
+            lucide.createIcons();
+        }
+        lucide.createIcons();
+        updateDmIcon(localStorage.getItem('teacher_theme') || 'light');
     </script>
 </body>
 

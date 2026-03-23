@@ -382,6 +382,8 @@
            And Overlay has its own background.
         */
     </style>
+    <link href="{{ url_for('static', filename='css/ui_alerts.css') }}" rel="stylesheet">
+    <script src="{{ url_for('static', filename='js/ui_alerts.js') }}"></script>
 </head>
 
 <body>
@@ -563,7 +565,7 @@
             try {
                 const res = await fetch('/register', { method: 'POST', body: data });
                 if (res.ok) {
-                    alert('Account created! Please Sign In.');
+                    showToast('Account created! Please Sign In.', 'success');
                     container.classList.remove("right-panel-active");
                     document.getElementById('l-email').value = document.getElementById('r-email').value;
                 } else { const json = await res.json(); err.innerText = json.msg || 'Registration failed'; err.style.display = 'block'; }

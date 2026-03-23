@@ -10,7 +10,11 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link href="{{ url_for('static', filename='css/dashboard.css') }}" rel="stylesheet">
+    <!-- Anti-flicker: apply saved theme before first paint -->
+    <script>if(localStorage.getItem('teacher_theme')==='dark')document.documentElement.setAttribute('data-theme','dark');</script>
 
+    <link href="{{ url_for('static', filename='css/ui_alerts.css') }}" rel="stylesheet">
+    <script src="{{ url_for('static', filename='js/ui_alerts.js') }}"></script>
 </head>
 
 <body>
@@ -26,7 +30,7 @@
     <nav class="sidebar">
         <div class="logo">Teacher Dashboard</div>
         <div class="nav-links">
-            <a href="#" class="nav-item active">
+            <a href="/teacher/dashboard" class="nav-item active">
                 <span class="nav-icon"><i data-lucide="layout-dashboard"></i></span> Dashboard
             </a>
             <a href="/teacher/students" class="nav-item">
@@ -43,6 +47,9 @@
             <a href="/teacher/notes" class="nav-item">
                 <span class="nav-icon"><i data-lucide="file-text"></i></span> My Notes
             </a>
+            <a href="/teacher/profile" class="nav-item">
+                <span class="nav-icon"><i data-lucide="user"></i></span> My Profile
+            </a>
         </div>
         <div class="sidebar-footer">
             <a href="/logout" class="nav-item" style="color: var(--danger);">
@@ -57,8 +64,11 @@
                 <h1>Hello, {{ teacher.full_name }}</h1>
                 <p style="color:var(--gray-500)">Here's what's happening in your classes today.</p>
             </div>
-            <div style="font-size:14px; color:var(--gray-500)">
+            <div style="display:flex; align-items:center; gap:12px; font-size:14px; color:var(--gray-500)">
                 {{ now_date }}
+                <button class="dm-toggle" id="dmToggle" onclick="toggleDarkMode()" title="Toggle dark mode">
+                    <i data-lucide="moon" id="dmIcon"></i>
+                </button>
             </div>
         </div>
 
@@ -250,23 +260,25 @@
 
         // Resolve Alert Function
         async function resolveAlert(alertId) {
-            if (!confirm("Mark this alert as resolved?")) return;
+            showConfirm("Resolve Warning?", "Mark this academic alert as resolved?", async () => {
+                try {
+                    const response = await fetch(`/api/teacher/alerts/${alertId}/resolve`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
 
-            try {
-                const response = await fetch(`/api/teacher/alerts/${alertId}/resolve`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' }
-                });
-
-                if (response.ok) {
-                    const el = document.getElementById(`alert-${alertId}`);
-                    if (el) el.remove();
-                } else {
-                    alert("Failed to resolve alert.");
+                    if (response.ok) {
+                        const el = document.getElementById(`alert-${alertId}`);
+                        if (el) el.remove();
+                        showToast("Alert resolved successfully.", "success");
+                    } else {
+                        showToast("Failed to resolve alert.", "error");
+                    }
+                } catch (error) {
+                    console.error("Error:", error);
+                    showToast("An error occurred.", "error");
                 }
-            } catch (error) {
-                console.error("Error:", error);
-            }
+            }, "Resolve");
         }
 
         // LOAD HEATMAP
@@ -331,6 +343,23 @@
 
         // Initialize Lucide icons
         lucide.createIcons();
+
+        // Dark Mode
+        function toggleDarkMode() {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            const newTheme = isDark ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('teacher_theme', newTheme);
+            updateDmIcon(newTheme);
+        }
+        function updateDmIcon(theme) {
+            const icon = document.getElementById('dmIcon');
+            if (!icon) return;
+            icon.setAttribute('data-lucide', theme === 'dark' ? 'sun' : 'moon');
+            lucide.createIcons();
+        }
+        // Apply icon on load
+        updateDmIcon(localStorage.getItem('teacher_theme') || 'light');
 
         // ─────────────────────────────────────────────────────────
 

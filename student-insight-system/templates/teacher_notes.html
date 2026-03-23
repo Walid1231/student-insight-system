@@ -8,6 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <link href="{{ url_for('static', filename='css/dashboard.css') }}" rel="stylesheet">
+    <script>if(localStorage.getItem('teacher_theme')==='dark')document.documentElement.setAttribute('data-theme','dark');</script>
     <style>
         .notes-toolbar {
             display: flex;
@@ -140,6 +141,9 @@
             <a href="/teacher/notes" class="nav-item active">
                 <span class="nav-icon"><i data-lucide="file-text"></i></span> My Notes
             </a>
+            <a href="/teacher/profile" class="nav-item">
+                <span class="nav-icon"><i data-lucide="user"></i></span> My Profile
+            </a>
         </div>
         <div class="sidebar-footer">
             <a href="/logout" class="nav-item" style="color: var(--danger);">
@@ -154,7 +158,12 @@
                 <h1>My Notes</h1>
                 <p style="color:var(--gray-500)">All notes you have sent to students — read-only history.</p>
             </div>
-            <div style="font-size:14px; color:var(--gray-500)">{{ now_date }}</div>
+            <div style="display:flex; align-items:center; gap:12px; font-size:14px; color:var(--gray-500)">
+                {{ now_date }}
+                <button class="dm-toggle" id="dmToggle" onclick="toggleDarkMode()" title="Toggle dark mode">
+                    <i data-lucide="moon" id="dmIcon"></i>
+                </button>
+            </div>
         </div>
 
         <div class="card">
@@ -276,6 +285,22 @@
 
         lucide.createIcons();
         loadNotes();
+
+        // Dark Mode
+        function toggleDarkMode() {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            const newTheme = isDark ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('teacher_theme', newTheme);
+            updateDmIcon(newTheme);
+        }
+        function updateDmIcon(theme) {
+            const icon = document.getElementById('dmIcon');
+            if (!icon) return;
+            icon.setAttribute('data-lucide', theme === 'dark' ? 'sun' : 'moon');
+            lucide.createIcons();
+        }
+        updateDmIcon(localStorage.getItem('teacher_theme') || 'light');
     </script>
 </body>
 
