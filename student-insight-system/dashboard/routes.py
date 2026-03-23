@@ -778,8 +778,6 @@ def update_preferences():
         student.settings.email_new_assignments = bool(data["email_new_assignments"])
     if "compact_sidebar" in data:
         student.settings.compact_sidebar = bool(data["compact_sidebar"])
-    if "profile_visibility" in data:
-        student.settings.profile_visibility = data["profile_visibility"]
         
     db.session.commit()
     return jsonify({"success": True})

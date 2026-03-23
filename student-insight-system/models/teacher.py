@@ -11,6 +11,15 @@ class TeacherProfile(db.Model):
     department = db.Column(db.String(100))
     subject_specialization = db.Column(db.String(100))
 
+    # Extended profile fields
+    designation = db.Column(db.String(100))
+    faculty = db.Column(db.String(150))
+    personal_webpage = db.Column(db.String(300))
+    email = db.Column(db.String(200))
+    phone = db.Column(db.String(30))
+    cell_phone = db.Column(db.String(30))
+    profile_picture = db.Column(db.String(300))  # stores filename
+
     # Relationships
     assignments = db.relationship(
         'TeacherAssignment', backref='teacher', cascade="all, delete-orphan"

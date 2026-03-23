@@ -21,7 +21,174 @@
     --success: #10b981;
     --warning: #f59e0b;
     --danger: #ef4444;
+
+    /* Dark mode toggle button */
+    --dm-btn-bg: rgba(255,255,255,0.12);
+    --dm-btn-border: rgba(255,255,255,0.22);
+    --dm-btn-color: #c7d2fe;
 }
+
+/* ── Dark Mode Tokens ──────────────────────────────────────── */
+html[data-theme="dark"] {
+    --bg-main: #0f1117;
+    --bg-card: #1a1d27;
+    --dark: #f3f4f6;
+    --text-primary: #e5e7eb;
+    --text-secondary: #9ca3af;
+    --border-light: #2d3241;
+    --success: #34d399;
+    --warning: #fbbf24;
+    --danger: #f87171;
+    --dm-btn-bg: rgba(99,102,241,0.18);
+    --dm-btn-border: rgba(99,102,241,0.4);
+    --dm-btn-color: #c7d2fe;
+}
+
+/* Smooth theme transitions */
+html[data-theme="dark"] body,
+html[data-theme="dark"] .sidebar,
+html[data-theme="dark"] .main-content,
+html[data-theme="dark"] .card,
+html[data-theme="dark"] nav.sidebar {
+    transition: background-color 0.3s ease, color 0.3s ease,
+                border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Body */
+html[data-theme="dark"] body {
+    background: #0f1117;
+    color: #e5e7eb;
+}
+
+/* Main content */
+html[data-theme="dark"] .main-content {
+    background: #0f1117;
+}
+
+/* Cards */
+html[data-theme="dark"] .card {
+    background: #1a1d27;
+    border: 1px solid #2d3241;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+html[data-theme="dark"] .card:hover {
+    box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+}
+html[data-theme="dark"] .card h3,
+html[data-theme="dark"] .chart-title {
+    color: #f3f4f6;
+}
+
+/* Stat cards */
+html[data-theme="dark"] .stat-info .value,
+html[data-theme="dark"] .stat-value {
+    color: #f3f4f6;
+}
+html[data-theme="dark"] .stat-info .label,
+html[data-theme="dark"] .stat-label {
+    color: #9ca3af;
+}
+
+/* Header */
+html[data-theme="dark"] .header h1,
+html[data-theme="dark"] .top-bar h1 {
+    color: #f3f4f6;
+}
+html[data-theme="dark"] .header p,
+html[data-theme="dark"] .top-bar-date {
+    color: #9ca3af;
+}
+
+/* Tables */
+html[data-theme="dark"] th,
+html[data-theme="dark"] td {
+    border-bottom-color: #2d3241;
+    color: #d1d5db;
+}
+html[data-theme="dark"] th {
+    color: #9ca3af;
+}
+html[data-theme="dark"] tr:hover {
+    background: #1e2231;
+}
+
+/* Buttons */
+html[data-theme="dark"] .btn-sm {
+    background: #1a1d27;
+    border-color: #2d3241;
+    color: #e5e7eb;
+}
+html[data-theme="dark"] .btn-sm:hover {
+    background: #1e2231;
+}
+html[data-theme="dark"] .sidebar-toggle {
+    background: #1a1d27;
+    border-color: #2d3241;
+    color: #e5e7eb;
+}
+
+/* Alerts panel */
+html[data-theme="dark"] .alert-item {
+    border-bottom-color: #2d3241;
+}
+html[data-theme="dark"] .alert-item strong {
+    color: #f3f4f6;
+}
+html[data-theme="dark"] .alerts-list {
+    color: #e5e7eb;
+}
+
+/* Status badges (light mode uses dark text — invert for dark) */
+html[data-theme="dark"] .status-good {
+    background: rgba(16,185,129,0.18);
+    color: #6ee7b7;
+    border-color: rgba(16,185,129,0.35);
+}
+html[data-theme="dark"] .status-average {
+    background: rgba(245,158,11,0.18);
+    color: #fcd34d;
+    border-color: rgba(245,158,11,0.35);
+}
+html[data-theme="dark"] .status-at-risk {
+    background: rgba(239,68,68,0.18);
+    color: #fca5a5;
+    border-color: rgba(239,68,68,0.35);
+}
+
+/* Modal / Heatmap text */
+html[data-theme="dark"] .modal-empty {
+    color: #6b7280;
+}
+html[data-theme="dark"] #heatmapContainer {
+    color: #d1d5db;
+}
+
+/* ── Dark Mode Toggle Button ───────────────────────────────── */
+.dm-toggle {
+    background: var(--dm-btn-bg);
+    border: 1px solid var(--dm-btn-border);
+    color: var(--dm-btn-color);
+    border-radius: 9px;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+    flex-shrink: 0;
+}
+.dm-toggle:hover {
+    background: rgba(99,102,241,0.28);
+    transform: scale(1.08);
+}
+.dm-toggle svg,
+.dm-toggle i {
+    width: 16px;
+    height: 16px;
+    pointer-events: none;
+}
+
 
 /* ── Reset ─────────────────────────────────────────────────── */
 *,

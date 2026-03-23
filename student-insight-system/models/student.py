@@ -88,13 +88,11 @@ class StudentSettings(db.Model):
     # Appearance
     compact_sidebar = db.Column(db.Boolean, default=False)
     
-    # Privacy
-    profile_visibility = db.Column(db.String(50), default='Teachers Only')
+
 
     def to_dict(self):
         return {
             'email_weekly_report': self.email_weekly_report,
             'email_new_assignments': self.email_new_assignments,
-            'compact_sidebar': self.compact_sidebar,
-            'profile_visibility': self.profile_visibility
+            'compact_sidebar': self.compact_sidebar
         }

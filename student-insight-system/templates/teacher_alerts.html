@@ -8,6 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <link href="{{ url_for('static', filename='css/dashboard.css') }}" rel="stylesheet">
+    <script>if(localStorage.getItem('teacher_theme')==='dark')document.documentElement.setAttribute('data-theme','dark');</script>
     <style>
         :root {
             /* Clean modern color palette */
@@ -30,6 +31,36 @@
             --primary: #4f46e5;
             --primary-hover: #4338ca;
             --success-color: #10b981;
+        }
+
+        /* Dark Mode overrides for alerts page */
+        html[data-theme="dark"] {
+            --bg-color: #0f1117;
+            --surface-color: #1a1d27;
+            --text-primary: #e5e7eb;
+            --text-secondary: #9ca3af;
+            --border-color: #2d3241;
+        }
+        html[data-theme="dark"] body {
+            background: #0f1117;
+            color: #e5e7eb;
+        }
+        html[data-theme="dark"] .main-content {
+            background: #0f1117;
+        }
+        html[data-theme="dark"] .stat-card,
+        html[data-theme="dark"] .alert-card,
+        html[data-theme="dark"] .alert-detail-panel {
+            background: #1a1d27;
+            border-color: #2d3241;
+        }
+        html[data-theme="dark"] .header {
+            border-bottom-color: #2d3241;
+        }
+        html[data-theme="dark"] .controls-bar,
+        html[data-theme="dark"] .alert-list-container {
+            background: #1a1d27;
+            border-color: #2d3241;
         }
 
         body {
@@ -555,6 +586,9 @@
             <a href="/teacher/notes" class="nav-item">
                 <span class="nav-icon"><i data-lucide="file-text"></i></span> My Notes
             </a>
+            <a href="/teacher/profile" class="nav-item">
+                <span class="nav-icon"><i data-lucide="user"></i></span> My Profile
+            </a>
         </div>
         <div class="sidebar-footer">
             <a href="/logout" class="nav-item" style="color: var(--sev-critical);">
@@ -569,8 +603,11 @@
                 <h1>Alerts</h1>
                 <p>Monitor and resolve issues requiring your attention.</p>
             </div>
-            <div style="font-size:14px; color:var(--text-secondary); font-weight: 500;">
+            <div style="display:flex; align-items:center; gap:12px; font-size:14px; color:var(--text-secondary); font-weight: 500;">
                 {{ now_date }}
+                <button class="dm-toggle" id="dmToggle" onclick="toggleDarkMode()" title="Toggle dark mode">
+                    <i data-lucide="moon" id="dmIcon"></i>
+                </button>
             </div>
         </div>
 
@@ -1188,6 +1225,23 @@
                 if (backdrop) backdrop.style.display = 'none';
             }
         });
+
+        // Dark Mode
+        function toggleDarkMode() {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            const newTheme = isDark ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('teacher_theme', newTheme);
+            updateDmIcon(newTheme);
+        }
+        function updateDmIcon(theme) {
+            const icon = document.getElementById('dmIcon');
+            if (!icon) return;
+            icon.setAttribute('data-lucide', theme === 'dark' ? 'sun' : 'moon');
+            lucide.createIcons();
+        }
+        lucide.createIcons();
+        updateDmIcon(localStorage.getItem('teacher_theme') || 'light');
     </script>
 </body>
 

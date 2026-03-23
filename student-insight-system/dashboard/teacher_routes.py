@@ -8,7 +8,7 @@ Register in dashboard/__init__.py:
     app.register_blueprint(teacher_bp)
 """
 
-from flask import Blueprint, render_template, jsonify, request
+from flask import Blueprint, render_template, jsonify, request, current_app
 from flask_jwt_extended import jwt_required, get_jwt, get_jwt_identity
 from models import (
     StudentProfile, TeacherProfile, TeacherAssignment,
@@ -22,6 +22,9 @@ from sqlalchemy.orm import selectinload
 from collections import defaultdict
 from datetime import datetime
 import re
+import os
+import uuid
+from werkzeug.utils import secure_filename
 
 teacher_bp = Blueprint("teacher", __name__)
 analytics_engine = AnalyticsEngine()
@@ -258,8 +261,6 @@ def teacher_student_detail(student_id):
     if not student:
         return jsonify({"msg": "Student not found"}), 404
 
-    is_private = student.settings and student.settings.profile_visibility == 'Private'
-
     notes = StudentNote.query.filter_by(
         student_id=student_id, teacher_id=teacher.id
     ).order_by(StudentNote.created_at.desc()).all()
@@ -270,35 +271,14 @@ def teacher_student_detail(student_id):
         "department":         student.department or "—",
         "class_level":        student.class_level or "—",
         "section":            student.section or "—",
-        "current_cgpa":       student.current_cgpa if not is_private else None,
-        "target_cgpa":        student.target_cgpa if not is_private else None,
-        "performance_status": student.performance_status if not is_private else "Private",
+        "current_cgpa":       student.current_cgpa,
+        "target_cgpa":        student.target_cgpa,
+        "performance_status": student.performance_status,
     }
 
     days_since_active = None
     if student.last_activity:
         days_since_active = (datetime.utcnow() - student.last_activity).days
-
-    if is_private:
-        return render_template(
-            "student_detail.html",
-            teacher=teacher,
-            student=student,
-            is_private=True,
-            attendance=None,
-            assignments=None,
-            assessments=None,
-            performance_trend=None,
-            days_since_active=days_since_active,
-            notes=notes,
-            insight=None,
-            profile_summary=profile_summary,
-            academic_snapshot=None,
-            skill_snapshot=None,
-            weekly_snapshot=None,
-            career_snapshot=None,
-            insight_preview=None,
-        )
 
     from dashboard.student_stats import (
         calculate_attendance_stats,
@@ -462,15 +442,14 @@ def api_teacher_students():
     for s in students:
         if status_filter and s.performance_status != status_filter:
             continue
-        is_private = s.settings and s.settings.profile_visibility == 'Private'
         result.append({
             "id":           s.id,
             "name":         s.full_name,
             "student_code": s.student_code,
             "class_level":  s.class_level,
             "section":      s.section,
-            "cgpa":         s.current_cgpa if not is_private else None,
-            "status":       s.performance_status if not is_private else "Private",
+            "cgpa":         s.current_cgpa,
+            "status":       s.performance_status,
             "last_active":  s.last_active.isoformat() if hasattr(s, "last_active") and s.last_active else None,
         })
     return jsonify(result)
@@ -659,8 +638,8 @@ def api_unassigned_students():
             "department":         s.department or "—",
             "class_level":        s.class_level or "—",
             "section":            s.section or "—",
-            "current_cgpa":       round(float(s.current_cgpa), 2) if s.current_cgpa and not (s.settings and s.settings.profile_visibility == 'Private') else None,
-            "performance_status": s.performance_status if not (s.settings and s.settings.profile_visibility == 'Private') else "Private",
+            "current_cgpa":       round(float(s.current_cgpa), 2) if s.current_cgpa else None,
+            "performance_status": s.performance_status,
         }
         for s in students
     ])
@@ -704,8 +683,8 @@ def api_assign_student():
             "department":         student.department or "—",
             "class_level":        student.class_level or "—",
             "section":            student.section or "—",
-            "current_cgpa":       round(float(student.current_cgpa), 2) if student.current_cgpa and not (student.settings and student.settings.profile_visibility == 'Private') else None,
-            "performance_status": student.performance_status if not (student.settings and student.settings.profile_visibility == 'Private') else "Private",
+            "current_cgpa":       round(float(student.current_cgpa), 2) if student.current_cgpa else None,
+            "performance_status": student.performance_status,
         },
     }), 201
 
@@ -808,3 +787,84 @@ def api_create_note():
     db.session.add(note)
     db.session.commit()
     return jsonify({"msg": "Note created", "id": note.id})
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TEACHER PROFILE — Page + APIs
+# ─────────────────────────────────────────────────────────────────────────────
+
+_ALLOWED_EXTS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+
+def _allowed_pic(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in _ALLOWED_EXTS
+
+
+@teacher_bp.route("/teacher/profile")
+@jwt_required()
+def teacher_profile_page():
+    """Render the teacher profile page."""
+    teacher, err = _get_teacher_or_403()
+    if err:
+        return err
+    return render_template(
+        "teacher_profile.html",
+        teacher=teacher,
+        now_date=datetime.now().strftime("%d %B, %Y"),
+    )
+
+
+@teacher_bp.route("/api/teacher/profile", methods=["POST"])
+@jwt_required()
+def api_update_teacher_profile():
+    """Update teacher profile text fields."""
+    teacher, err = _get_teacher_or_403()
+    if err:
+        return err
+
+    body = request.get_json(silent=True) or {}
+    fields = [
+        "full_name", "designation", "department", "faculty",
+        "subject_specialization", "personal_webpage",
+        "email", "phone", "cell_phone",
+    ]
+    for f in fields:
+        if f in body:
+            val = (body[f] or "").strip()
+            setattr(teacher, f, val or None)
+
+    db.session.commit()
+    return jsonify({"success": True, "msg": "Profile updated"})
+
+
+@teacher_bp.route("/api/teacher/profile/picture", methods=["POST"])
+@jwt_required()
+def api_update_teacher_picture():
+    """Upload and save teacher profile picture."""
+    teacher, err = _get_teacher_or_403()
+    if err:
+        return err
+
+    if 'picture' not in request.files:
+        return jsonify({"success": False, "msg": "No file provided"}), 400
+
+    file = request.files['picture']
+    if not file.filename or not _allowed_pic(file.filename):
+        return jsonify({"success": False, "msg": "Invalid file type"}), 400
+
+    # Build upload directory
+    upload_dir = os.path.join(current_app.root_path, 'static', 'uploads', 'teacher_pics')
+    os.makedirs(upload_dir, exist_ok=True)
+
+    # Remove old picture if present
+    if teacher.profile_picture:
+        old_path = os.path.join(upload_dir, teacher.profile_picture)
+        if os.path.exists(old_path):
+            os.remove(old_path)
+
+    ext = secure_filename(file.filename).rsplit('.', 1)[1].lower()
+    filename = f"teacher_{teacher.id}_{uuid.uuid4().hex[:8]}.{ext}"
+    file.save(os.path.join(upload_dir, filename))
+
+    teacher.profile_picture = filename
+    db.session.commit()
+    return jsonify({"success": True, "filename": filename, "msg": "Picture updated"})

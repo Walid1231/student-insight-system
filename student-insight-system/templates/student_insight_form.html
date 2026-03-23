@@ -546,6 +546,8 @@
             }
         }
     </style>
+    <link href="{{ url_for('static', filename='css/ui_alerts.css') }}" rel="stylesheet">
+    <script src="{{ url_for('static', filename='js/ui_alerts.js') }}"></script>
 </head>
 
 <body>
@@ -1133,12 +1135,13 @@
                     `;
                     reportContainer.style.display = 'block';
                     reportContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    showToast('Insight report generated successfully!', 'success');
                 } else {
-                    alert('Error: ' + (data.error || 'Failed to generate report'));
+                    showToast('Error: ' + (data.error || 'Failed to generate report'), 'error');
                 }
             } catch (err) {
                 console.error(err);
-                alert('An error occurred while generating the report.');
+                showToast('An error occurred while generating the report.', 'error');
             } finally {
                 btn.disabled = false;
                 btn.innerText = 'Generate My Insight Report';

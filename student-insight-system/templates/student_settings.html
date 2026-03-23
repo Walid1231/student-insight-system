@@ -64,6 +64,8 @@
             });
         })();
     </script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/ui_alerts.css') }}">
+    <script src="{{ url_for('static', filename='js/ui_alerts.js') }}"></script>
 </head>
 
 <body>
@@ -100,9 +102,7 @@
                     <a href="#appearance" class="settings-nav-link" onclick="switchSection('appearance')">
                         <i class="fa-solid fa-paintbrush"></i> Appearance
                     </a>
-                    <a href="#privacy" class="settings-nav-link" onclick="switchSection('privacy')">
-                        <i class="fa-solid fa-lock"></i> Privacy
-                    </a>
+
                 </aside>
 
                 <!-- Content Area -->
@@ -238,32 +238,7 @@
                         </div>
                     </div>
 
-                    <!-- 5. PRIVACY SECTION -->
-                    <div id="privacy" class="settings-section">
-                        <div class="content-header">
-                            <h2>Privacy & Data</h2>
-                            <p>Manage your personal data and visibility.</p>
-                        </div>
-                        <div class="settings-group">
-                            <div class="setting-item">
-                                <div class="setting-info">
-                                    <span class="setting-label">Profile Visibility</span>
-                                    <span class="setting-desc">Who can see your academic stats?</span>
-                                </div>
-                                <select class="form-select" style="width: auto;" onchange="updatePref('profile_visibility', this.value)">
-                                    <option value="Teachers Only" {% if not profile.settings or profile.settings.profile_visibility == 'Teachers Only' %}selected{% endif %}>Teachers Only (Default)</option>
-                                    <option value="Private" {% if profile.settings and profile.settings.profile_visibility == 'Private' %}selected{% endif %}>Private</option>
-                                </select>
-                            </div>
-                            <div class="setting-item">
-                                <div class="setting-info">
-                                    <span class="setting-label text-red">Danger Zone</span>
-                                    <span class="setting-desc">Permanently delete your account and all data.</span>
-                                </div>
-                                <button class="btn btn-danger btn-sm" onclick="deleteAccount()">Delete Account</button>
-                            </div>
-                        </div>
-                    </div>
+
 
                 </div>
             </div>
@@ -301,7 +276,7 @@
         async function submitPasswordChange() {
             const current_password = document.getElementById('current_pass').value;
             const new_password = document.getElementById('new_pass').value;
-            if(!current_password || !new_password) return alert('Please fill in both fields.');
+            if(!current_password || !new_password) return showToast('Please fill in both fields.', 'error');
             
             try {
                 const res = await fetch('/api/student/change-password', {
@@ -311,12 +286,12 @@
                 });
                 const data = await res.json();
                 if(data.success) {
-                    alert('Password updated successfully!');
+                    showToast('Password updated successfully!', 'success');
                     closePasswordModal();
                 } else {
-                    alert(data.msg || 'Failed to update password.');
+                    showToast(data.msg || 'Failed to update password.', 'error');
                 }
-            } catch (e) { alert('An error occurred.'); }
+            } catch (e) { showToast('An error occurred.', 'error'); }
         }
 
         async function updatePref(key, value) {
@@ -332,23 +307,23 @@
                 document.cookie = `sidebar_collapsed=${value}; path=/; max-age=31536000`;
             }
 
-            await fetch('/api/student/settings/preferences', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ [key]: value })
-            });
-        }
-
-        async function deleteAccount() {
-            if(confirm("Are you absolutely sure you want to delete your account? This cannot be undone.")) {
-                try {
-                    const res = await fetch('/student/delete-profile', { method: 'DELETE' });
-                    if(res.ok) {
-                        window.location.href = '/logout';
-                    }
-                } catch(e) { alert('Error deleting account.'); }
+            try {
+                const res = await fetch('/api/student/settings/preferences', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ [key]: value })
+                });
+                
+                const data = await res.json();
+                if (!data.success && data.msg) {
+                    showToast(data.msg, 'error');
+                }
+            } catch (e) {
+                console.error(e);
             }
         }
+
+
 
         function switchSection(sectionId) {
             // Hide all sections

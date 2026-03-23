@@ -7,6 +7,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="{{ url_for('static', filename='css/ui_alerts.css') }}" rel="stylesheet">
+    <script src="{{ url_for('static', filename='js/ui_alerts.js') }}"></script>
     <style>
         :root {
             --bg-body: #f3f4f6;
@@ -609,16 +611,14 @@
 
         <!-- ── Profile Hero ── -->
         {% set cgpa_val = profile_summary.current_cgpa or 0 %}
-        {% set cgpa_pct = (cgpa_val / 4.0 * 100) | round | int if not is_private else 0 %}
+        {% set cgpa_pct = (cgpa_val / 4.0 * 100) | round | int %}
         <div class="profile-hero">
             <div class="cgpa-ring" style="--pct: {{ cgpa_pct }};">
                 <div class="cgpa-ring-inner">
                     <span class="cgpa-num">
-                        {% if is_private %}
-                        <i data-lucide="lock" style="width:24px; height:24px; color:var(--text-muted);"></i>
-                        {% elif profile_summary.current_cgpa %}{{ "%.2f" | format(profile_summary.current_cgpa) }}{% else %}N/A{% endif %}
+                        {% if profile_summary.current_cgpa %}{{ "%.2f" | format(profile_summary.current_cgpa) }}{% else %}N/A{% endif %}
                     </span>
-                    <span class="cgpa-label">{% if is_private %}Private{% else %}CGPA{% endif %}</span>
+                    <span class="cgpa-label">CGPA</span>
                 </div>
             </div>
             <div class="profile-info">
@@ -648,14 +648,6 @@
         </div>
 
         <!-- ── KPI Cards ── -->
-        {% if is_private %}
-        <div style="text-align:center; padding: 60px 20px; background:var(--bg-card); border-radius:var(--radius); border:1px solid var(--border); margin-bottom: 24px;">
-            <i data-lucide="lock" style="width:48px; height:48px; color:var(--text-muted); margin-bottom:16px;"></i>
-            <h2 style="font-size:20px; color:var(--text-primary); margin-bottom:8px;">Private Profile</h2>
-            <p style="color:var(--text-secondary); max-width:400px; margin:0 auto;">This student has set their profile visibility to Private. Academic statistics and insights are hidden.</p>
-        </div>
-        <div class="content-grid">
-        {% else %}
         <div class="kpi-grid">
             <!-- Predicted GPA -->
             <div class="kpi-card">
@@ -918,12 +910,14 @@
             });
 
             if (response.ok) {
-                window.location.reload();
+                showToast('Note added successfully!', 'success');
+                setTimeout(() => window.location.reload(), 1500);
             } else {
-                alert("Failed to add note");
+                showToast("Failed to add note.", 'error');
             }
             } catch (e) {
                 console.error(e);
+                showToast("An error occurred while adding the note.", 'error');
             }
         }
         </script>
