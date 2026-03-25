@@ -101,6 +101,7 @@ class AcademicService:
             career = CareerPath.query.get(g.career_id)
             goals.append({
                 'id': g.id,
+                'career_id': g.career_id,
                 'career_title': career.title if career else 'Unknown',
                 'goal_type': g.goal_type,
                 'is_primary': g.is_primary,
@@ -259,15 +260,15 @@ class AcademicService:
     # ── Goal Management ───────────────────────────────────────
 
     @staticmethod
-    def add_goal(user_id: str, career_id: int, goal_type: str = "Long Term") -> bool:
-        """Add a career goal. Returns True if created, False if duplicate."""
+    def add_goal(user_id: str, career_id: int, goal_type: str = "Long Term"):
+        """Add a career goal. Returns goal ID if created, None if duplicate."""
         student = AcademicService._get_student(user_id)
 
         existing = StudentGoal.query.filter_by(
             student_id=student.id, career_id=career_id
         ).first()
         if existing:
-            return False
+            return existing.id
 
         is_first = not StudentGoal.query.filter_by(student_id=student.id).first()
         goal = StudentGoal(
@@ -282,7 +283,7 @@ class AcademicService:
         from dashboard.recalculate import recalculate_weekly_update
         recalculate_weekly_update(student.id)
         logger.info("Goal added for student_id=%d, career_id=%d", student.id, career_id)
-        return True
+        return goal.id
 
     @staticmethod
     def delete_goal(user_id: str, goal_id: int) -> None:

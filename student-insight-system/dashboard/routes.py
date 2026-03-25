@@ -1016,8 +1016,8 @@ def api_gg_add_goal():
     goal_type = data.get("goal_type", "Long Term")
     if not career_id:
         return jsonify({"ok": False, "msg": "career_id required"}), 400
-    AcademicService.add_goal(user_id, int(career_id), goal_type)
-    return jsonify({"ok": True})
+    goal_id = AcademicService.add_goal(user_id, int(career_id), goal_type)
+    return jsonify({"ok": True, "goal_id": goal_id})
 
 
 @dashboard_bp.route("/api/gg/goal/<int:goal_id>/delete", methods=["POST"])
