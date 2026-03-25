@@ -73,10 +73,9 @@
             transform: translateY(0);
         }
 
-        /* ── Dept select ── */
-        .dept-wrap { position: relative; }
-        .dept-wrap > i { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; font-size: 13px; z-index: 1; }
-        #dept-select { padding-left: 38px; appearance: none; -webkit-appearance: none; cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%236b7280' d='M1 1l5 5 5-5'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; font-family: 'DM Sans', sans-serif; }
+        /* ── Dept display ── */
+        .dept-wrap { display: flex; align-items: center; gap: 14px; background: var(--bg); padding: 14px 18px; border-radius: 10px; border: 1px solid var(--border); }
+        .dept-wrap > i { color: var(--brand); font-size: 22px; flex-shrink: 0; }
 
         /* ── Chips & pills ── */
         .pill-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
@@ -240,30 +239,27 @@
             <h1 style="font-family:'DM Serif Display',serif;color:var(--navy);font-size:30px;margin:0 0 6px;display:flex;align-items:center;gap:12px;">
                 <i class="fas fa-bullseye" style="font-size:24px;color:var(--gold);"></i> Goals &amp; Grades
             </h1>
-            <p style="font-size:14px;color:var(--muted);margin:0;">Select your department to begin — cards unfold as you go.</p>
+            <p style="font-size:14px;color:var(--muted);margin:0;">Your department drives your career and skill suggestions below.</p>
         </div>
 
         <div class="gg-layout">
 
-            <!-- ══ STEP 0 · Department ══ -->
+            <!-- ══ STEP 0 · Department (auto-loaded from profile) ══ -->
             <div class="gg-card" id="card-dept">
                 <div class="gg-card-header">
                     <h2><span class="step-number">1</span><i class="fas fa-university"></i> Department</h2>
-                    <p>Pick your department — skills and career paths will appear instantly</p>
+                    <p>Loaded from your profile — skills and career paths appear automatically</p>
                 </div>
                 <div class="gg-card-body">
                     <div class="dept-wrap">
                         <i class="fas fa-graduation-cap"></i>
-                        <select id="dept-select" class="form-input">
-                            <option value="">— Choose your department —</option>
-                            {% for group_name, depts in dept_groups %}
-                            <optgroup label="{{ group_name }}">
-                                {% for dept in depts %}
-                                <option value="{{ dept }}" {% if student.department == dept %}selected{% endif %}>{{ dept }}</option>
-                                {% endfor %}
-                            </optgroup>
-                            {% endfor %}
-                        </select>
+                        <div style="flex:1;">
+                            <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:2px;">Your Department</div>
+                            <div style="font-weight:600;font-size:16px;color:var(--navy);">
+                                {{ student.department or 'Not set — please update your Profile first' }}
+                            </div>
+                        </div>
+                        <input type="hidden" id="dept-select" value="{{ student.department or '' }}">
                     </div>
 
                     <div id="dept-careers-wrap" style="display:none;">
@@ -560,11 +556,14 @@ function setLoading(btn, on) {
 // careerId → goalId map, built from matching_careers (which has goal_id)
 // Note: goals[] from server does NOT include career_id, so we use matching_careers
 const careerGoalMap = new Map();
+try {
 {% for career in matching_careers %}{% if career.goal_id %}careerGoalMap.set({{ career.id }}, {{ career.goal_id }});{% endif %}
 {% endfor %}
+} catch(e) { console.warn('careerGoalMap init:', e); }
 
-const allCareerOptions = Array.from(document.getElementById('manual-career-select').options);
-const defaultCareerOption = allCareerOptions[0];
+const manualCareerEl = document.getElementById('manual-career-select');
+const allCareerOptions = manualCareerEl ? Array.from(manualCareerEl.options) : [];
+const defaultCareerOption = allCareerOptions[0] || document.createElement('option');
 const careerOptionsList = allCareerOptions.slice(1);
 
 // ═══════════════════════════════════════════════════════════
@@ -589,10 +588,19 @@ function revealCardsUpTo(index) {
 
 // On load: if dept already selected, reveal all immediately (returning student)
 (function initReveal() {
-    const dept = document.getElementById('dept-select').value;
-    if (dept) {
-        revealCardsUpTo(3);
-        loadDeptData(dept, true);
+    try {
+        const dept = document.getElementById('dept-select').value;
+        if (dept) {
+            revealCardsUpTo(3);
+            loadDeptData(dept, true);
+        }
+    } catch(e) {
+        console.warn('initReveal error:', e);
+        // Failsafe: force-reveal all cards so page isn't blank
+        CARDS.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) { el.classList.add('card-visible'); }
+        });
     }
 })();
 
@@ -600,23 +608,21 @@ function revealCardsUpTo(index) {
 //  Department selector
 // ═══════════════════════════════════════════════════════════
 const deptCache = new Map();
-
-document.getElementById('dept-select').addEventListener('change', function () {
-    const dept = this.value;
-    if (!dept) return;
-    revealCardsUpTo(3);
-    loadDeptData(dept, false);
-});
+// Department is now auto-loaded from the student's profile — no manual change listener needed.
 
 async function loadDeptData(dept, silent) {
-    if (deptCache.has(dept)) {
-        applyDeptData(deptCache.get(dept));
-        return;
+    try {
+        if (deptCache.has(dept)) {
+            applyDeptData(deptCache.get(dept));
+            return;
+        }
+        const r = await fetch(`/api/department-data?dept=${encodeURIComponent(dept)}`);
+        const d = await r.json();
+        deptCache.set(dept, d);
+        applyDeptData(d);
+    } catch(e) {
+        console.warn('loadDeptData error:', e);
     }
-    const r = await fetch(`/api/department-data?dept=${encodeURIComponent(dept)}`);
-    const d = await r.json();
-    deptCache.set(dept, d);
-    applyDeptData(d);
 }
 
 function applyDeptData(d) {
