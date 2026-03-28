@@ -13,8 +13,7 @@ from core.errors import NotFoundError
 from core.extensions import db
 from models import (
     StudentProfile, StudentAcademicRecord, CourseCatalog, AcademicMetric,
-    StudentSkill, StudentGoal, CareerPath, CareerRequiredSkill,
-    Skill as SkillModel,
+    StudentSkill, StudentGoal, CareerPath, CareerRequiredSkill, Skill,
 )
 
 logger = logging.getLogger(__name__)
@@ -48,22 +47,17 @@ class AcademicService:
         # Skills filtered by department
         student_dept = (student.department or "").strip()
         if student_dept:
-            all_skills = SkillModel.query.filter(
+            all_skills = Skill.query.filter(
                 db.or_(
-                    SkillModel.department == student_dept,
-                    SkillModel.department == None,  # noqa: E711
+                    Skill.department == student_dept,
+                    Skill.department == None,  # noqa: E711
                 )
-            ).order_by(SkillModel.skill_name).all()
+            ).order_by(Skill.skill_name).all()
         else:
-            all_skills = SkillModel.query.order_by(SkillModel.skill_name).all()
+            all_skills = Skill.query.order_by(Skill.skill_name).all()
 
         student_skills = StudentSkill.query.filter_by(student_id=student.id).all()
-        skill_name_to_id = {s.skill_name: s.id for s in all_skills}
-        student_skill_id_set = set()
-        for ss in student_skills:
-            sid = skill_name_to_id.get(ss.skill_name)
-            if sid:
-                student_skill_id_set.add(sid)
+        student_skill_id_set = {ss.skill_id for ss in student_skills if ss.skill_id}
 
         # Matching careers
         matching_careers = []
@@ -84,27 +78,70 @@ class AcademicService:
                     existing_goal = StudentGoal.query.filter_by(
                         student_id=student.id, career_id=career_id
                     ).first()
+                    
+                    req_skills = (
+                        db.session.query(Skill)
+                        .join(CareerRequiredSkill, Skill.id == CareerRequiredSkill.skill_id)
+                        .filter(CareerRequiredSkill.career_id == career.id)
+                        .all()
+                    )
+                    
+                    skill_list = []
+                    for s in req_skills:
+                        skill_list.append({
+                            'id': s.id,
+                            'name': s.skill_name,
+                            'matched': s.id in student_skill_id_set
+                        })
+
                     matching_careers.append({
                         'id': career.id,
                         'title': career.title,
                         'field_category': career.field_category,
                         'match_count': match_count,
+                        'total_req': len(skill_list),
+                        'skills': skill_list,
                         'goal_id': existing_goal.id if existing_goal else None,
                     })
 
-        # Goals with career titles
+        # Goals with career titles and match counts
         goals_raw = StudentGoal.query.filter_by(student_id=student.id).all()
         goal_career_ids = {g.career_id: g.id for g in goals_raw}
 
         goals = []
         for g in goals_raw:
             career = CareerPath.query.get(g.career_id)
+            if not career:
+                continue
+
+            req_skills = (
+                db.session.query(Skill)
+                .join(CareerRequiredSkill, Skill.id == CareerRequiredSkill.skill_id)
+                .filter(CareerRequiredSkill.career_id == g.career_id)
+                .all()
+            )
+            
+            skill_list = []
+            matches_count = 0
+            for s in req_skills:
+                is_matched = s.id in student_skill_id_set
+                if is_matched: matches_count += 1
+                skill_list.append({
+                    'id': s.id,
+                    'name': s.skill_name,
+                    'matched': is_matched
+                })
+            
             goals.append({
                 'id': g.id,
                 'career_id': g.career_id,
-                'career_title': career.title if career else 'Unknown',
+                'career_title': career.title,
                 'goal_type': g.goal_type,
                 'is_primary': g.is_primary,
+                'match_count': matches_count,
+                'total_req': len(skill_list),
+                'skills': skill_list,
+                'field_category': career.field_category
             })
 
         # Academic records
@@ -337,6 +374,7 @@ class AcademicService:
 
         new_ss = StudentSkill(
             student_id=student.id,
+            skill_id=master.id,
             skill_name=master.skill_name,  # use canonical casing
             proficiency_score=50,
             last_updated=datetime.utcnow(),

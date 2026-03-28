@@ -15,15 +15,16 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/unified_styles.css') }}?v=3">
     <style>
         :root {
-            --navy: #002D62;
-            --gold: #C9A84C;
-            --bg: #F8F6F1;
+            --navy: #0f172a;
+            --gold: #f59e0b;
+            --brand: var(--navy);
+            --bg: #f8fafc;
             --card-bg: #ffffff;
-            --border: #E8E4DC;
-            --text: #1a1a2e;
-            --muted: #6b7280;
-            --green: #059669;
-            --red: #dc2626;
+            --border: #e2e8f0;
+            --text: #1e293b;
+            --muted: #64748b;
+            --green: #10b981;
+            --red: #ef4444;
         }
 
         body {
@@ -90,6 +91,25 @@
 
         .gg-card-body {
             padding: 24px 28px;
+        }
+
+        #card-goals .gg-card-body {
+            max-height: 650px;
+            overflow-y: auto;
+            padding-right: 15px;
+        }
+
+        #card-goals .gg-card-body::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #card-goals .gg-card-body::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        #card-goals .gg-card-body::-webkit-scrollbar-thumb {
+            background-color: #cbd5e1;
+            border-radius: 10px;
         }
 
         /* ── Animated collapse ── */
@@ -301,185 +321,280 @@
             font-size: 14px;
         }
 
-        /* ── Sub-label ── */
-        .sub-label {
+        /* ── Dropdown for Matches ── */
+        .matches-dropdown {
+            margin-bottom: 24px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: #fff;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .matches-dropdown-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: #f8fafc;
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.2s;
+        }
+
+        .matches-dropdown-header:hover {
+            background: #f1f5f9;
+        }
+
+        .matches-dropdown-header .label-content {
+            display: flex;
+            align-items: center;
+            gap: 10px;
             font-size: 11px;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: .5px;
             color: var(--muted);
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 7px;
         }
 
-        /* ── Career list ── */
-        .career-list {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .career-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 13px 16px;
-            border-radius: 9px;
-            border: 1.5px solid var(--border);
-            background: var(--bg);
-            gap: 12px;
-            transition: border-color .15s;
-        }
-
-        .career-row:hover {
-            border-color: var(--navy);
-        }
-
-        .career-row h4 {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--text);
-            margin: 0 0 2px;
-            font-family: 'DM Sans', sans-serif;
-        }
-
-        .career-row span {
-            font-size: 12px;
+        .matches-dropdown-header i.fa-chevron-down {
+            font-size: 11px;
+            transition: transform 0.3s ease;
             color: var(--muted);
         }
 
-        .career-row span strong {
-            color: var(--navy);
+        .matches-dropdown.is-active .fa-chevron-down {
+            transform: rotate(180deg);
         }
 
-        .career-actions {
+        .matches-dropdown-body {
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .matches-dropdown.is-active .matches-dropdown-body {
+            max-height: 800px;
+            opacity: 1;
+            padding: 15px;
+            overflow-y: auto;
+        }
+
+        /* ── Career Cards Grid ── */
+        .goal-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 10px;
+        }
+
+        .goal-card {
+            background: var(--card-bg);
+            border: 1.5px solid var(--border);
+            border-radius: 12px;
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            transition: all 0.2s ease;
+            position: relative;
+            background: #fff;
+        }
+
+        .goal-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+            border-color: var(--navy);
+        }
+
+        .goal-card.is-primary {
+            border-color: var(--navy);
+            background: rgba(15, 23, 42, 0.02);
+        }
+
+        .goal-card.is-primary::after {
+            content: 'PRIMARY';
+            position: absolute;
+            top: -10px;
+            right: 15px;
+            background: var(--navy);
+            color: #fff;
+            font-size: 9px;
+            font-weight: 800;
+            padding: 2px 8px;
+            border-radius: 10px;
+            letter-spacing: 0.5px;
+        }
+
+        .goal-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .goal-card-header h4 {
+            margin: 0;
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--navy);
+            line-height: 1.3;
+        }
+
+        .goal-card-type {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--muted);
+            background: var(--bg);
+            padding: 2px 6px;
+            border-radius: 4px;
+            white-space: nowrap;
+        }
+
+        .goal-card-body {
+            font-size: 13px;
+            color: var(--text);
+            max-height: 160px; /* Standardized height */
+            overflow-y: auto;
+            padding-right: 10px;
+            margin: 8px 0;
+            border-bottom: 1px solid transparent;
+            transition: border-color 0.2s;
+        }
+
+        .goal-card:hover .goal-card-body {
+            border-bottom-color: #f1f5f9;
+        }
+
+        .sk-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 10px;
+        }
+
+        .sk-pill {
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            background: #f1f5f9;
+            color: #64748b;
+            border: 1px solid #e2e8f0;
+        }
+
+        .sk-pill.matched {
+            background: #dcfce7;
+            color: #166534;
+            border-color: #bbf7d0;
+        }
+
+        /* Custom Scrollbar for Card Body */
+        .goal-card-body::-webkit-scrollbar {
+            width: 4px;
+        }
+        .goal-card-body::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .goal-card-body::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        .match-stat {
             display: flex;
             align-items: center;
-            gap: 8px;
-            flex-shrink: 0;
+            justify-content: space-between;
+            margin-bottom: 8px;
         }
 
-        .btn-add-g {
-            padding: 6px 13px;
-            border-radius: 7px;
-            border: 1.5px solid var(--navy);
-            background: transparent;
+        .match-score {
+            font-size: 12px;
+            font-weight: 700;
             color: var(--navy);
+        }
+
+        .match-bar-bg {
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+
+        .match-bar-fill {
+            height: 100%;
+            background: var(--navy);
+            border-radius: 3px;
+            transition: width 0.4s ease;
+        }
+
+        .goal-card-footer {
+            margin-top: auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
+        }
+
+        /* ── Compact Variant ── */
+        .goal-card.compact {
+            padding: 12px 14px;
+            gap: 8px;
+        }
+
+        .goal-card.compact .goal-card-header h4 {
+            font-size: 14px;
+        }
+
+        .goal-card.compact .goal-card-body {
+            max-height: 100px; /* More compact viewport */
+            margin: 4px 0;
+            padding-right: 8px;
+        }
+
+        .goal-card.compact .sk-pill {
+            font-size: 10px;
+            padding: 1px 6px;
+        }
+
+        .goal-card.compact .goal-card-footer {
+            padding-top: 8px;
+        }
+
+        .btn-card-action {
+            padding: 6px 12px;
             font-size: 12px;
             font-weight: 600;
+            border-radius: 6px;
             cursor: pointer;
-            font-family: 'DM Sans', sans-serif;
-            transition: all .15s;
+            transition: all 0.15s;
+            font-family: inherit;
         }
 
-        .btn-add-g:hover {
+        .btn-set-primary {
+            background: transparent;
+            border: 1.5px solid var(--navy);
+            color: var(--navy);
+        }
+
+        .btn-set-primary:hover {
             background: var(--navy);
             color: #fff;
         }
 
-        .goal-type-sel {
-            padding: 5px 8px;
-            font-size: 12px;
-            border-radius: 7px;
-            border: 1px solid var(--border);
-            font-family: 'DM Sans', sans-serif;
-            height: 32px;
-        }
-
-        .btn-rm-g {
-            background: none;
+        .btn-delete-goal {
+            background: transparent;
             border: none;
             color: var(--muted);
-            font-size: 12px;
-            font-weight: 500;
-            cursor: pointer;
-            padding: 5px 10px;
-            border-radius: 6px;
-            font-family: 'DM Sans', sans-serif;
-            transition: all .15s;
+            padding: 6px;
         }
 
-        .btn-rm-g:hover {
+        .btn-delete-goal:hover {
             color: var(--red);
-            background: rgba(220, 38, 38, .07);
-        }
-
-        .badge-added {
-            display: inline-block;
-            font-size: 10px;
-            font-weight: 700;
-            background: #dbeafe;
-            color: #2563eb;
-            padding: 2px 8px;
-            border-radius: 10px;
-            margin-left: 6px;
-        }
-
-        /* ── Goals table ── */
-        .gg-sep {
-            border: none;
-            border-top: 1px solid var(--border);
-            margin: 22px 0;
-        }
-
-        .mini-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .mini-table th {
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: .4px;
-            color: var(--muted);
-            padding: 9px 10px;
-            text-align: left;
-            border-bottom: 2px solid var(--border);
-        }
-
-        .mini-table td {
-            font-size: 13px;
-            padding: 11px 10px;
-            color: var(--text);
-            border-bottom: 1px solid var(--border);
-        }
-
-        .mini-table tr:last-child td {
-            border-bottom: none;
-        }
-
-        .mini-table tr:hover td {
-            background: rgba(0, 45, 98, .02);
-        }
-
-        .badge-primary {
-            display: inline-block;
-            font-size: 10px;
-            font-weight: 700;
-            background: rgba(0, 45, 98, .12);
-            color: var(--navy);
-            padding: 2px 9px;
-            border-radius: 10px;
-        }
-
-        .btn-set-primary {
-            background: none;
-            border: 1px dashed var(--border);
-            color: var(--muted);
-            font-size: 11px;
-            cursor: pointer;
-            padding: 3px 9px;
-            border-radius: 6px;
-            font-family: 'DM Sans', sans-serif;
-            transition: all .15s;
-        }
-
-        .btn-set-primary:hover {
-            border-color: var(--navy);
-            color: var(--navy);
+            background: rgba(239, 68, 68, 0.05);
         }
 
         .btn-del {
@@ -806,8 +921,13 @@
                         </div>
 
                         <div class="skill-add-row">
-                            <input type="text" id="skill-input" class="form-input"
+                            <input type="text" id="skill-input" class="form-input" list="master-skills-list"
                                 placeholder="e.g. Python, Machine Learning, Public Speaking…" autocomplete="off">
+                            <datalist id="master-skills-list">
+                                {% for s in all_skills %}
+                                <option value="{{ s.skill_name }}">
+                                {% endfor %}
+                            </datalist>
                             <button id="add-skill-btn" class="btn btn-primary" onclick="addSkill()"
                                 style="white-space:nowrap;padding:10px 20px;">
                                 <i class="fas fa-plus"></i> Add Skill
@@ -857,72 +977,130 @@
                             </button>
                         </div>
 
-                        <div class="sub-label"><i class="fas fa-magic"></i> Matches Based on Your Skills</div>
-                        <div id="matching-careers-area">
-                            {% if matching_careers %}
-                            <div class="career-list">
-                                {% for career in matching_careers %}
-                                <div class="career-row" id="cr-{{ career.id }}">
-                                    <div>
-                                        <h4>{{ career.title }}{% if career.id in goal_career_ids %}<span
-                                                class="badge-added">ADDED</span>{% endif %}</h4>
-                                        <span><strong>{{ career.match_count }}</strong> skills matched &middot; {{
-                                            career.field_category or '' }}</span>
-                                    </div>
-                                    <div class="career-actions">
-                                        {% if career.id not in goal_career_ids %}
-                                        <select class="goal-type-sel" id="gt-{{ career.id }}">
-                                            <option value="Long Term">Long Term</option>
-                                            <option value="Short Term">Short Term</option>
-                                        </select>
-                                        <button class="btn-add-g" onclick="addGoal({{ career.id }})"><i
-                                                class="fas fa-plus"></i> Add</button>
-                                        {% else %}
-                                        <button class="btn-rm-g" onclick="deleteGoalByCareer({{ career.id }})"><i
-                                                class="fas fa-times"></i> Remove</button>
-                                        {% endif %}
-                                    </div>
+                        <div class="matches-dropdown" id="matches-dropdown">
+                            <div class="matches-dropdown-header" onclick="toggleMatches()">
+                                <div class="label-content">
+                                    <i class="fas fa-magic" style="color:var(--navy);"></i>
+                                    Matches Based on Your Skills
                                 </div>
-                                {% endfor %}
+                                <i class="fas fa-chevron-down"></i>
                             </div>
-                            {% else %}
-                            <div class="gg-empty">
-                                <i class="fas fa-search"></i>
-                                <p>Add skills above to see matching career paths here.</p>
+                            <div class="matches-dropdown-body">
+                                <div id="matching-careers-area">
+                                    {% if matching_careers %}
+                                    <div class="goal-grid">
+                                        {% for career in matching_careers %}
+                                        <div class="goal-card" id="cr-{{ career.id }}">
+                                            <div class="goal-card-header">
+                                                <h4>{{ career.title }}</h4>
+                                                <div class="career-actions">
+                                                    {% if career.id not in goal_career_ids %}
+                                                    <select class="goal-type-sel" id="gt-{{ career.id }}" style="padding: 2px 5px; height: 24px; font-size: 10px;">
+                                                        <option value="Long Term">Long Term</option>
+                                                        <option value="Short Term">Short Term</option>
+                                                    </select>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            <div class="goal-card-body">
+                                                <div class="match-stat">
+                                                    <span class="match-score">{{ career.match_count }} of {{ career.total_req }} skills</span>
+                                                    {% set pct = (career.match_count / career.total_req * 100) | round | int if career.total_req > 0 else 0 %}
+                                                    <span class="badge-added">{{ pct }}% MATCH</span>
+                                                </div>
+                                                <div class="match-bar-bg">
+                                                    <div class="match-bar-fill" style="width: {{ pct }}%"></div>
+                                                </div>
+                                                
+                                                <div class="sk-list">
+                                                    {% for s in career.skills %}
+                                                    <span class="sk-pill {% if s.matched %}matched{% endif %}">
+                                                        {% if s.matched %}<i class="fas fa-check"></i> {% endif %}{{ s.name }}
+                                                    </span>
+                                                    {% endfor %}
+                                                </div>
+                                                
+                                                <p style="margin-top:10px; margin-bottom:0; opacity:0.8; font-size:11px;">Field: {{ career.field_category or 'General' }}</p>
+                                            </div>
+                                            <div class="goal-card-footer" style="flex-wrap: wrap; gap: 8px;">
+                                                {% if career.id not in goal_career_ids %}
+                                                <button class="btn-card-action btn-set-primary" onclick="addAndSetPrimary({{ career.id }})" style="border-style: solid; background: var(--gold); color: #fff; border-color: var(--gold); flex: 1;">
+                                                    <i class="fas fa-star"></i> Set as Primary Goal
+                                                </button>
+                                                <button class="btn-card-action btn-set-primary" onclick="addGoal({{ career.id }})" style="border-style: solid; flex: 1;">
+                                                    <i class="fas fa-plus"></i> Add to Goals
+                                                </button>
+                                                {% else %}
+                                                <span class="type-badge type-core"><i class="fas fa-check"></i> Already Saved</span>
+                                                <button class="btn-delete-goal" onclick="deleteGoalByCareer({{ career.id }})">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    {% else %}
+                                    <div class="gg-empty">
+                                        <i class="fas fa-search"></i>
+                                        <p>Add skills above to see matching career paths here.</p>
+                                    </div>
+                                    {% endif %}
+                                </div>
                             </div>
-                            {% endif %}
                         </div>
 
                         {% if goals %}
                         <hr class="gg-sep">
-                        <div class="sub-label">Your Saved Goals</div>
-                        <table class="mini-table" id="goals-table">
-                            <thead>
-                                <tr>
-                                    <th>Career</th>
-                                    <th>Type</th>
-                                    <th>Priority</th>
-                                    <th></th>
-                                </tr>
-                            </thead>
-                            <tbody id="goals-tbody">
-                                {% for g in goals %}
-                                <tr id="goal-row-{{ g.id }}" data-goal-id="{{ g.id }}"
-                                    data-career-id="{{ g.career_id }}">
-                                    <td><strong>{{ g.career_title | e }}</strong></td>
-                                    <td>{{ g.goal_type }}</td>
-                                    <td>{% if g.is_primary %}<span class="badge-primary">PRIMARY</span>{% else %}<button
-                                            class="btn-set-primary" onclick="setPrimary({{ g.id }})">Set
-                                            Primary</button>{% endif %}</td>
-                                    <td><button class="btn-del" onclick="deleteGoal({{ g.id }})" title="Delete"><i
-                                                class="fas fa-trash"></i></button></td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                        <div class="sub-label"><i class="fas fa-save"></i> Your Saved Goals</div>
+                        <div class="goal-grid" id="goals-container">
+                            {% for g in goals %}
+                            <div class="goal-card compact {% if g.is_primary %}is-primary{% endif %}" id="goal-card-{{ g.id }}">
+                                <div class="goal-card-header">
+                                    <h4>{{ g.career_title }}</h4>
+                                    <span class="goal-card-type">{{ g.goal_type }}</span>
+                                </div>
+                                <div class="goal-card-body">
+                                    <div class="match-stat">
+                                        <span class="match-score">{{ g.match_count }} of {{ g.total_req }} skills</span>
+                                        {% set pct = (g.match_count / g.total_req * 100) | round | int if g.total_req > 0 else 0 %}
+                                        <span class="match-score">{{ pct }}%</span>
+                                    </div>
+                                    <div class="match-bar-bg">
+                                        <div class="match-bar-fill" style="width: {{ pct }}%"></div>
+                                    </div>
+
+                                    <div class="sk-list">
+                                        {% for s in g.skills %}
+                                        <span class="sk-pill {% if s.matched %}matched{% endif %}">
+                                            {% if s.matched %}<i class="fas fa-check"></i> {% endif %}{{ s.name }}
+                                        </span>
+                                        {% endfor %}
+                                    </div>
+
+                                    <p style="opacity: 0.7; font-size: 11px; margin-top: 10px; margin-bottom: 5px;">Field: {{ g.field_category or 'General' }}</p>
+                                </div>
+                                <div class="goal-card-footer">
+                                    {% if not g.is_primary %}
+                                    <button class="btn-card-action btn-set-primary" onclick="setPrimary({{ g.id }})">
+                                        <i class="fas fa-star"></i> Set Primary
+                                    </button>
+                                    {% else %}
+                                    <span class="type-badge type-core" style="background: var(--navy); color: #fff;">
+                                        <i class="fas fa-check-circle"></i> Main Focus
+                                    </span>
+                                    {% endif %}
+                                    <button class="btn-delete-goal" onclick="deleteGoal({{ g.id }})" title="Remove Goal">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
                         {% else %}
                         <hr class="gg-sep" id="goals-sep" style="display:none;">
                         <div class="sub-label" id="goals-saved-label" style="display:none;">Your Saved Goals</div>
+                        <div class="goal-grid" id="goals-container"></div>
                         {% endif %}
                     </div>
                 </div>
@@ -1126,23 +1304,6 @@
             revealedUpTo = Math.max(revealedUpTo, index);
         }
 
-        // On load: if dept already selected, reveal all immediately (returning student)
-        (function initReveal() {
-            try {
-                const dept = document.getElementById('dept-select').value;
-                if (dept) {
-                    revealCardsUpTo(3);
-                    loadDeptData(dept, true);
-                }
-            } catch (e) {
-                console.warn('initReveal error:', e);
-                // Failsafe: force-reveal all cards so page isn't blank
-                CARDS.forEach(id => {
-                    const el = document.getElementById(id);
-                    if (el) { el.classList.add('card-visible'); }
-                });
-            }
-        })();
 
         // ═══════════════════════════════════════════════════════════
         //  Department selector
@@ -1399,6 +1560,13 @@
             swapCareerRowToRemove(careerId, d.goal_id);
         }
 
+        function toggleMatches() {
+            const dropdown = document.getElementById('matches-dropdown');
+            if (dropdown) {
+                dropdown.classList.toggle('is-active');
+            }
+        }
+
         async function addGoal(careerId) {
             const typeEl = document.getElementById(`gt-${careerId}`);
             const goalType = typeEl ? typeEl.value : 'Long Term';
@@ -1409,6 +1577,14 @@
             if (!d.ok) { toast(d.msg || 'Error', true); return; }
             toast('Goal added!');
             await refreshGoalsTable();
+            return d; // Return result for chaining
+        }
+
+        async function addAndSetPrimary(careerId) {
+            const d = await addGoal(careerId);
+            if (d && d.ok && d.goal_id) {
+                await setPrimary(d.goal_id);
+            }
         }
 
         async function deleteGoal(goalId) {
@@ -1438,40 +1614,56 @@
         }
 
         function swapCareerRowToRemove(careerId, goalId) {
-            const row = document.getElementById(`cr-${careerId}`);
-            if (!row) return;
-            const h4 = row.querySelector('h4');
-            if (h4 && !h4.querySelector('.badge-added')) {
-                h4.insertAdjacentHTML('beforeend', '<span class="badge-added">ADDED</span>');
+            const card = document.getElementById(`cr-${careerId}`);
+            if (!card) return;
+            
+            const body = card.querySelector('.goal-card-body');
+            const footer = card.querySelector('.goal-card-footer');
+            
+            // Add 'Added' indicator if not there
+            if (body && !body.querySelector('.badge-added')) {
+                // The badge was already in match-stat in the template, but let's ensure it's synced
             }
-            row.querySelector('.career-actions').innerHTML =
-                `<button class="btn-rm-g" onclick="deleteGoalByCareer(${careerId})"><i class="fas fa-times"></i> Remove</button>`;
+            
+            footer.innerHTML = `
+                <span class="type-badge type-core"><i class="fas fa-check"></i> Added</span>
+                <button class="btn-delete-goal" onclick="deleteGoalByCareer(${careerId})">
+                    <i class="fas fa-trash"></i>
+                </button>
+            `;
             if (goalId) careerGoalMap.set(careerId, goalId);
         }
 
         function restoreCareerRowAdd(careerId) {
-            const row = document.getElementById(`cr-${careerId}`);
-            if (!row) return;
-            row.querySelector('.badge-added')?.remove();
-            row.querySelector('.career-actions').innerHTML =
-                `<select class="goal-type-sel" id="gt-${careerId}">
-            <option value="Long Term">Long Term</option><option value="Short Term">Short Term</option>
-         </select>
-         <button class="btn-add-g" onclick="addGoal(${careerId})"><i class="fas fa-plus"></i> Add</button>`;
+            const card = document.getElementById(`cr-${careerId}`);
+            if (!card) return;
+            
+            const footer = card.querySelector('.goal-card-footer');
+            const header = card.querySelector('.career-actions');
+            
+            // Restore the select dropdown in header if it was removed (it might still be there)
+            if (header && !header.innerHTML.trim()) {
+                header.innerHTML = `
+                    <select class="goal-type-sel" id="gt-${careerId}" style="padding: 2px 5px; height: 24px; font-size: 10px;">
+                        <option value="Long Term">Long Term</option>
+                        <option value="Short Term">Short Term</option>
+                    </select>
+                `;
+            }
+
+            footer.innerHTML = `
+                <button class="btn-card-action btn-set-primary" onclick="addGoal(${careerId})" style="border-style: solid; background: var(--navy); color: #fff;">
+                    <i class="fas fa-plus"></i> Add Goal
+                </button>
+            `;
         }
 
         async function setPrimary(goalId) {
             const d = await api(`/api/gg/goal/${goalId}/primary`, {});
             if (!d.ok) { toast('Error', true); return; }
-            document.querySelectorAll('#goals-tbody tr').forEach(tr => {
-                const id = parseInt(tr.dataset.goalId);
-                const td = tr.cells[2];
-                if (id === goalId) {
-                    td.innerHTML = '<span class="badge-primary">PRIMARY</span>';
-                } else if (td.querySelector('.badge-primary')) {
-                    td.innerHTML = `<button class="btn-set-primary" onclick="setPrimary(${id})">Set Primary</button>`;
-                }
-            });
+            
+            // Refresh the whole table to update all cards correctly
+            await refreshGoalsTable();
             toast('Primary goal updated!');
         }
 
@@ -1488,75 +1680,120 @@
                 careerTitleMap.set(g.career_title.toLowerCase(), g.id);
             });
 
-            // Ensure table exists
-            let table = document.getElementById('goals-table');
-            if (!table && goals.length) {
-                const sep = document.getElementById('goals-sep');
-                const lbl = document.getElementById('goals-saved-label');
+            // Handle Saved Goals Container
+            const goalsContainer = document.getElementById('goals-container');
+            const sep = document.getElementById('goals-sep');
+            const lbl = document.getElementById('goals-saved-label');
+
+            if (!goals.length) {
+                if (goalsContainer) goalsContainer.innerHTML = '';
+                if (sep) sep.style.display = 'none';
+                if (lbl) lbl.style.display = 'none';
+            } else {
                 if (sep) sep.style.display = '';
                 if (lbl) lbl.style.display = '';
-                // Create table dynamically
-                const body = document.querySelector('#card-goals .gg-card-body');
-                table = document.createElement('table');
-                table.className = 'mini-table';
-                table.id = 'goals-table';
-                table.innerHTML = `<thead><tr><th>Career</th><th>Type</th><th>Priority</th><th></th></tr></thead><tbody id="goals-tbody"></tbody>`;
-                body.appendChild(table);
+                if (goalsContainer) {
+                    goalsContainer.innerHTML = goals.map(g => {
+                        const pct = g.total_req > 0 ? Math.round(g.match_count / g.total_req * 100) : 0;
+                        const skillPills = (g.skills || []).map(s => `
+                            <span class="sk-pill ${s.matched ? 'matched' : ''}">
+                                ${s.matched ? '<i class="fas fa-check"></i> ' : ''}${esc(s.name)}
+                            </span>
+                        `).join('');
+
+                        return `
+                        <div class="goal-card compact ${g.is_primary ? 'is-primary' : ''}" id="goal-card-${g.id}">
+                            <div class="goal-card-header">
+                                <h4>${esc(g.career_title)}</h4>
+                                <span class="goal-card-type">${esc(g.goal_type)}</span>
+                            </div>
+                            <div class="goal-card-body">
+                                <div class="match-stat">
+                                    <span class="match-score">${g.match_count} of ${g.total_req} skills</span>
+                                    <span class="match-score">${pct}%</span>
+                                </div>
+                                <div class="match-bar-bg">
+                                    <div class="match-bar-fill" style="width: ${pct}%"></div>
+                                </div>
+                                <div class="sk-list">${skillPills}</div>
+                                <p style="opacity: 0.7; font-size: 11px; margin-top: 10px; margin-bottom: 5px;">Field: ${esc(g.field_category || 'General')}</p>
+                            </div>
+                            <div class="goal-card-footer">
+                                ${!g.is_primary 
+                                    ? `<button class="btn-card-action btn-set-primary" onclick="setPrimary(${g.id})"><i class="fas fa-star"></i> Set Primary</button>`
+                                    : `<span class="type-badge type-core" style="background: var(--navy); color: #fff;"><i class="fas fa-check-circle"></i> Main Focus</span>`
+                                }
+                                <button class="btn-delete-goal" onclick="deleteGoal(${g.id})" title="Remove Goal">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </div>
+                        </div>`;
+                    }).join('');
+                }
             }
 
-            const tbody = document.getElementById('goals-tbody');
-            if (!tbody) return;
-            if (!goals.length) { tbody.innerHTML = ''; return; }
-
-            tbody.innerHTML = goals.map(g =>
-                `<tr id="goal-row-${g.id}" data-goal-id="${g.id}" data-career-id="${g.career_id}">
-            <td><strong>${esc(g.career_title)}</strong></td>
-            <td>${esc(g.goal_type)}</td>
-            <td>${g.is_primary
-                    ? '<span class="badge-primary">PRIMARY</span>'
-                    : `<button class="btn-set-primary" onclick="setPrimary(${g.id})">Set Primary</button>`}</td>
-            <td><button class="btn-del" onclick="deleteGoal(${g.id})" title="Delete"><i class="fas fa-trash"></i></button></td>
-        </tr>`
-            ).join('');
-
-            // ─ Rebuild Matches Block ─
+            // Handle Matching Careers Area
             const matchingArea = document.getElementById('matching-careers-area');
             if (matchingArea) {
                 if (d.matching_careers && d.matching_careers.length > 0) {
-                    matchingArea.innerHTML = '<div class="career-list">' + d.matching_careers.map(c => {
+                    matchingArea.innerHTML = '<div class="goal-grid">' + d.matching_careers.map(c => {
                         const isAdded = careerGoalMap.has(c.id);
-                        const badge = isAdded ? '<span class="badge-added">ADDED</span>' : '';
-                        const actions = isAdded
-                            ? `<button class="btn-rm-g" onclick="deleteGoalByCareer(${c.id})"><i class="fas fa-times"></i> Remove</button>`
-                            : `<select class="goal-type-sel" id="gt-${c.id}">
-                            <option value="Long Term">Long Term</option>
-                            <option value="Short Term">Short Term</option>
-                       </select>
-                       <button class="btn-add-g" onclick="addGoal(${c.id})"><i class="fas fa-plus"></i> Add</button>`;
+                        const pct = c.total_req > 0 ? Math.round(c.match_count / c.total_req * 100) : 0;
+                        const skillPills = (c.skills || []).map(s => `
+                            <span class="sk-pill ${s.matched ? 'matched' : ''}">
+                                ${s.matched ? '<i class="fas fa-check"></i> ' : ''}${esc(s.name)}
+                            </span>
+                        `).join('');
 
-                        return `<div class="career-row" id="cr-${c.id}">
-                            <div>
-                                <h4>${esc(c.title)}${badge}</h4>
-                                <span><strong>${c.match_count}</strong> skills matched &middot; ${esc(c.field_category || '')}</span>
+                        const actionsHeader = !isAdded 
+                            ? `<select class="goal-type-sel" id="gt-${c.id}" style="padding: 2px 5px; height: 24px; font-size: 10px;">
+                                <option value="Long Term">Long Term</option>
+                                <option value="Short Term">Short Term</option>
+                               </select>`
+                            : '';
+
+                        const actionsFooter = !isAdded
+                            ? `<button class="btn-card-action btn-set-primary" onclick="addAndSetPrimary(${c.id})" style="border-style: solid; background: var(--gold); color: #fff; border-color: var(--gold); flex: 1;">
+                                <i class="fas fa-star"></i> Set as Primary Goal
+                               </button>
+                               <button class="btn-card-action btn-set-primary" onclick="addGoal(${c.id})" style="border-style: solid; flex: 1;">
+                                <i class="fas fa-plus"></i> Add to Goals
+                               </button>`
+                            : `<span class="type-badge type-core"><i class="fas fa-check"></i> Already Saved</span>
+                               <button class="btn-delete-goal" onclick="deleteGoalByCareer(${c.id})">
+                                <i class="fas fa-trash"></i>
+                               </button>`;
+
+                        return `
+                        <div class="goal-card" id="cr-${c.id}">
+                            <div class="goal-card-header">
+                                <h4>${esc(c.title)}</h4>
+                                <div class="career-actions">${actionsHeader}</div>
                             </div>
-                            <div class="career-actions">
-                                ${actions}
+                            <div class="goal-card-body">
+                                <div class="match-stat">
+                                    <span class="match-score">${c.match_count} of ${c.total_req} skills</span>
+                                    <span class="badge-added">${pct}% MATCH</span>
+                                </div>
+                                <div class="match-bar-bg">
+                                    <div class="match-bar-fill" style="width: ${pct}%"></div>
+                                </div>
+                                <div class="sk-list">${skillPills}</div>
+                                <p style="margin-top:10px; margin-bottom:0; opacity:0.8; font-size:11px;">Field: ${esc(c.field_category || 'General')}</p>
                             </div>
+                            <div class="goal-card-footer">${actionsFooter}</div>
                         </div>`;
                     }).join('') + '</div>';
                 } else {
                     matchingArea.innerHTML = `<div class="gg-empty">
-                <i class="fas fa-search"></i>
-                <p>Add skills above to see matching career paths here.</p>
-            </div>`;
+                        <i class="fas fa-search"></i>
+                        <p>Add skills above to see matching career paths here.</p>
+                    </div>`;
                 }
             }
 
-            // Sync career rows
-            goals.forEach(g => swapCareerRowToRemove(g.career_id, g.id));
-
-            // Rebuild career pills so added state stays in sync without page reload
-            const dept = document.getElementById('dept-select').value;
+            // Sync career pills for department section
+            const dept = (document.getElementById('dept-select') || {}).value;
             if (dept && deptCache.has(dept)) {
                 buildCareerPills(deptCache.get(dept).careers || []);
             }
@@ -1599,71 +1836,95 @@
 
         async function deleteGrade(recordId) {
             const d = await api(`/api/gg/grade/${recordId}/delete`, {});
-            if (!d.ok) { toast('Error deleting grade', true); return; }
-            const row = document.getElementById(`rec-${recordId}`);
-            if (row) { row.style.cssText = 'opacity:0;transition:opacity .25s;'; setTimeout(() => row?.remove(), 260); }
-            updateCgpaDisplay(d.new_cgpa);
-            toast(`Grade removed. CGPA → ${d.new_cgpa ?? '—'}`);
+            if (d.ok) {
+                document.getElementById(`rec-${recordId}`)?.remove();
+                updateCgpaDisplay(d.new_cgpa);
+                toast('Grade removed');
+            }
         }
 
-        function updateCgpaDisplay(val) {
-            const display = (val !== null && val !== undefined) ? val : 'N/A';
-            document.getElementById('live-cgpa').textContent = display;
-            document.getElementById('cgpa-chip-val').textContent = display;
+        function updateCgpaDisplay(cgpa) {
+            const val = cgpa ?? 'N/A';
+            document.getElementById('live-cgpa').textContent = val;
+            document.getElementById('cgpa-chip-val').textContent = val;
         }
 
         const TYPE_STYLE = { Core: 'type-core', GED: 'type-ged', Elective: 'type-elective' };
 
-        function renderRecords(records) {
+        function renderRecords(recs) {
             const wrap = document.getElementById('records-wrap');
-            const empty = document.getElementById('records-empty');
-            if (!records.length) {
-                if (empty) empty.style.display = '';
-                const tbl = document.getElementById('records-table');
-                if (tbl) tbl.remove();
+            if (!recs || !recs.length) {
+                wrap.innerHTML = `<div class="gg-empty" id="records-empty">
+                    <i class="fas fa-book-open"></i>
+                    <p>No grades yet. Add your first course grade above.</p>
+                </div>`;
                 return;
             }
-            if (empty) empty.style.display = 'none';
 
-            let table = document.getElementById('records-table');
-            if (!table) {
-                table = document.createElement('table');
-                table.className = 'mini-table';
-                table.id = 'records-table';
-                table.style.margin = '0';
-                table.innerHTML = `<thead><tr>
-            <th style="padding-left:24px;">Course</th>
-            <th>Type</th><th>Semester</th><th>Grade</th><th>GPA pts</th><th>Credits</th>
-            <th style="padding-right:24px;"></th>
-        </tr></thead><tbody id="records-tbody"></tbody>`;
-                wrap.appendChild(table);
+            // Restore table if it was hidden
+            if (!document.getElementById('records-table')) {
+                wrap.innerHTML = `<table class="mini-table" style="margin:0;" id="records-table">
+                    <thead>
+                        <tr>
+                            <th style="padding-left:24px;">Course</th>
+                            <th>Type</th>
+                            <th>Semester</th>
+                            <th>Grade</th>
+                            <th>GPA pts</th>
+                            <th>Credits</th>
+                            <th style="padding-right:24px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="records-tbody"></tbody>
+                </table>`;
             }
 
             const tbody = document.getElementById('records-tbody');
-            tbody.innerHTML = records.map(r =>
-                `<tr id="rec-${r.id}">
-            <td style="padding-left:24px;font-weight:500;">${esc(r.course_name)}</td>
-            <td><span class="type-badge ${TYPE_STYLE[r.course_type] || ''}">${esc(r.course_type)}</span></td>
-            <td>Sem ${r.semester_taken}</td>
-            <td><strong>${esc(r.grade)}</strong></td>
-            <td>${r.grade_point}</td>
-            <td>${r.credit_value}cr</td>
-            <td style="padding-right:24px;">
-                <button class="btn-del" onclick="deleteGrade(${r.id})" title="Delete"><i class="fas fa-trash"></i></button>
-            </td>
-        </tr>`
-            ).join('');
+            tbody.innerHTML = recs.map(r => `
+                <tr id="rec-${r.id}">
+                    <td style="padding-left:24px;font-weight:500;">${esc(r.course_name)}</td>
+                    <td><span class="type-badge ${TYPE_STYLE[r.course_type] || ''}">${esc(r.course_type)}</span></td>
+                    <td>Sem ${r.semester_taken}</td>
+                    <td><strong>${esc(r.grade)}</strong></td>
+                    <td>${r.grade_point}</td>
+                    <td>${r.credit_value}cr</td>
+                    <td style="padding-right:24px;">
+                        <button class="btn-del" onclick="deleteGrade(${r.id})" title="Delete"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>
+            `).join('');
 
             // Update datalist deduped
             const dl = document.getElementById('course-list');
             if (dl) {
                 const seen = new Set();
-                dl.innerHTML = records.filter(r => {
+                dl.innerHTML = recs.filter(r => {
                     if (seen.has(r.course_name)) return false;
                     seen.add(r.course_name); return true;
                 }).map(r => `<option value="${esc(r.course_name)}">`).join('');
             }
         }
+
+        // ═══════════════════════════════════════════════════════════
+        //  Final initialization
+        // ═══════════════════════════════════════════════════════════
+        (function initReveal() {
+            try {
+                const dept = document.getElementById('dept-select').value;
+                if (dept) {
+                    revealCardsUpTo(3);
+                    loadDeptData(dept, true);
+                } else {
+                    revealCardsUpTo(0);
+                }
+            } catch (e) {
+                console.warn('initReveal error:', e);
+                CARDS.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) { el.classList.add('card-visible'); }
+                });
+            }
+        })();
     </script>
 </body>
 

@@ -1,0 +1,10 @@
+﻿2026-03-28 17:28:57 | INFO     | - | app | Logging initialised at DEBUG
+
+--- VERIFYING MATCHING SCORE ---
+2026-03-28 17:28:58 | INFO     | - | services.dashboard_service | Dashboard data loaded for student_id=1
+Student: Ahmed Al-Rashid
+Skills: ['Python', 'Data Analysis', 'SQL', 'Problem Solving']
+
+Compatibility Results:
+
+--- TEST COMPLETE ---

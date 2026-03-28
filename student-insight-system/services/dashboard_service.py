@@ -141,7 +141,7 @@ class DashboardService:
         goals_list = StudentGoal.query.filter_by(student_id=student.id).order_by(
             StudentGoal.is_primary.desc()
         ).all()
-        student_skill_names = {s.skill_name for s in skills}
+        student_skill_ids = {s.skill_id for s in skills if s.skill_id}
         careers = []
 
         for g in goals_list[:3]:
@@ -150,23 +150,22 @@ class DashboardService:
                 continue
             required = CareerRequiredSkill.query.filter_by(career_id=g.career_id).count()
             matched = 0
-            if student_skill_names:
+            if student_skill_ids:
                 matched = (
                     db.session.query(CareerRequiredSkill)
-                    .join(SkillModel, CareerRequiredSkill.skill_id == SkillModel.id)
                     .filter(
                         CareerRequiredSkill.career_id == g.career_id,
-                        SkillModel.skill_name.in_(student_skill_names),
+                        CareerRequiredSkill.skill_id.in_(student_skill_ids),
                     )
                     .count()
                 )
-            # 0% when no required skills are defined for this career
+            # Use a threshold or flag if no required skills are defined for this career
             if required > 0:
                 match_pct = min(int(matched / required * 100), 100)
                 no_data = False
             else:
                 match_pct = 0
-                no_data = True
+                no_data = True # Indicate that requirements haven't been defined yet
             careers.append({
                 "role": career.title,
                 "match": match_pct,

@@ -21,10 +21,13 @@ class Skill(db.Model):
 class StudentSkill(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     student_id = db.Column(db.Integer, db.ForeignKey('student_profile.id'), nullable=False)
-    skill_name = db.Column(db.String(100), nullable=False)
+    skill_id = db.Column(db.Integer, db.ForeignKey('skills.id'), nullable=True)
+    skill_name = db.Column(db.String(100), nullable=False) # Fallback/Display name
     proficiency_score = db.Column(db.Integer, default=0)
     risk_score = db.Column(db.Float, default=0.0)
     last_updated = db.Column(db.DateTime, default=datetime.utcnow)
+
+    master_skill = db.relationship('Skill', backref='student_records', lazy=True)
 
     __table_args__ = (
         db.Index('ix_student_skill_student_id', 'student_id'),

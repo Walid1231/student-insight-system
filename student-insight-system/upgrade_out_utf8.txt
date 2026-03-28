@@ -1,0 +1,408 @@
+﻿2026-03-28 17:03:27 | INFO     | - | app | Logging initialised at DEBUG
+flask : INFO  [alembic.
+runtime.migration] 
+Context impl 
+PostgresqlImpl.
+At line:1 char:1
++ flask db upgrade > 
+upgrade_out.txt 2>&1
++ ~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
+    + CategoryInfo     
+         : NotSpecifi  
+  ed: (INFO  [alembi   
+ c....PostgresqlImp    
+l.:String) [], Rem    
+oteException
+    + FullyQualifiedEr 
+   rorId : NativeComm  
+  andError
+ 
+INFO  [alembic.runtime.
+migration] Will assume 
+transactional DDL.
+INFO  [alembic.runtime.
+migration] Running 
+upgrade  -> 
+b13f43537333, Initial 
+migration for Postgres
+Traceback (most recent 
+call last):
+  File "C:\Users\akib1\
+AppData\Local\Programs\
+Python\Python310\lib\si
+te-packages\sqlalchemy\
+engine\base.py", line 
+1967, in 
+_exec_single_context
+    self.dialect.do_exe
+cute(
+  File "C:\Users\akib1\
+AppData\Local\Programs\
+Python\Python310\lib\si
+te-packages\sqlalchemy\
+engine\default.py", 
+line 952, in do_execute
+    cursor.execute(stat
+ement, parameters)
+psycopg2.errors.Duplica
+teTable: relation 
+"assessment" already 
+exists
+
+
+The above exception 
+was the direct cause 
+of the following 
+exception:
+
+Traceback (most recent 
+call last):
+  File "C:\Users\akib1\
+AppData\Local\Programs\
+Python\Python310\lib\ru
+npy.py", line 196, in 
+_run_module_as_main
+    return 
+_run_code(code, 
+main_globals, None,
+  File "C:\Users\akib1\
+AppData\Local\Programs\
+Python\Python310\lib\ru
+npy.py", line 86, in 
+_run_code
+    exec(code, 
+run_globals)
+  File "C:\Users\akib1\
+AppData\Local\Programs\
+Python\Python310\Script
+s\flask.exe\__main__.py
+", line 5, in <module>
+  File "C:\Users\akib1\
+AppData\Local\Programs\
+Python\Python310\lib\si
+te-packages\flask\cli.p
+y", line 1131, in main
+    cli.main()
+  File "C:\Users\akib1\
+AppData\Local\Programs\
+Python\Python310\lib\si
+te-packages\click\core.
+py", line 1406, in main
+    rv = 
+self.invoke(ctx)
+  File "C:\Users\akib1\
+AppData\Local\Programs\
+Python\Python310\lib\si
+te-packages\click\core.
+py", line 1873, in 
+invoke
+    return _process_res
+ult(sub_ctx.command.inv
+oke(sub_ctx))
+  File "C:\Users\akib1\
+AppData\Local\Programs\
+Python\Python310\lib\si
+te-packages\click\core.
+py", line 1873, in 
+invoke
+    return _process_res
+ult(sub_ctx.command.inv
+oke(sub_ctx))
+  File "C:\Users\akib1\
+AppData\Local\Programs\
+Python\Python310\lib\si
+te-packages\click\core.
+py", line 1269, in 
+invoke
+    return ctx.invoke(s
+elf.callback, 
+**ctx.params)
+  File "C:\Users\akib1\
+AppData\Local\Programs\
+Python\Python310\lib\si
+te-packages\click\core.
+py", line 824, in 
+invoke
+    return 
+callback(*args, 
+**kwargs)
+  File "C:\Users\akib1\
+AppData\Local\Programs\
+Python\Python310\lib\si
+te-packages\click\decor
+ators.py", line 34, in 
+new_func
+    return f(get_curren
+t_context(), *args, 
+**kwargs)
+  File "C:\Users\akib1\
+AppData\Local\Programs\
+Python\Python310\lib\si
+te-packages\flask\cli.p
+y", line 400, in 
+decorator
+    return 
+ctx.invoke(f, *args, 
+**kwargs)
+  File "C:\Users\akib1\
+AppData\Local\Programs\
+Python\Python310\lib\si
+te-packages\click\core.
+py", line 824, in 
+invoke
+    return 
+callback(*args, 
+**kwargs)
+  File "C:\Users\akib1\
+AppData\Local\Programs\
+Python\Python310\lib\si
+te-packages\flask_migra
+te\cli.py", line 157, 
+in upgrade
+    _upgrade(directory 
+or g.directory, 
+revision, sql, tag, 
+x_arg or g.x_arg)
+  File "C:\Users\akib1\
+AppData\Local\Programs\
+Python\Python310\lib\si
+te-packages\flask_migra
+te\__init__.py", line 
+111, in wrapped
+    f(*args, **kwargs)
+  File "C:\Users\akib1\
+AppData\Local\Programs\
+Python\Python310\lib\si
+te-packages\flask_migra
+te\__init__.py", line 
+200, in upgrade
+    command.upgrade(con
+fig, revision, 
+sql=sql, tag=tag)
+  File "C:\Users\akib1\
+AppData\Local\Programs\
+Python\Python310\lib\si
+te-packages\alembic\com
+mand.py", line 483, in 
+upgrade
+    script.run_env()
+  File "C:\Users\akib1\
+AppData\Local\Programs\
+Python\Python310\lib\si
+te-packages\alembic\scr
+ipt\base.py", line 
+545, in run_env
+    util.load_python_fi
+le(self.dir, "env.py")
+  File "C:\Users\akib1\
+AppData\Local\Programs\
+Python\Python310\lib\si
+te-packages\alembic\uti
+l\pyfiles.py", line 
+116, in 
+load_python_file
+    module = load_modul
+e_py(module_id, path)
+  File "C:\Users\akib1\
+AppData\Local\Programs\
+Python\Python310\lib\si
+te-packages\alembic\uti
+l\pyfiles.py", line 
+136, in load_module_py
+    spec.loader.exec_mo
+dule(module)  # type: 
+ignore
+  File "<frozen importl
+ib._bootstrap_external>
+", line 883, in 
+exec_module
+  File "<frozen importl
+ib._bootstrap>", line 
+241, in _call_with_fram
+es_removed
+  File "P:\student_insi
+ght\student-insight-sys
+tem\student-insight-sys
+tem\migrations\env.py",
+ line 113, in <module>
+    
+run_migrations_online()
+  File "P:\student_insi
+ght\student-insight-sys
+tem\student-insight-sys
+tem\migrations\env.py",
+ line 107, in 
+run_migrations_online
+    context.run_migrati
+ons()
+  File "<string>", 
+line 8, in 
+run_migrations
+  File "C:\Users\akib1\
+AppData\Local\Programs\
+Python\Python310\lib\si
+te-packages\alembic\run
+time\environment.py", 
+line 969, in 
+run_migrations
+    self.get_context().
+run_migrations(**kw)
+  File "C:\Users\akib1\
+AppData\Local\Programs\
+Python\Python310\lib\si
+te-packages\alembic\run
+time\migration.py", 
+line 626, in 
+run_migrations
+    
+step.migration_fn(**kw)
+  File "P:\student_insi
+ght\student-insight-sys
+tem\student-insight-sys
+tem\migrations\versions
+\b13f43537333_initial_m
+igration_for_postgres.p
+y", line 21, in upgrade
+    op.create_table('as
+sessment',
+  File "<string>", 
+line 8, in create_table
+  File "<string>", 
+line 3, in create_table
+  File "C:\Users\akib1\
+AppData\Local\Programs\
+Python\Python310\lib\si
+te-packages\alembic\ope
+rations\ops.py", line 
+1331, in create_table
+    return 
+operations.invoke(op)
+  File "C:\Users\akib1\
+AppData\Local\Programs\
+Python\Python310\lib\si
+te-packages\alembic\ope
+rations\base.py", line 
+452, in invoke
+    return fn(self, 
+operation)
+  File "C:\Users\akib1\
+AppData\Local\Programs\
+Python\Python310\lib\si
+te-packages\alembic\ope
+rations\toimpl.py", 
+line 140, in 
+create_table
+    operations.impl.cre
+ate_table(table, **kw)
+  File "C:\Users\akib1\
+AppData\Local\Programs\
+Python\Python310\lib\si
+te-packages\alembic\ddl
+\impl.py", line 442, 
+in create_table
+    self._exec(schema.C
+reateTable(table, 
+**kw))
+  File "C:\Users\akib1\
+AppData\Local\Programs\
+Python\Python310\lib\si
+te-packages\alembic\ddl
+\impl.py", line 256, 
+in _exec
+    return conn.execute
+(construct, params)
+  File "C:\Users\akib1\
+AppData\Local\Programs\
+Python\Python310\lib\si
+te-packages\sqlalchemy\
+engine\base.py", line 
+1419, in execute
+    return meth(
+  File "C:\Users\akib1\
+AppData\Local\Programs\
+Python\Python310\lib\si
+te-packages\sqlalchemy\
+sql\ddl.py", line 187, 
+in 
+_execute_on_connection
+    return connection._
+execute_ddl(
+  File "C:\Users\akib1\
+AppData\Local\Programs\
+Python\Python310\lib\si
+te-packages\sqlalchemy\
+engine\base.py", line 
+1530, in _execute_ddl
+    ret = 
+self._execute_context(
+  File "C:\Users\akib1\
+AppData\Local\Programs\
+Python\Python310\lib\si
+te-packages\sqlalchemy\
+engine\base.py", line 
+1846, in 
+_execute_context
+    return self._exec_s
+ingle_context(
+  File "C:\Users\akib1\
+AppData\Local\Programs\
+Python\Python310\lib\si
+te-packages\sqlalchemy\
+engine\base.py", line 
+1986, in 
+_exec_single_context
+    self._handle_dbapi_
+exception(
+  File "C:\Users\akib1\
+AppData\Local\Programs\
+Python\Python310\lib\si
+te-packages\sqlalchemy\
+engine\base.py", line 
+2363, in 
+_handle_dbapi_exception
+    raise sqlalchemy_ex
+ception.with_traceback(
+exc_info[2]) from e
+  File "C:\Users\akib1\
+AppData\Local\Programs\
+Python\Python310\lib\si
+te-packages\sqlalchemy\
+engine\base.py", line 
+1967, in 
+_exec_single_context
+    self.dialect.do_exe
+cute(
+  File "C:\Users\akib1\
+AppData\Local\Programs\
+Python\Python310\lib\si
+te-packages\sqlalchemy\
+engine\default.py", 
+line 952, in do_execute
+    cursor.execute(stat
+ement, parameters)
+sqlalchemy.exc.Programm
+ingError: (psycopg2.err
+ors.DuplicateTable) 
+relation "assessment" 
+already exists
+
+[SQL: 
+CREATE TABLE 
+assessment (
+	id SERIAL NOT NULL, 
+	title VARCHAR(200) 
+NOT NULL, 
+	type VARCHAR(20), 
+	subject VARCHAR(100), 
+	total_points FLOAT, 
+	date DATE, 
+	created_at TIMESTAMP 
+WITHOUT TIME ZONE, 
+	PRIMARY KEY (id)
+)
+
+]
+(Background on this 
+error at: https://sqlal
+che.me/e/20/f405)

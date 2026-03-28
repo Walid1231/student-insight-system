@@ -40,6 +40,15 @@ class SkillService:
             db.session.add(skill)
             db.session.flush()
 
+        if not skill.skill_id:
+            from models import Skill as SkillModel
+            master = SkillModel.query.filter(
+                db.func.lower(SkillModel.skill_name) == skill_name.lower()
+            ).first()
+            if master:
+                skill.skill_id = master.id
+                skill.skill_name = master.skill_name
+
         skill.proficiency_score = proficiency
         skill.last_updated = datetime.utcnow()
 
