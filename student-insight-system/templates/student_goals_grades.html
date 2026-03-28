@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Goals &amp; Grades | Student Insight</title>
@@ -7,7 +8,9 @@
     <meta name="description" content="Set career goals, track skills, and manage academic grades.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/unified_styles.css') }}?v=3">
     <style>
@@ -22,31 +25,49 @@
             --green: #059669;
             --red: #dc2626;
         }
-        body { background: var(--bg); font-family: 'DM Sans', sans-serif; }
-        h1, h2, h3 { font-family: 'DM Serif Display', serif; }
 
-        .gg-layout { display: flex; flex-direction: column; gap: 28px; }
+        body {
+            background: var(--bg);
+            font-family: 'DM Sans', sans-serif;
+        }
+
+        h1,
+        h2,
+        h3 {
+            font-family: 'DM Serif Display', serif;
+        }
+
+        .gg-layout {
+            display: flex;
+            flex-direction: column;
+            gap: 28px;
+        }
 
         /* ── Wizard Cards ── */
         .gg-card {
             background: var(--card-bg);
             border: 1px solid var(--border);
             border-radius: 14px;
-            box-shadow: 0 2px 16px rgba(0,0,0,.06);
+            box-shadow: 0 2px 16px rgba(0, 0, 0, .06);
             position: relative;
             overflow: hidden;
         }
+
         .gg-card::before {
             content: '';
             position: absolute;
-            top: 0; left: 0; right: 0;
+            top: 0;
+            left: 0;
+            right: 0;
             height: 3px;
             background: linear-gradient(90deg, var(--navy), var(--gold));
         }
+
         .gg-card-header {
             padding: 22px 28px 16px;
             border-bottom: 1px solid var(--border);
         }
+
         .gg-card-header h2 {
             font-size: 21px;
             color: var(--navy);
@@ -55,9 +76,21 @@
             align-items: center;
             gap: 10px;
         }
-        .gg-card-header h2 i { font-size: 17px; opacity: .8; }
-        .gg-card-header p { font-size: 13px; color: var(--muted); margin: 0; }
-        .gg-card-body { padding: 24px 28px; }
+
+        .gg-card-header h2 i {
+            font-size: 17px;
+            opacity: .8;
+        }
+
+        .gg-card-header p {
+            font-size: 13px;
+            color: var(--muted);
+            margin: 0;
+        }
+
+        .gg-card-body {
+            padding: 24px 28px;
+        }
 
         /* ── Animated collapse ── */
         .gg-collapsible {
@@ -67,948 +100,1441 @@
             transform: translateY(8px);
             transition: max-height .4s ease, opacity .35s ease, transform .35s ease;
         }
+
         .gg-collapsible.card-visible {
             max-height: 1200px;
             opacity: 1;
             transform: translateY(0);
         }
 
-        /* ── Dept select ── */
-        .dept-wrap { position: relative; }
-        .dept-wrap > i { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; font-size: 13px; z-index: 1; }
-        #dept-select { padding-left: 38px; appearance: none; -webkit-appearance: none; cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%236b7280' d='M1 1l5 5 5-5'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; font-family: 'DM Sans', sans-serif; }
+        /* ── Dept display ── */
+        .dept-wrap {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            background: var(--bg);
+            padding: 14px 18px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+        }
+
+        .dept-wrap>i {
+            color: var(--brand);
+            font-size: 22px;
+            flex-shrink: 0;
+        }
 
         /* ── Chips & pills ── */
-        .pill-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
-        .s-chip {
-            display: inline-flex; align-items: center; gap: 5px;
-            padding: 5px 13px; border-radius: 20px;
-            border: 1.5px dashed #d1d5db; background: transparent;
-            font-size: 12px; font-weight: 500; color: var(--muted);
-            cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all .15s;
+        .pill-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 14px;
         }
-        .s-chip:hover:not(.s-added) { border-style: solid; border-color: var(--green); background: rgba(5,150,105,.08); color: var(--green); }
-        .s-chip.s-added { border-style: solid; border-color: #d1d5db; background: #f3f4f6; color: #9ca3af; cursor: default; }
-        .s-chip i { font-size: 9px; }
+
+        .s-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 13px;
+            border-radius: 20px;
+            border: 1.5px dashed #d1d5db;
+            background: transparent;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--muted);
+            cursor: pointer;
+            font-family: 'DM Sans', sans-serif;
+            transition: all .15s;
+        }
+
+        .s-chip:hover:not(.s-added) {
+            border-style: solid;
+            border-color: var(--green);
+            background: rgba(5, 150, 105, .08);
+            color: var(--green);
+        }
+
+        .s-chip.s-added {
+            border-style: solid;
+            border-color: #d1d5db;
+            background: #f3f4f6;
+            color: #9ca3af;
+            cursor: default;
+        }
+
+        .s-chip i {
+            font-size: 9px;
+        }
 
         .c-pill {
-            display: inline-flex; align-items: center; gap: 6px;
-            padding: 6px 13px; border-radius: 7px;
-            border: 1.5px solid var(--border); background: var(--bg);
-            font-size: 12px; font-weight: 500; color: var(--text);
-            cursor: pointer; font-family: 'DM Sans', sans-serif; transition: border-color .15s, background .15s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 13px;
+            border-radius: 7px;
+            border: 1.5px solid var(--border);
+            background: var(--bg);
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text);
+            cursor: pointer;
+            font-family: 'DM Sans', sans-serif;
+            transition: border-color .15s, background .15s;
         }
-        .c-pill:hover { border-color: var(--navy); background: rgba(0,45,98,.04); }
-        .c-pill i { font-size: 10px; opacity: .6; }
+
+        .c-pill:hover {
+            border-color: var(--navy);
+            background: rgba(0, 45, 98, .04);
+        }
+
+        .c-pill i {
+            font-size: 10px;
+            opacity: .6;
+        }
 
         /* ── Skill tags ── */
-        .skill-tags-area { display: flex; flex-wrap: wrap; gap: 8px; min-height: 38px; }
-        .sk-tag {
-            display: inline-flex; align-items: center; gap: 7px;
-            padding: 7px 12px; border-radius: 7px;
-            border: 1.5px solid rgba(0,45,98,.22); background: rgba(0,45,98,.05);
-            font-size: 13px; font-weight: 500; color: var(--navy);
+        .skill-tags-area {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            min-height: 38px;
         }
-        .sk-tag button { background: none; border: none; color: inherit; opacity: .5; cursor: pointer; padding: 0; font-size: 11px; line-height: 1; transition: opacity .15s; }
-        .sk-tag button:hover { opacity: 1; }
-        .skill-add-row { display: flex; gap: 8px; margin-top: 14px; }
-        .skill-add-row input { flex: 1; }
+
+        .sk-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 7px 12px;
+            border-radius: 7px;
+            border: 1.5px solid rgba(0, 45, 98, .22);
+            background: rgba(0, 45, 98, .05);
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--navy);
+        }
+
+        .sk-tag button {
+            background: none;
+            border: none;
+            color: inherit;
+            opacity: .5;
+            cursor: pointer;
+            padding: 0;
+            font-size: 11px;
+            line-height: 1;
+            transition: opacity .15s;
+        }
+
+        .sk-tag button:hover {
+            opacity: 1;
+        }
+
+        .skill-add-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 14px;
+        }
+
+        .skill-add-row input {
+            flex: 1;
+        }
 
         /* ── Suggest label ── */
         .suggest-label {
-            font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px;
-            color: var(--muted); margin-top: 22px; margin-bottom: 6px;
-            display: flex; align-items: center; gap: 7px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            color: var(--muted);
+            margin-top: 22px;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 7px;
         }
-        .suggest-label i { color: var(--navy); }
+
+        .suggest-label i {
+            color: var(--navy);
+        }
 
         /* ── Target CGPA strip ── */
         .target-strip {
-            display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
-            padding: 12px 16px; border-radius: 9px;
-            background: var(--bg); border: 1px solid var(--border); margin-bottom: 22px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            padding: 12px 16px;
+            border-radius: 9px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            margin-bottom: 22px;
         }
-        .target-strip label { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; }
-        .target-strip input { width: 90px; }
-        #cgpa-save-status { font-size: 12px; color: var(--green); font-weight: 500; opacity: 0; transition: opacity .3s; }
-        .target-strip .cur { font-size: 12px; color: var(--muted); margin-left: auto; }
-        .target-strip .cur strong { color: var(--navy); font-size: 14px; }
+
+        .target-strip label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text);
+            white-space: nowrap;
+        }
+
+        .target-strip input {
+            width: 90px;
+        }
+
+        #cgpa-save-status {
+            font-size: 12px;
+            color: var(--green);
+            font-weight: 500;
+            opacity: 0;
+            transition: opacity .3s;
+        }
+
+        .target-strip .cur {
+            font-size: 12px;
+            color: var(--muted);
+            margin-left: auto;
+        }
+
+        .target-strip .cur strong {
+            color: var(--navy);
+            font-size: 14px;
+        }
 
         /* ── Sub-label ── */
-        .sub-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); margin-bottom: 12px; display: flex; align-items: center; gap: 7px; }
+        .sub-label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            color: var(--muted);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
 
         /* ── Career list ── */
-        .career-list { display: flex; flex-direction: column; gap: 10px; }
+        .career-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
         .career-row {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 13px 16px; border-radius: 9px;
-            border: 1.5px solid var(--border); background: var(--bg); gap: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 13px 16px;
+            border-radius: 9px;
+            border: 1.5px solid var(--border);
+            background: var(--bg);
+            gap: 12px;
             transition: border-color .15s;
         }
-        .career-row:hover { border-color: var(--navy); }
-        .career-row h4 { font-size: 14px; font-weight: 600; color: var(--text); margin: 0 0 2px; font-family: 'DM Sans', sans-serif; }
-        .career-row span { font-size: 12px; color: var(--muted); }
-        .career-row span strong { color: var(--navy); }
-        .career-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-        .btn-add-g { padding: 6px 13px; border-radius: 7px; border: 1.5px solid var(--navy); background: transparent; color: var(--navy); font-size: 12px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all .15s; }
-        .btn-add-g:hover { background: var(--navy); color: #fff; }
-        .goal-type-sel { padding: 5px 8px; font-size: 12px; border-radius: 7px; border: 1px solid var(--border); font-family: 'DM Sans', sans-serif; height: 32px; }
-        .btn-rm-g { background: none; border: none; color: var(--muted); font-size: 12px; font-weight: 500; cursor: pointer; padding: 5px 10px; border-radius: 6px; font-family: 'DM Sans', sans-serif; transition: all .15s; }
-        .btn-rm-g:hover { color: var(--red); background: rgba(220,38,38,.07); }
-        .badge-added { display: inline-block; font-size: 10px; font-weight: 700; background: #dbeafe; color: #2563eb; padding: 2px 8px; border-radius: 10px; margin-left: 6px; }
+
+        .career-row:hover {
+            border-color: var(--navy);
+        }
+
+        .career-row h4 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text);
+            margin: 0 0 2px;
+            font-family: 'DM Sans', sans-serif;
+        }
+
+        .career-row span {
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .career-row span strong {
+            color: var(--navy);
+        }
+
+        .career-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .btn-add-g {
+            padding: 6px 13px;
+            border-radius: 7px;
+            border: 1.5px solid var(--navy);
+            background: transparent;
+            color: var(--navy);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: 'DM Sans', sans-serif;
+            transition: all .15s;
+        }
+
+        .btn-add-g:hover {
+            background: var(--navy);
+            color: #fff;
+        }
+
+        .goal-type-sel {
+            padding: 5px 8px;
+            font-size: 12px;
+            border-radius: 7px;
+            border: 1px solid var(--border);
+            font-family: 'DM Sans', sans-serif;
+            height: 32px;
+        }
+
+        .btn-rm-g {
+            background: none;
+            border: none;
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-family: 'DM Sans', sans-serif;
+            transition: all .15s;
+        }
+
+        .btn-rm-g:hover {
+            color: var(--red);
+            background: rgba(220, 38, 38, .07);
+        }
+
+        .badge-added {
+            display: inline-block;
+            font-size: 10px;
+            font-weight: 700;
+            background: #dbeafe;
+            color: #2563eb;
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-left: 6px;
+        }
 
         /* ── Goals table ── */
-        .gg-sep { border: none; border-top: 1px solid var(--border); margin: 22px 0; }
-        .mini-table { width: 100%; border-collapse: collapse; }
-        .mini-table th { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); padding: 9px 10px; text-align: left; border-bottom: 2px solid var(--border); }
-        .mini-table td { font-size: 13px; padding: 11px 10px; color: var(--text); border-bottom: 1px solid var(--border); }
-        .mini-table tr:last-child td { border-bottom: none; }
-        .mini-table tr:hover td { background: rgba(0,45,98,.02); }
-        .badge-primary { display: inline-block; font-size: 10px; font-weight: 700; background: rgba(0,45,98,.12); color: var(--navy); padding: 2px 9px; border-radius: 10px; }
-        .btn-set-primary { background: none; border: 1px dashed var(--border); color: var(--muted); font-size: 11px; cursor: pointer; padding: 3px 9px; border-radius: 6px; font-family: 'DM Sans', sans-serif; transition: all .15s; }
-        .btn-set-primary:hover { border-color: var(--navy); color: var(--navy); }
-        .btn-del { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 13px; padding: 4px 8px; border-radius: 6px; transition: all .15s; }
-        .btn-del:hover { color: var(--red); background: rgba(220,38,38,.07); }
+        .gg-sep {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 22px 0;
+        }
+
+        .mini-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .mini-table th {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .4px;
+            color: var(--muted);
+            padding: 9px 10px;
+            text-align: left;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .mini-table td {
+            font-size: 13px;
+            padding: 11px 10px;
+            color: var(--text);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .mini-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .mini-table tr:hover td {
+            background: rgba(0, 45, 98, .02);
+        }
+
+        .badge-primary {
+            display: inline-block;
+            font-size: 10px;
+            font-weight: 700;
+            background: rgba(0, 45, 98, .12);
+            color: var(--navy);
+            padding: 2px 9px;
+            border-radius: 10px;
+        }
+
+        .btn-set-primary {
+            background: none;
+            border: 1px dashed var(--border);
+            color: var(--muted);
+            font-size: 11px;
+            cursor: pointer;
+            padding: 3px 9px;
+            border-radius: 6px;
+            font-family: 'DM Sans', sans-serif;
+            transition: all .15s;
+        }
+
+        .btn-set-primary:hover {
+            border-color: var(--navy);
+            color: var(--navy);
+        }
+
+        .btn-del {
+            background: none;
+            border: none;
+            color: var(--muted);
+            cursor: pointer;
+            font-size: 13px;
+            padding: 4px 8px;
+            border-radius: 6px;
+            transition: all .15s;
+        }
+
+        .btn-del:hover {
+            color: var(--red);
+            background: rgba(220, 38, 38, .07);
+        }
 
         /* ── Grade form ── */
-        .grade-grid { display: grid; grid-template-columns: 2fr 1fr 80px 1fr 1fr auto; gap: 12px; align-items: end; }
-        @media (max-width: 800px) { .grade-grid { grid-template-columns: 1fr 1fr; } }
-        .fg label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); margin-bottom: 6px; }
+        .grade-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 80px 1fr 1fr auto;
+            gap: 12px;
+            align-items: end;
+        }
+
+        @media (max-width: 800px) {
+            .grade-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .fg label {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .4px;
+            color: var(--muted);
+            margin-bottom: 6px;
+        }
 
         /* ── CGPA chip ── */
-        .cgpa-chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 14px; border-radius: 7px; background: rgba(5,150,105,.1); color: var(--green); font-size: 13px; font-weight: 700; }
+        .cgpa-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 14px;
+            border-radius: 7px;
+            background: rgba(5, 150, 105, .1);
+            color: var(--green);
+            font-size: 13px;
+            font-weight: 700;
+        }
 
         /* ── Type badges ── */
-        .type-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 5px; }
-        .type-core { background: rgba(0,45,98,.1); color: var(--navy); }
-        .type-ged { background: rgba(5,150,105,.1); color: var(--green); }
-        .type-elective { background: rgba(124,58,237,.1); color: #7c3aed; }
+        .type-badge {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 9px;
+            border-radius: 5px;
+        }
+
+        .type-core {
+            background: rgba(0, 45, 98, .1);
+            color: var(--navy);
+        }
+
+        .type-ged {
+            background: rgba(5, 150, 105, .1);
+            color: var(--green);
+        }
+
+        .type-elective {
+            background: rgba(124, 58, 237, .1);
+            color: #7c3aed;
+        }
 
         /* ── Empty state ── */
-        .gg-empty { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 36px 16px; color: var(--muted); text-align: center; }
-        .gg-empty i { font-size: 28px; opacity: .35; }
-        .gg-empty p { font-size: 13px; margin: 0; }
+        .gg-empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            padding: 36px 16px;
+            color: var(--muted);
+            text-align: center;
+        }
+
+        .gg-empty i {
+            font-size: 28px;
+            opacity: .35;
+        }
+
+        .gg-empty p {
+            font-size: 13px;
+            margin: 0;
+        }
 
         /* ── Toast ── */
-        #gg-toast { position: fixed; bottom: 28px; right: 28px; background: var(--navy); color: #fff; padding: 13px 20px; border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.18); font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 10px; opacity: 0; transform: translateY(10px); transition: opacity .25s, transform .25s; z-index: 9999; pointer-events: none; font-family: 'DM Sans', sans-serif; }
-        #gg-toast.show { opacity: 1; transform: translateY(0); }
-        #gg-toast.err { background: var(--red); }
+        #gg-toast {
+            position: fixed;
+            bottom: 28px;
+            right: 28px;
+            background: var(--navy);
+            color: #fff;
+            padding: 13px 20px;
+            border-radius: 10px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, .18);
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity .25s, transform .25s;
+            z-index: 9999;
+            pointer-events: none;
+            font-family: 'DM Sans', sans-serif;
+        }
+
+        #gg-toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        #gg-toast.err {
+            background: var(--red);
+        }
 
         /* ── Spinner ── */
-        .spin { display: inline-block; animation: spin .6s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        .spin {
+            display: inline-block;
+            animation: spin .6s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
 
         /* ── Step indicator ── */
         .step-number {
-            display: inline-flex; align-items: center; justify-content: center;
-            width: 26px; height: 26px; border-radius: 50%;
-            background: var(--navy); color: #fff;
-            font-size: 12px; font-weight: 700; font-family: 'DM Sans', sans-serif;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: var(--navy);
+            color: #fff;
+            font-size: 12px;
+            font-weight: 700;
+            font-family: 'DM Sans', sans-serif;
             flex-shrink: 0;
         }
 
         /* scrollbar flash on card reveal */
         @keyframes highlightCard {
-            0% { box-shadow: 0 0 0 3px rgba(201,168,76,.45), 0 2px 16px rgba(0,0,0,.06); }
-            100% { box-shadow: 0 2px 16px rgba(0,0,0,.06); }
+            0% {
+                box-shadow: 0 0 0 3px rgba(201, 168, 76, .45), 0 2px 16px rgba(0, 0, 0, .06);
+            }
+
+            100% {
+                box-shadow: 0 2px 16px rgba(0, 0, 0, .06);
+            }
         }
-        .card-flash { animation: highlightCard .9s ease forwards; }
+
+        .card-flash {
+            animation: highlightCard .9s ease forwards;
+        }
 
         /* dark mode */
-        html[data-theme="dark"] .gg-card { background: #1a1d27; border-color: #2d3241; }
-        html[data-theme="dark"] .gg-card-header { border-color: #2d3241; }
-        html[data-theme="dark"] .gg-card-header h2 { color: #93c5fd; }
-        html[data-theme="dark"] .target-strip { background: #141720; border-color: #2d3241; }
-        html[data-theme="dark"] .career-row { background: #141720; border-color: #2d3241; }
-        html[data-theme="dark"] .career-row h4 { color: #e5e7eb; }
-        html[data-theme="dark"] .sk-tag { border-color: rgba(107,158,222,.35); background: rgba(107,158,222,.1); color: #6b9fde; }
-        html[data-theme="dark"] .mini-table th, html[data-theme="dark"] .mini-table td { border-color: #2d3241; color: #d1d5db; }
-        html[data-theme="dark"] .mini-table tr:hover td { background: #1e2231; }
-        html[data-theme="dark"] .c-pill { background: #141720; border-color: #2d3241; color: #d1d5db; }
-        html[data-theme="dark"] .gg-sep { border-color: #2d3241; }
+        html[data-theme="dark"] .gg-card {
+            background: #1a1d27;
+            border-color: #2d3241;
+        }
+
+        html[data-theme="dark"] .gg-card-header {
+            border-color: #2d3241;
+        }
+
+        html[data-theme="dark"] .gg-card-header h2 {
+            color: #93c5fd;
+        }
+
+        html[data-theme="dark"] .target-strip {
+            background: #141720;
+            border-color: #2d3241;
+        }
+
+        html[data-theme="dark"] .career-row {
+            background: #141720;
+            border-color: #2d3241;
+        }
+
+        html[data-theme="dark"] .career-row h4 {
+            color: #e5e7eb;
+        }
+
+        html[data-theme="dark"] .sk-tag {
+            border-color: rgba(107, 158, 222, .35);
+            background: rgba(107, 158, 222, .1);
+            color: #6b9fde;
+        }
+
+        html[data-theme="dark"] .mini-table th,
+        html[data-theme="dark"] .mini-table td {
+            border-color: #2d3241;
+            color: #d1d5db;
+        }
+
+        html[data-theme="dark"] .mini-table tr:hover td {
+            background: #1e2231;
+        }
+
+        html[data-theme="dark"] .c-pill {
+            background: #141720;
+            border-color: #2d3241;
+            color: #d1d5db;
+        }
+
+        html[data-theme="dark"] .gg-sep {
+            border-color: #2d3241;
+        }
     </style>
 </head>
 
 <body>
-{% set active_page = 'goals' %}
-{% include 'components/sidebar.html' %}
+    {% set active_page = 'goals' %}
+    {% include 'components/sidebar.html' %}
 
-<main class="main-content">
-    <div class="dashboard-container" style="padding: 32px 28px 72px;">
+    <main class="main-content">
+        <div class="dashboard-container" style="padding: 32px 28px 72px;">
 
-        <div class="welcome-header" style="margin-bottom:28px;">
-            <h1 style="font-family:'DM Serif Display',serif;color:var(--navy);font-size:30px;margin:0 0 6px;display:flex;align-items:center;gap:12px;">
-                <i class="fas fa-bullseye" style="font-size:24px;color:var(--gold);"></i> Goals &amp; Grades
-            </h1>
-            <p style="font-size:14px;color:var(--muted);margin:0;">Select your department to begin — cards unfold as you go.</p>
-        </div>
-
-        <div class="gg-layout">
-
-            <!-- ══ STEP 0 · Department ══ -->
-            <div class="gg-card" id="card-dept">
-                <div class="gg-card-header">
-                    <h2><span class="step-number">1</span><i class="fas fa-university"></i> Department</h2>
-                    <p>Pick your department — skills and career paths will appear instantly</p>
-                </div>
-                <div class="gg-card-body">
-                    <div class="dept-wrap">
-                        <i class="fas fa-graduation-cap"></i>
-                        <select id="dept-select" class="form-input" disabled style="background:#f9fafb; cursor:not-allowed;">
-                            <option value="">— Please configure your Department in your Profile —</option>
-                            {% for group_name, depts in dept_groups %}
-                            <optgroup label="{{ group_name }}">
-                                {% for dept in depts %}
-                                <option value="{{ dept }}" {% if student.department == dept %}selected{% endif %}>{{ dept }}</option>
-                                {% endfor %}
-                            </optgroup>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    {% if not student.department %}
-                    <div style="margin-top: 12px;">
-                        <a href="{{ url_for('dashboard.student_profile') }}" class="btn-add-g" style="text-decoration:none; display:inline-flex; align-items:center; gap:6px; color:#fff; background:var(--navy); padding:6px 12px; border-radius:6px; font-size:13px; font-weight:600;">
-                            <i class="fas fa-user-edit"></i> Edit Profile to unlock
-                        </a>
-                    </div>
-                    {% else %}
-                    <div style="margin-top: 8px; font-size: 11px; text-transform: uppercase; font-weight: 700; color: var(--muted); letter-spacing: 0.5px;">
-                        <i class="fas fa-lock" style="margin-right:4px;"></i> Synced from Profile
-                    </div>
-                    {% endif %}
-
-
-                    <div id="dept-careers-wrap" style="display:none;">
-                        <div class="suggest-label"><i class="fas fa-briefcase"></i> Suggested Career Paths</div>
-                        <div class="pill-row" id="career-pills"></div>
-                    </div>
-                </div>
+            <div class="welcome-header" style="margin-bottom:28px;">
+                <h1
+                    style="font-family:'DM Serif Display',serif;color:var(--navy);font-size:30px;margin:0 0 6px;display:flex;align-items:center;gap:12px;">
+                    <i class="fas fa-bullseye" style="font-size:24px;color:var(--gold);"></i> Goals &amp; Grades
+                </h1>
+                <p style="font-size:14px;color:var(--muted);margin:0;">Your department drives your career and skill
+                    suggestions below.</p>
             </div>
 
-            <!-- ══ STEP 1 · Skills ══ -->
-            <div class="gg-card gg-collapsible" id="card-skills">
-                <div class="gg-card-header">
-                    <h2><span class="step-number">2</span><i class="fas fa-layer-group"></i> Your Skills</h2>
-                    <p>Skills power your career matches — add from suggestions or type your own</p>
-                </div>
-                <div class="gg-card-body">
+            <div class="gg-layout">
 
-                    <div id="dept-skills-wrap" style="display:none;">
-                        <div class="suggest-label"><i class="fas fa-tools"></i> Suggested for your department — click to add</div>
-                        <div class="pill-row" id="skill-pills"></div>
-                        <hr class="gg-sep">
+                <!-- ══ STEP 0 · Department (auto-loaded from profile) ══ -->
+                <div class="gg-card" id="card-dept">
+                    <div class="gg-card-header">
+                        <h2><span class="step-number">1</span><i class="fas fa-university"></i> Department</h2>
+                        <p>Loaded from your profile — skills and career paths appear automatically</p>
                     </div>
-
-                    <div class="suggest-label" style="margin-top:0;"><i class="fas fa-check-circle" style="color:var(--green);"></i> Your Current Skills</div>
-                    <div class="skill-tags-area" id="skill-tags-area">
-                        {% for ss in student_skills %}
-                        <div class="sk-tag" data-skill-id="{{ ss.id }}">
-                            <i class="fas fa-check" style="font-size:9px;"></i>
-                            {{ ss.skill_name }}
-                            <button onclick="deleteSkill({{ ss.id }}, this)" title="Remove"><i class="fas fa-times"></i></button>
+                    <div class="gg-card-body">
+                        <div class="dept-wrap">
+                            <i class="fas fa-graduation-cap"></i>
+                            <select id="dept-select" class="form-input" disabled
+                                style="background:#f9fafb; cursor:not-allowed;">
+                                <option value="">— Please configure your Department in your Profile —</option>
+                                {% for group_name, depts in dept_groups %}
+                                <optgroup label="{{ group_name }}">
+                                    {% for dept in depts %}
+                                    <option value="{{ dept }}" {% if student.department==dept %}selected{% endif %}>{{
+                                        dept }}</option>
+                                    {% endfor %}
+                                </optgroup>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        {% if not student.department %}
+                        <div style="margin-top: 12px;">
+                            <a href="{{ url_for('dashboard.student_profile') }}" class="btn-add-g"
+                                style="text-decoration:none; display:inline-flex; align-items:center; gap:6px; color:#fff; background:var(--navy); padding:6px 12px; border-radius:6px; font-size:13px; font-weight:600;">
+                                <i class="fas fa-user-edit"></i> Edit Profile to unlock
+                            </a>
                         </div>
                         {% else %}
-                        <div class="gg-empty" id="no-skills-msg" style="padding:10px 0;">
-                            <p>No skills yet — pick from suggestions or type below.</p>
+                        <div
+                            style="margin-top: 8px; font-size: 11px; text-transform: uppercase; font-weight: 700; color: var(--muted); letter-spacing: 0.5px;">
+                            <i class="fas fa-lock" style="margin-right:4px;"></i> Synced from Profile
                         </div>
-                        {% endfor %}
-                    </div>
+                        {% endif %}
 
-                    <div class="skill-add-row">
-                        <input type="text" id="skill-input" class="form-input" placeholder="e.g. Python, Machine Learning, Public Speaking…" autocomplete="off">
-                        <button id="add-skill-btn" class="btn btn-primary" onclick="addSkill()" style="white-space:nowrap;padding:10px 20px;">
-                            <i class="fas fa-plus"></i> Add Skill
-                        </button>
+
+                        <div id="dept-careers-wrap" style="display:none;">
+                            <div class="suggest-label"><i class="fas fa-briefcase"></i> Suggested Career Paths</div>
+                            <div class="pill-row" id="career-pills"></div>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- ══ STEP 2 · Career Goals ══ -->
-            <div class="gg-card gg-collapsible" id="card-goals">
-                <div class="gg-card-header">
-                    <h2><span class="step-number">3</span><i class="fas fa-star"></i> Career Goals</h2>
-                    <p>Set your target CGPA and choose career paths you're working towards</p>
-                </div>
-                <div class="gg-card-body">
-
-                    <div class="target-strip">
-                        <i class="fas fa-trophy" style="color:var(--gold);font-size:16px;"></i>
-                        <label>Target CGPA</label>
-                        <input type="number" id="target-cgpa-input" class="form-input" step="0.01" min="0" max="4.0"
-                            value="{{ student.target_cgpa or '' }}" placeholder="e.g. 3.50"
-                            onkeydown="if(event.key==='Enter'){event.preventDefault();saveTargetCgpa();}">
-                        <button id="cgpa-save-btn" class="btn btn-primary" onclick="saveTargetCgpa()" style="padding:8px 16px;font-size:12px;">
-                            <i class="fas fa-save"></i> Save
-                        </button>
-                        <span id="cgpa-save-status"><i class="fas fa-check"></i> Saved</span>
-                        <span class="cur">Current: <strong id="live-cgpa">{{ student.current_cgpa or 'N/A' }}</strong></span>
+                <!-- ══ STEP 1 · Skills ══ -->
+                <div class="gg-card gg-collapsible" id="card-skills">
+                    <div class="gg-card-header">
+                        <h2><span class="step-number">2</span><i class="fas fa-layer-group"></i> Your Skills</h2>
+                        <p>Skills power your career matches — add from suggestions or type your own</p>
                     </div>
+                    <div class="gg-card-body">
 
-                    <div class="sub-label"><i class="fas fa-search"></i> Select Career Goal Manually</div>
-                    <div class="skill-add-row" style="margin-bottom:28px;gap:10px;">
-                        <select id="manual-career-select" class="form-input" style="flex:2;">
-                            <option value="">— Choose a career path —</option>
-                            {% for c in all_careers %}
-                            <option value="{{ c.id }}">{{ c.title }}</option>
-                            {% endfor %}
-                        </select>
-                        <select id="manual-goal-type" class="form-input" style="flex:1;">
-                            <option value="Long Term">Long Term</option>
-                            <option value="Short Term">Short Term</option>
-                        </select>
-                        <button id="add-manual-goal-btn" class="btn btn-primary" onclick="addManualGoal()" style="white-space:nowrap;padding:10px 20px;">
-                            <i class="fas fa-plus"></i> Add Goal
-                        </button>
-                    </div>
+                        <div id="dept-skills-wrap" style="display:none;">
+                            <div class="suggest-label"><i class="fas fa-tools"></i> Suggested for your department —
+                                click to add</div>
+                            <div class="pill-row" id="skill-pills"></div>
+                            <hr class="gg-sep">
+                        </div>
 
-                    <div class="sub-label"><i class="fas fa-magic"></i> Matches Based on Your Skills</div>
-                    <div id="matching-careers-area">
-                        {% if matching_careers %}
-                        <div class="career-list">
-                            {% for career in matching_careers %}
-                            <div class="career-row" id="cr-{{ career.id }}">
-                                <div>
-                                    <h4>{{ career.title }}{% if career.id in goal_career_ids %}<span class="badge-added">ADDED</span>{% endif %}</h4>
-                                    <span><strong>{{ career.match_count }}</strong> skills matched &middot; {{ career.field_category or '' }}</span>
-                                </div>
-                                <div class="career-actions">
-                                    {% if career.id not in goal_career_ids %}
-                                    <select class="goal-type-sel" id="gt-{{ career.id }}">
-                                        <option value="Long Term">Long Term</option>
-                                        <option value="Short Term">Short Term</option>
-                                    </select>
-                                    <button class="btn-add-g" onclick="addGoal({{ career.id }})"><i class="fas fa-plus"></i> Add</button>
-                                    {% else %}
-                                    <button class="btn-rm-g" onclick="deleteGoalByCareer({{ career.id }})"><i class="fas fa-times"></i> Remove</button>
-                                    {% endif %}
-                                </div>
+                        <div class="suggest-label" style="margin-top:0;"><i class="fas fa-check-circle"
+                                style="color:var(--green);"></i> Your Current Skills</div>
+                        <div class="skill-tags-area" id="skill-tags-area">
+                            {% for ss in student_skills %}
+                            <div class="sk-tag" data-skill-id="{{ ss.id }}">
+                                <i class="fas fa-check" style="font-size:9px;"></i>
+                                {{ ss.skill_name }}
+                                <button onclick="deleteSkill({{ ss.id }}, this)" title="Remove"><i
+                                        class="fas fa-times"></i></button>
+                            </div>
+                            {% else %}
+                            <div class="gg-empty" id="no-skills-msg" style="padding:10px 0;">
+                                <p>No skills yet — pick from suggestions or type below.</p>
                             </div>
                             {% endfor %}
                         </div>
-                        {% else %}
-                        <div class="gg-empty">
-                            <i class="fas fa-search"></i>
-                            <p>Add skills above to see matching career paths here.</p>
-                        </div>
-                        {% endif %}
-                    </div>
 
-                    {% if goals %}
-                    <hr class="gg-sep">
-                    <div class="sub-label">Your Saved Goals</div>
-                    <table class="mini-table" id="goals-table">
-                        <thead><tr><th>Career</th><th>Type</th><th>Priority</th><th></th></tr></thead>
-                        <tbody id="goals-tbody">
-                            {% for g in goals %}
-                            <tr id="goal-row-{{ g.id }}" data-goal-id="{{ g.id }}" data-career-id="{{ g.career_id }}">
-                                <td><strong>{{ g.career_title | e }}</strong></td>
-                                <td>{{ g.goal_type }}</td>
-                                <td>{% if g.is_primary %}<span class="badge-primary">PRIMARY</span>{% else %}<button class="btn-set-primary" onclick="setPrimary({{ g.id }})">Set Primary</button>{% endif %}</td>
-                                <td><button class="btn-del" onclick="deleteGoal({{ g.id }})" title="Delete"><i class="fas fa-trash"></i></button></td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                    {% else %}
-                    <hr class="gg-sep" id="goals-sep" style="display:none;">
-                    <div class="sub-label" id="goals-saved-label" style="display:none;">Your Saved Goals</div>
-                    {% endif %}
-                </div>
-            </div>
-
-            <!-- ══ STEP 3 · Add Grade ══ -->
-            <div class="gg-card gg-collapsible" id="card-grade">
-                <div class="gg-card-header">
-                    <h2><span class="step-number">4</span><i class="fas fa-plus-circle"></i> Add a Grade</h2>
-                    <p>Each grade instantly recalculates your CGPA — no page refresh needed</p>
-                </div>
-                <div class="gg-card-body">
-                    <div class="grade-grid">
-                        <div class="fg">
-                            <label>Course Name</label>
-                            <input type="text" id="g-course" class="form-input" list="course-list" placeholder="e.g. Data Structures" autocomplete="off">
-                            <datalist id="course-list">
-                                {% set seen_courses = [] %}
-                                {% for r in records %}
-                                {% if r.course_name not in seen_courses %}
-                                <option value="{{ r.course_name | e }}">
-                                {% if seen_courses.append(r.course_name) %}{% endif %}
-                                {% endif %}
-                                {% endfor %}
-                            </datalist>
-                        </div>
-                        <div class="fg">
-                            <label>Type</label>
-                            <select id="g-type" class="form-input">
-                                <option value="Core">Core (Major)</option>
-                                <option value="GED">GED (Gen Ed)</option>
-                                <option value="Elective">Elective</option>
-                            </select>
-                        </div>
-                        <div class="fg">
-                            <label>Credits</label>
-                            <input type="number" id="g-credits" class="form-input" value="3" min="1" max="6">
-                        </div>
-                        <div class="fg">
-                            <label>Semester</label>
-                            <select id="g-sem" class="form-input">
-                                {% for i in range(1, 13) %}
-                                <option value="{{ i }}">Sem {{ i }}{% if i <= 3 %} (Y1){% elif i <= 6 %} (Y2){% elif i <= 9 %} (Y3){% else %} (Y4){% endif %}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="fg">
-                            <label>Grade</label>
-                            <select id="g-grade" class="form-input">
-                                <option value="">Grade…</option>
-                                <option value="A+">A+ (4.0)</option>
-                                <option value="A">A (4.0)</option>
-                                <option value="A-">A- (3.7)</option>
-                                <option value="B+">B+ (3.3)</option>
-                                <option value="B">B (3.0)</option>
-                                <option value="B-">B- (2.7)</option>
-                                <option value="C+">C+ (2.3)</option>
-                                <option value="C">C (2.0)</option>
-                                <option value="D">D (1.0)</option>
-                                <option value="F">F (0.0)</option>
-                            </select>
-                        </div>
-                        <div class="fg">
-                            <label>&nbsp;</label>
-                            <button id="add-grade-btn" class="btn btn-primary" onclick="addGrade()" style="width:100%;padding:10px 14px;">
-                                <i class="fas fa-plus"></i> Add
+                        <div class="skill-add-row">
+                            <input type="text" id="skill-input" class="form-input"
+                                placeholder="e.g. Python, Machine Learning, Public Speaking…" autocomplete="off">
+                            <button id="add-skill-btn" class="btn btn-primary" onclick="addSkill()"
+                                style="white-space:nowrap;padding:10px 20px;">
+                                <i class="fas fa-plus"></i> Add Skill
                             </button>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- ══ STEP 4 · Academic Record ══ -->
-            <div class="gg-card gg-collapsible" id="card-records">
-                <div class="gg-card-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
-                    <div>
-                        <h2><span class="step-number">5</span><i class="fas fa-graduation-cap"></i> Academic Record</h2>
-                        <p style="margin:0;">All grades — CGPA updates automatically</p>
+                <!-- ══ STEP 2 · Career Goals ══ -->
+                <div class="gg-card gg-collapsible" id="card-goals">
+                    <div class="gg-card-header">
+                        <h2><span class="step-number">3</span><i class="fas fa-star"></i> Career Goals</h2>
+                        <p>Set your target CGPA and choose career paths you're working towards</p>
                     </div>
-                    <div class="cgpa-chip" id="cgpa-chip-header">
-                        <i class="fas fa-chart-line" style="font-size:12px;"></i>
-                        CGPA <span id="cgpa-chip-val">{{ student.current_cgpa or 'N/A' }}</span>
+                    <div class="gg-card-body">
+
+                        <div class="target-strip">
+                            <i class="fas fa-trophy" style="color:var(--gold);font-size:16px;"></i>
+                            <label>Target CGPA</label>
+                            <input type="number" id="target-cgpa-input" class="form-input" step="0.01" min="0" max="4.0"
+                                value="{{ student.target_cgpa or '' }}" placeholder="e.g. 3.50"
+                                onkeydown="if(event.key==='Enter'){event.preventDefault();saveTargetCgpa();}">
+                            <button id="cgpa-save-btn" class="btn btn-primary" onclick="saveTargetCgpa()"
+                                style="padding:8px 16px;font-size:12px;">
+                                <i class="fas fa-save"></i> Save
+                            </button>
+                            <span id="cgpa-save-status"><i class="fas fa-check"></i> Saved</span>
+                            <span class="cur">Current: <strong id="live-cgpa">{{ student.current_cgpa or 'N/A'
+                                    }}</strong></span>
+                        </div>
+
+                        <div class="sub-label"><i class="fas fa-search"></i> Select Career Goal Manually</div>
+                        <div class="skill-add-row" style="margin-bottom:28px;gap:10px;">
+                            <select id="manual-career-select" class="form-input" style="flex:2;">
+                                <option value="">— Choose a career path —</option>
+                                {% for c in all_careers %}
+                                <option value="{{ c.id }}">{{ c.title }}</option>
+                                {% endfor %}
+                            </select>
+                            <select id="manual-goal-type" class="form-input" style="flex:1;">
+                                <option value="Long Term">Long Term</option>
+                                <option value="Short Term">Short Term</option>
+                            </select>
+                            <button id="add-manual-goal-btn" class="btn btn-primary" onclick="addManualGoal()"
+                                style="white-space:nowrap;padding:10px 20px;">
+                                <i class="fas fa-plus"></i> Add Goal
+                            </button>
+                        </div>
+
+                        <div class="sub-label"><i class="fas fa-magic"></i> Matches Based on Your Skills</div>
+                        <div id="matching-careers-area">
+                            {% if matching_careers %}
+                            <div class="career-list">
+                                {% for career in matching_careers %}
+                                <div class="career-row" id="cr-{{ career.id }}">
+                                    <div>
+                                        <h4>{{ career.title }}{% if career.id in goal_career_ids %}<span
+                                                class="badge-added">ADDED</span>{% endif %}</h4>
+                                        <span><strong>{{ career.match_count }}</strong> skills matched &middot; {{
+                                            career.field_category or '' }}</span>
+                                    </div>
+                                    <div class="career-actions">
+                                        {% if career.id not in goal_career_ids %}
+                                        <select class="goal-type-sel" id="gt-{{ career.id }}">
+                                            <option value="Long Term">Long Term</option>
+                                            <option value="Short Term">Short Term</option>
+                                        </select>
+                                        <button class="btn-add-g" onclick="addGoal({{ career.id }})"><i
+                                                class="fas fa-plus"></i> Add</button>
+                                        {% else %}
+                                        <button class="btn-rm-g" onclick="deleteGoalByCareer({{ career.id }})"><i
+                                                class="fas fa-times"></i> Remove</button>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <div class="gg-empty">
+                                <i class="fas fa-search"></i>
+                                <p>Add skills above to see matching career paths here.</p>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        {% if goals %}
+                        <hr class="gg-sep">
+                        <div class="sub-label">Your Saved Goals</div>
+                        <table class="mini-table" id="goals-table">
+                            <thead>
+                                <tr>
+                                    <th>Career</th>
+                                    <th>Type</th>
+                                    <th>Priority</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="goals-tbody">
+                                {% for g in goals %}
+                                <tr id="goal-row-{{ g.id }}" data-goal-id="{{ g.id }}"
+                                    data-career-id="{{ g.career_id }}">
+                                    <td><strong>{{ g.career_title | e }}</strong></td>
+                                    <td>{{ g.goal_type }}</td>
+                                    <td>{% if g.is_primary %}<span class="badge-primary">PRIMARY</span>{% else %}<button
+                                            class="btn-set-primary" onclick="setPrimary({{ g.id }})">Set
+                                            Primary</button>{% endif %}</td>
+                                    <td><button class="btn-del" onclick="deleteGoal({{ g.id }})" title="Delete"><i
+                                                class="fas fa-trash"></i></button></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        {% else %}
+                        <hr class="gg-sep" id="goals-sep" style="display:none;">
+                        <div class="sub-label" id="goals-saved-label" style="display:none;">Your Saved Goals</div>
+                        {% endif %}
                     </div>
                 </div>
-                <div style="overflow-x:auto;" id="records-wrap">
-                    {% if records %}
-                    <table class="mini-table" style="margin:0;" id="records-table">
-                        <thead>
-                            <tr>
-                                <th style="padding-left:24px;">Course</th>
-                                <th>Type</th><th>Semester</th><th>Grade</th><th>GPA pts</th><th>Credits</th>
-                                <th style="padding-right:24px;"></th>
-                            </tr>
-                        </thead>
-                        <tbody id="records-tbody">
-                            {% for r in records %}
-                            <tr id="rec-{{ r.id }}">
-                                <td style="padding-left:24px;font-weight:500;">{{ r.course_name | e }}</td>
-                                <td><span class="type-badge type-{{ r.course_type | lower }}">{{ r.course_type }}</span></td>
-                                <td>Sem {{ r.semester_taken }}</td>
-                                <td><strong>{{ r.grade }}</strong></td>
-                                <td>{{ r.grade_point }}</td>
-                                <td>{{ r.credit_value }}cr</td>
-                                <td style="padding-right:24px;">
-                                    <button class="btn-del" onclick="deleteGrade({{ r.id }})" title="Delete"><i class="fas fa-trash"></i></button>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                    {% else %}
-                    <div class="gg-empty" id="records-empty">
-                        <i class="fas fa-book-open"></i>
-                        <p>No grades yet. Add your first course grade above.</p>
+
+                <!-- ══ STEP 3 · Add Grade ══ -->
+                <div class="gg-card gg-collapsible" id="card-grade">
+                    <div class="gg-card-header">
+                        <h2><span class="step-number">4</span><i class="fas fa-plus-circle"></i> Add a Grade</h2>
+                        <p>Each grade instantly recalculates your CGPA — no page refresh needed</p>
                     </div>
-                    {% endif %}
+                    <div class="gg-card-body">
+                        <div class="grade-grid">
+                            <div class="fg">
+                                <label>Course Name</label>
+                                <input type="text" id="g-course" class="form-input" list="course-list"
+                                    placeholder="e.g. Data Structures" autocomplete="off">
+                                <datalist id="course-list">
+                                    {% set seen_courses = [] %}
+                                    {% for r in records %}
+                                    {% if r.course_name not in seen_courses %}
+                                    <option value="{{ r.course_name | e }}">
+                                        {% if seen_courses.append(r.course_name) %}{% endif %}
+                                        {% endif %}
+                                        {% endfor %}
+                                </datalist>
+                            </div>
+                            <div class="fg">
+                                <label>Type</label>
+                                <select id="g-type" class="form-input">
+                                    <option value="Core">Core (Major)</option>
+                                    <option value="GED">GED (Gen Ed)</option>
+                                    <option value="Elective">Elective</option>
+                                </select>
+                            </div>
+                            <div class="fg">
+                                <label>Credits</label>
+                                <input type="number" id="g-credits" class="form-input" value="3" min="1" max="6">
+                            </div>
+                            <div class="fg">
+                                <label>Semester</label>
+                                <select id="g-sem" class="form-input">
+                                    {% for i in range(1, 13) %}
+                                    <option value="{{ i }}">Sem {{ i }}{% if i <= 3 %} (Y1){% elif i <=6 %} (Y2){% elif
+                                            i <=9 %} (Y3){% else %} (Y4){% endif %}</option>
+                                            {% endfor %}
+                                </select>
+                            </div>
+                            <div class="fg">
+                                <label>Grade</label>
+                                <select id="g-grade" class="form-input">
+                                    <option value="">Grade…</option>
+                                    <option value="A+">A+ (4.0)</option>
+                                    <option value="A">A (4.0)</option>
+                                    <option value="A-">A- (3.7)</option>
+                                    <option value="B+">B+ (3.3)</option>
+                                    <option value="B">B (3.0)</option>
+                                    <option value="B-">B- (2.7)</option>
+                                    <option value="C+">C+ (2.3)</option>
+                                    <option value="C">C (2.0)</option>
+                                    <option value="D">D (1.0)</option>
+                                    <option value="F">F (0.0)</option>
+                                </select>
+                            </div>
+                            <div class="fg">
+                                <label>&nbsp;</label>
+                                <button id="add-grade-btn" class="btn btn-primary" onclick="addGrade()"
+                                    style="width:100%;padding:10px 14px;">
+                                    <i class="fas fa-plus"></i> Add
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-        </div><!-- gg-layout -->
-    </div><!-- dashboard-container -->
-</main>
+                <!-- ══ STEP 4 · Academic Record ══ -->
+                <div class="gg-card gg-collapsible" id="card-records">
+                    <div class="gg-card-header"
+                        style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+                        <div>
+                            <h2><span class="step-number">5</span><i class="fas fa-graduation-cap"></i> Academic Record
+                            </h2>
+                            <p style="margin:0;">All grades — CGPA updates automatically</p>
+                        </div>
+                        <div class="cgpa-chip" id="cgpa-chip-header">
+                            <i class="fas fa-chart-line" style="font-size:12px;"></i>
+                            CGPA <span id="cgpa-chip-val">{{ student.current_cgpa or 'N/A' }}</span>
+                        </div>
+                    </div>
+                    <div style="overflow-x:auto;" id="records-wrap">
+                        {% if records %}
+                        <table class="mini-table" style="margin:0;" id="records-table">
+                            <thead>
+                                <tr>
+                                    <th style="padding-left:24px;">Course</th>
+                                    <th>Type</th>
+                                    <th>Semester</th>
+                                    <th>Grade</th>
+                                    <th>GPA pts</th>
+                                    <th>Credits</th>
+                                    <th style="padding-right:24px;"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="records-tbody">
+                                {% for r in records %}
+                                <tr id="rec-{{ r.id }}">
+                                    <td style="padding-left:24px;font-weight:500;">{{ r.course_name | e }}</td>
+                                    <td><span class="type-badge type-{{ r.course_type | lower }}">{{ r.course_type
+                                            }}</span></td>
+                                    <td>Sem {{ r.semester_taken }}</td>
+                                    <td><strong>{{ r.grade }}</strong></td>
+                                    <td>{{ r.grade_point }}</td>
+                                    <td>{{ r.credit_value }}cr</td>
+                                    <td style="padding-right:24px;">
+                                        <button class="btn-del" onclick="deleteGrade({{ r.id }})" title="Delete"><i
+                                                class="fas fa-trash"></i></button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        {% else %}
+                        <div class="gg-empty" id="records-empty">
+                            <i class="fas fa-book-open"></i>
+                            <p>No grades yet. Add your first course grade above.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
 
-<div id="gg-toast"><i class="fas fa-check-circle" id="gg-toast-icon"></i><span id="gg-toast-msg"></span></div>
+            </div><!-- gg-layout -->
+        </div><!-- dashboard-container -->
+    </main>
 
-<script>
-// ═══════════════════════════════════════════════════════════
-//  Utilities
-// ═══════════════════════════════════════════════════════════
-function esc(s) {
-    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
+    <div id="gg-toast"><i class="fas fa-check-circle" id="gg-toast-icon"></i><span id="gg-toast-msg"></span></div>
 
-function toast(msg, err = false) {
-    const el = document.getElementById('gg-toast');
-    const icon = document.getElementById('gg-toast-icon');
-    el.className = 'show' + (err ? ' err' : '');
-    icon.className = err ? 'fas fa-exclamation-circle' : 'fas fa-check-circle';
-    document.getElementById('gg-toast-msg').textContent = msg;
-    clearTimeout(el._t);
-    el._t = setTimeout(() => el.classList.remove('show', 'err'), 3200);
-}
-
-async function api(url, body = null) {
-    const opts = body !== null
-        ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }
-        : { method: 'GET' };
-    const r = await fetch(url, opts);
-    return r.json();
-}
-
-function setLoading(btn, on) {
-    if (!btn) return;
-    btn.disabled = on;
-    if (on) { btn.dataset.orig = btn.innerHTML; btn.innerHTML = '<i class="fas fa-circle-notch spin"></i>'; }
-    else btn.innerHTML = btn.dataset.orig;
-}
-
-// careerId → goalId map and lowercase title → goalId map, built from goals
-const careerGoalMap = new Map();
-const careerTitleMap = new Map();
-{% for g in goals %}
-careerGoalMap.set({{ g.career_id }}, {{ g.id }});
-careerTitleMap.set({{ g.career_title | tojson | lower }}, {{ g.id }});
-{% endfor %}
-
-// Snapshot career data as plain objects at init — DOM refs become stale when innerHTML is cleared
-const _careerSelectEl = document.getElementById('manual-career-select');
-const allCareerOptionsData = Array.from(_careerSelectEl.options).map(o => ({ value: o.value, text: o.text }));
-const defaultCareerOptionData = allCareerOptionsData[0];
-const careerOptionsData = allCareerOptionsData.slice(1); // [{value, text}, ...]
-
-// ═══════════════════════════════════════════════════════════
-//  Wizard: card reveal sequence
-// ═══════════════════════════════════════════════════════════
-const CARDS = ['card-skills', 'card-goals', 'card-grade', 'card-records'];
-let revealedUpTo = -1;
-
-function revealCardsUpTo(index) {
-    CARDS.forEach((id, i) => {
-        const el = document.getElementById(id);
-        if (!el) return;
-        if (i <= index && !el.classList.contains('card-visible')) {
-            setTimeout(() => {
-                el.classList.add('card-visible');
-                setTimeout(() => el.classList.add('card-flash'), 50);
-            }, (i - revealedUpTo - 1) * 160);
+    <script>
+        // ═══════════════════════════════════════════════════════════
+        //  Utilities
+        // ═══════════════════════════════════════════════════════════
+        function esc(s) {
+            return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
         }
-    });
-    revealedUpTo = Math.max(revealedUpTo, index);
-}
 
-// On load: if dept already selected, reveal all immediately (returning student)
-(function initReveal() {
-    const dept = document.getElementById('dept-select').value;
-    if (dept) {
-        revealCardsUpTo(3);
-        loadDeptData(dept, true);
-    }
-})();
-
-// ═══════════════════════════════════════════════════════════
-//  Department selector
-// ═══════════════════════════════════════════════════════════
-const deptCache = new Map();
-
-document.getElementById('dept-select').addEventListener('change', function () {
-    const dept = this.value;
-    if (!dept) return;
-    revealCardsUpTo(3);
-    loadDeptData(dept, false);
-});
-
-async function loadDeptData(dept, silent) {
-    if (deptCache.has(dept)) {
-        applyDeptData(deptCache.get(dept));
-        return;
-    }
-
-    // Show loading state
-    const pillsEl = document.getElementById('career-pills');
-    const skillsEl = document.getElementById('skill-pills');
-    const careersWrap = document.getElementById('dept-careers-wrap');
-    const skillsWrap = document.getElementById('dept-skills-wrap');
-    careersWrap.style.display = '';
-    skillsWrap.style.display = '';
-    pillsEl.innerHTML = '<span style="color:var(--muted);font-size:13px;"><i class="fas fa-circle-notch spin"></i> Loading career paths…</span>';
-    skillsEl.innerHTML = '<span style="color:var(--muted);font-size:13px;"><i class="fas fa-circle-notch spin"></i> Loading skills…</span>';
-
-    try {
-        const r = await fetch(`/api/department-data?dept=${encodeURIComponent(dept)}`);
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        const d = await r.json();
-        deptCache.set(dept, d);
-        applyDeptData(d);
-    } catch (err) {
-        pillsEl.innerHTML = '<span style="color:var(--red);font-size:13px;"><i class="fas fa-exclamation-circle"></i> Failed to load career data. Please try again.</span>';
-        skillsEl.innerHTML = '';
-        console.error('loadDeptData error:', err);
-    }
-}
-
-function applyDeptData(d) {
-    buildCareerPills(d.careers || []);
-    buildSkillChips(d.skills || []);
-
-    // Rebuild select from static data snapshot (NOT from DOM — those refs go stale after innerHTML clear)
-    const sel = document.getElementById('manual-career-select');
-    sel.innerHTML = '';
-
-    const defOpt = document.createElement('option');
-    defOpt.value = defaultCareerOptionData.value;
-    defOpt.textContent = defaultCareerOptionData.text;
-    sel.appendChild(defOpt);
-
-    const relevantNames = (d.careers || []).map(n => n.toLowerCase().trim());
-    const relatedGrp = document.createElement('optgroup');
-    relatedGrp.label = 'Suggested Paths';
-    const otherGrp = document.createElement('optgroup');
-    otherGrp.label = 'Other Paths';
-
-    careerOptionsData.forEach(data => {
-        const opt = document.createElement('option');
-        opt.value = data.value;
-        opt.textContent = data.text;
-        if (relevantNames.includes(data.text.toLowerCase().trim())) {
-            relatedGrp.appendChild(opt);
-        } else {
-            otherGrp.appendChild(opt);
+        function toast(msg, err = false) {
+            const el = document.getElementById('gg-toast');
+            const icon = document.getElementById('gg-toast-icon');
+            el.className = 'show' + (err ? ' err' : '');
+            icon.className = err ? 'fas fa-exclamation-circle' : 'fas fa-check-circle';
+            document.getElementById('gg-toast-msg').textContent = msg;
+            clearTimeout(el._t);
+            el._t = setTimeout(() => el.classList.remove('show', 'err'), 3200);
         }
-    });
 
-    if (relatedGrp.children.length > 0) sel.appendChild(relatedGrp);
-    if (otherGrp.children.length > 0) sel.appendChild(otherGrp);
-}
+        async function api(url, body = null) {
+            const opts = body !== null
+                ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }
+                : { method: 'GET' };
+            const r = await fetch(url, opts);
+            return r.json();
+        }
 
-function buildCareerPills(careers) {
-    const grid = document.getElementById('career-pills');
-    const wrap = document.getElementById('dept-careers-wrap');
-    grid.innerHTML = '';
+        function setLoading(btn, on) {
+            if (!btn) return;
+            btn.disabled = on;
+            if (on) { btn.dataset.orig = btn.innerHTML; btn.innerHTML = '<i class="fas fa-circle-notch spin"></i>'; }
+            else btn.innerHTML = btn.dataset.orig;
+        }
 
-    careers.forEach(c => {
-        let careerId = null;
-        const cLower = c.toLowerCase().trim();
-        // Look up from data snapshot (not stale DOM refs)
-        for (let i = 0; i < careerOptionsData.length; i++) {
-            if (careerOptionsData[i].text.toLowerCase().trim() === cLower) {
-                careerId = parseInt(careerOptionsData[i].value);
-                break;
+        // careerId → goalId map and lowercase title → goalId map, built from goals
+        const careerGoalMap = new Map();
+        const careerTitleMap = new Map();
+        {% for g in goals %}
+        careerGoalMap.set({{ g.career_id }}, {{ g.id }});
+        careerTitleMap.set({{ g.career_title | tojson | lower }}, {{ g.id }});
+        {% endfor %}
+
+
+        // Snapshot career data as plain objects at init — DOM refs become stale when innerHTML is cleared
+        const _careerSelectEl = document.getElementById('manual-career-select');
+        const allCareerOptionsData = Array.from(_careerSelectEl.options).map(o => ({ value: o.value, text: o.text }));
+        const defaultCareerOptionData = allCareerOptionsData[0];
+        const careerOptionsData = allCareerOptionsData.slice(1); // [{value, text}, ...]
+
+        // ═══════════════════════════════════════════════════════════
+        //  Wizard: card reveal sequence
+        // ═══════════════════════════════════════════════════════════
+        const CARDS = ['card-skills', 'card-goals', 'card-grade', 'card-records'];
+        let revealedUpTo = -1;
+
+        function revealCardsUpTo(index) {
+            CARDS.forEach((id, i) => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                if (i <= index && !el.classList.contains('card-visible')) {
+                    setTimeout(() => {
+                        el.classList.add('card-visible');
+                        setTimeout(() => el.classList.add('card-flash'), 50);
+                    }, (i - revealedUpTo - 1) * 160);
+                }
+            });
+            revealedUpTo = Math.max(revealedUpTo, index);
+        }
+
+        // On load: if dept already selected, reveal all immediately (returning student)
+        (function initReveal() {
+            try {
+                const dept = document.getElementById('dept-select').value;
+                if (dept) {
+                    revealCardsUpTo(3);
+                    loadDeptData(dept, true);
+                }
+            } catch (e) {
+                console.warn('initReveal error:', e);
+                // Failsafe: force-reveal all cards so page isn't blank
+                CARDS.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) { el.classList.add('card-visible'); }
+                });
+            }
+        })();
+
+        // ═══════════════════════════════════════════════════════════
+        //  Department selector
+        // ═══════════════════════════════════════════════════════════
+        const deptCache = new Map();
+        // Department is now auto-loaded from the student's profile — no manual change listener needed.
+
+        async function loadDeptData(dept, silent) {
+            if (deptCache.has(dept)) {
+                applyDeptData(deptCache.get(dept));
+                return;
+            }
+
+            // Show loading state
+            const pillsEl = document.getElementById('career-pills');
+            const skillsEl = document.getElementById('skill-pills');
+            const careersWrap = document.getElementById('dept-careers-wrap');
+            const skillsWrap = document.getElementById('dept-skills-wrap');
+            careersWrap.style.display = '';
+            skillsWrap.style.display = '';
+            pillsEl.innerHTML = '<span style="color:var(--muted);font-size:13px;"><i class="fas fa-circle-notch spin"></i> Loading career paths…</span>';
+            skillsEl.innerHTML = '<span style="color:var(--muted);font-size:13px;"><i class="fas fa-circle-notch spin"></i> Loading skills…</span>';
+
+            try {
+                const r = await fetch(`/api/department-data?dept=${encodeURIComponent(dept)}`);
+                if (!r.ok) throw new Error(`HTTP ${r.status}`);
+                const d = await r.json();
+                deptCache.set(dept, d);
+                applyDeptData(d);
+            } catch (err) {
+                pillsEl.innerHTML = '<span style="color:var(--red);font-size:13px;"><i class="fas fa-exclamation-circle"></i> Failed to load career data. Please try again.</span>';
+                skillsEl.innerHTML = '';
+                console.error('loadDeptData error:', err);
             }
         }
 
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'c-pill';
-        btn.innerHTML = `<i class="fas fa-briefcase"></i> ${esc(c)}`;
+        function applyDeptData(d) {
+            buildCareerPills(d.careers || []);
+            buildSkillChips(d.skills || []);
 
-        if ((careerId && careerGoalMap.has(careerId)) || careerTitleMap.has(cLower)) {
-            btn.classList.add('s-added');
-            btn.style.borderColor = '#d1d5db';
-            btn.style.background = '#f3f4f6';
-            btn.style.color = '#9ca3af';
-            btn.style.cursor = 'default';
-        } else {
-            btn.onclick = async () => {
-                setLoading(btn, true);
-                const apiRes = await api('/api/gg/goal/add', { career_id: careerId, career_title: c, goal_type: 'Long Term' });
-                setLoading(btn, false);
-                if (!apiRes.ok) { toast(apiRes.msg || 'Error', true); return; }
-                toast('Goal added!');
+            // Rebuild select from static data snapshot (NOT from DOM — those refs go stale after innerHTML clear)
+            const sel = document.getElementById('manual-career-select');
+            sel.innerHTML = '';
 
-                if (apiRes.new_career_id) careerId = apiRes.new_career_id;
+            const defOpt = document.createElement('option');
+            defOpt.value = defaultCareerOptionData.value;
+            defOpt.textContent = defaultCareerOptionData.text;
+            sel.appendChild(defOpt);
 
-                btn.classList.add('s-added');
-                btn.style.borderColor = '#d1d5db';
-                btn.style.background = '#f3f4f6';
-                btn.style.color = '#9ca3af';
-                btn.style.cursor = 'default';
-                btn.onclick = null;
+            const relevantNames = (d.careers || []).map(n => n.toLowerCase().trim());
+            const relatedGrp = document.createElement('optgroup');
+            relatedGrp.label = 'Suggested Paths';
+            const otherGrp = document.createElement('optgroup');
+            otherGrp.label = 'Other Paths';
 
-                await refreshGoalsTable();
-                if (careerId) swapCareerRowToRemove(careerId, apiRes.goal_id);
-            };
+            careerOptionsData.forEach(data => {
+                const opt = document.createElement('option');
+                opt.value = data.value;
+                opt.textContent = data.text;
+                if (relevantNames.includes(data.text.toLowerCase().trim())) {
+                    relatedGrp.appendChild(opt);
+                } else {
+                    otherGrp.appendChild(opt);
+                }
+            });
+
+            if (relatedGrp.children.length > 0) sel.appendChild(relatedGrp);
+            if (otherGrp.children.length > 0) sel.appendChild(otherGrp);
         }
-        grid.appendChild(btn);
-    });
-    wrap.style.display = careers.length ? '' : 'none';
-}
 
-function buildSkillChips(skills) {
-    const grid = document.getElementById('skill-pills');
-    const wrap = document.getElementById('dept-skills-wrap');
-    grid.innerHTML = '';
-    skills.forEach(s => {
-        const added = existingSkillNames.has(s.toLowerCase());
-        const ch = document.createElement('button');
-        ch.type = 'button';
-        ch.className = 's-chip' + (added ? ' s-added' : '');
-        ch.innerHTML = added ? `<i class="fas fa-check"></i> ${esc(s)}` : `<i class="fas fa-plus"></i> ${esc(s)}`;
-        ch.title = added ? 'Already in your skills' : `Add "${s}"`;
-        if (!added) ch.onclick = () => quickAddSkill(s, ch);
-        grid.appendChild(ch);
-    });
-    wrap.style.display = skills.length ? '' : 'none';
-}
+        function buildCareerPills(careers) {
+            const grid = document.getElementById('career-pills');
+            const wrap = document.getElementById('dept-careers-wrap');
+            grid.innerHTML = '';
 
-// ═══════════════════════════════════════════════════════════
-//  Skills
-// ═══════════════════════════════════════════════════════════
-let existingSkillNames = new Set([{{ student_skills | map(attribute='skill_name') | map('tojson') | join(', ') }}].map(s => s.toLowerCase()));
+            careers.forEach(c => {
+                let careerId = null;
+                const cLower = c.toLowerCase().trim();
+                // Look up from data snapshot (not stale DOM refs)
+                for (let i = 0; i < careerOptionsData.length; i++) {
+                    if (careerOptionsData[i].text.toLowerCase().trim() === cLower) {
+                        careerId = parseInt(careerOptionsData[i].value);
+                        break;
+                    }
+                }
 
-document.getElementById('skill-input').addEventListener('keydown', e => {
-    if (e.key === 'Enter') { e.preventDefault(); addSkill(); }
-});
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'c-pill';
+                btn.innerHTML = `<i class="fas fa-briefcase"></i> ${esc(c)}`;
 
-async function addSkill() {
-    const inp = document.getElementById('skill-input');
-    const btn = document.getElementById('add-skill-btn');
-    const name = inp.value.trim();
-    if (!name) { inp.focus(); return; }
-    setLoading(btn, true);
-    const d = await api('/api/gg/skill/add', { skill_name: name });
-    setLoading(btn, false);
-    if (!d.ok) { toast(d.msg || 'Error adding skill', true); return; }
-    inp.value = '';
-    refreshSkillTags(d.skills);
-    markChipAdded(name);
-    await refreshGoalsTable(); // Re-fetch matches
-    toast(`✓ "${name}" added`);
-}
+                if ((careerId && careerGoalMap.has(careerId)) || careerTitleMap.has(cLower)) {
+                    btn.classList.add('s-added');
+                    btn.style.borderColor = '#d1d5db';
+                    btn.style.background = '#f3f4f6';
+                    btn.style.color = '#9ca3af';
+                    btn.style.cursor = 'default';
+                } else {
+                    btn.onclick = async () => {
+                        setLoading(btn, true);
+                        const apiRes = await api('/api/gg/goal/add', { career_id: careerId, career_title: c, goal_type: 'Long Term' });
+                        setLoading(btn, false);
+                        if (!apiRes.ok) { toast(apiRes.msg || 'Error', true); return; }
+                        toast('Goal added!');
 
-async function quickAddSkill(name, chipEl) {
-    chipEl.className = 's-chip s-added';
-    chipEl.innerHTML = `<i class="fas fa-check"></i> ${esc(name)}`;
-    chipEl.onclick = null;
-    const d = await api('/api/gg/skill/add', { skill_name: name });
-    if (!d.ok) { toast(d.msg || 'Error', true); return; }
-    refreshSkillTags(d.skills);
-    await refreshGoalsTable(); // Re-fetch matches
-    toast(`✓ "${name}" added`);
-}
+                        if (apiRes.new_career_id) careerId = apiRes.new_career_id;
 
-async function deleteSkill(skillId, btn) {
-    setLoading(btn, true);
-    const d = await api(`/api/gg/skill/${skillId}/delete`, {});
-    if (!d.ok) { toast('Error removing skill', true); setLoading(btn, false); return; }
-    refreshSkillTags(d.skills);
-    await refreshGoalsTable(); // Re-fetch matches
-    toast('Skill removed');
-}
+                        btn.classList.add('s-added');
+                        btn.style.borderColor = '#d1d5db';
+                        btn.style.background = '#f3f4f6';
+                        btn.style.color = '#9ca3af';
+                        btn.style.cursor = 'default';
+                        btn.onclick = null;
 
-function markChipAdded(name) {
-    document.querySelectorAll('#skill-pills .s-chip').forEach(ch => {
-        const label = ch.textContent.trim().replace(/^[✓+]\s*/, '');
-        if (label === name) {
-            ch.className = 's-chip s-added';
-            ch.innerHTML = `<i class="fas fa-check"></i> ${esc(name)}`;
-            ch.onclick = null;
+                        await refreshGoalsTable();
+                        if (careerId) swapCareerRowToRemove(careerId, apiRes.goal_id);
+                    };
+                }
+                grid.appendChild(btn);
+            });
+            wrap.style.display = careers.length ? '' : 'none';
         }
-    });
-}
 
-function refreshSkillTags(skills) {
-    existingSkillNames = new Set(skills.map(s => s.name.toLowerCase()));
-    const area = document.getElementById('skill-tags-area');
-    if (!skills.length) {
-        area.innerHTML = '<div class="gg-empty" style="padding:10px 0;"><p>No skills yet.</p></div>';
-        return;
-    }
-    area.innerHTML = skills.map(s =>
-        `<div class="sk-tag" data-skill-id="${s.id}">
+        function buildSkillChips(skills) {
+            const grid = document.getElementById('skill-pills');
+            const wrap = document.getElementById('dept-skills-wrap');
+            grid.innerHTML = '';
+            skills.forEach(s => {
+                const added = existingSkillNames.has(s.toLowerCase());
+                const ch = document.createElement('button');
+                ch.type = 'button';
+                ch.className = 's-chip' + (added ? ' s-added' : '');
+                ch.innerHTML = added ? `<i class="fas fa-check"></i> ${esc(s)}` : `<i class="fas fa-plus"></i> ${esc(s)}`;
+                ch.title = added ? 'Already in your skills' : `Add "${s}"`;
+                if (!added) ch.onclick = () => quickAddSkill(s, ch);
+                grid.appendChild(ch);
+            });
+            wrap.style.display = skills.length ? '' : 'none';
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //  Skills
+        // ═══════════════════════════════════════════════════════════
+        let existingSkillNames = new Set([{{ student_skills | map(attribute = 'skill_name') | map('tojson') | join(', ') }}].map(s => s.toLowerCase()));
+
+        document.getElementById('skill-input').addEventListener('keydown', e => {
+            if (e.key === 'Enter') { e.preventDefault(); addSkill(); }
+        });
+
+        async function addSkill() {
+            const inp = document.getElementById('skill-input');
+            const btn = document.getElementById('add-skill-btn');
+            const name = inp.value.trim();
+            if (!name) { inp.focus(); return; }
+            setLoading(btn, true);
+            const d = await api('/api/gg/skill/add', { skill_name: name });
+            setLoading(btn, false);
+            if (!d.ok) { toast(d.msg || 'Error adding skill', true); return; }
+            inp.value = '';
+            refreshSkillTags(d.skills);
+            markChipAdded(name);
+            await refreshGoalsTable(); // Re-fetch matches
+            toast(`✓ "${name}" added`);
+        }
+
+        async function quickAddSkill(name, chipEl) {
+            chipEl.className = 's-chip s-added';
+            chipEl.innerHTML = `<i class="fas fa-check"></i> ${esc(name)}`;
+            chipEl.onclick = null;
+            const d = await api('/api/gg/skill/add', { skill_name: name });
+            if (!d.ok) { toast(d.msg || 'Error', true); return; }
+            refreshSkillTags(d.skills);
+            await refreshGoalsTable(); // Re-fetch matches
+            toast(`✓ "${name}" added`);
+        }
+
+        async function deleteSkill(skillId, btn) {
+            setLoading(btn, true);
+            const d = await api(`/api/gg/skill/${skillId}/delete`, {});
+            if (!d.ok) { toast('Error removing skill', true); setLoading(btn, false); return; }
+            refreshSkillTags(d.skills);
+            await refreshGoalsTable(); // Re-fetch matches
+            toast('Skill removed');
+        }
+
+        function markChipAdded(name) {
+            document.querySelectorAll('#skill-pills .s-chip').forEach(ch => {
+                const label = ch.textContent.trim().replace(/^[✓+]\s*/, '');
+                if (label === name) {
+                    ch.className = 's-chip s-added';
+                    ch.innerHTML = `<i class="fas fa-check"></i> ${esc(name)}`;
+                    ch.onclick = null;
+                }
+            });
+        }
+
+        function refreshSkillTags(skills) {
+            existingSkillNames = new Set(skills.map(s => s.name.toLowerCase()));
+            const area = document.getElementById('skill-tags-area');
+            if (!skills.length) {
+                area.innerHTML = '<div class="gg-empty" style="padding:10px 0;"><p>No skills yet.</p></div>';
+                return;
+            }
+            area.innerHTML = skills.map(s =>
+                `<div class="sk-tag" data-skill-id="${s.id}">
             <i class="fas fa-check" style="font-size:9px;"></i>
             ${esc(s.name)}
             <button onclick="deleteSkill(${s.id}, this)" title="Remove"><i class="fas fa-times"></i></button>
         </div>`
-    ).join('');
-    // Sync chip states
-    document.querySelectorAll('#skill-pills .s-chip').forEach(ch => {
-        const label = ch.textContent.trim().replace(/^[\u2713+]\s*/, '');
-        const added = existingSkillNames.has(label.toLowerCase());
-        ch.className = 's-chip' + (added ? ' s-added' : '');
-        ch.innerHTML = added ? `<i class="fas fa-check"></i> ${esc(label)}` : `<i class="fas fa-plus"></i> ${esc(label)}`;
-        ch.onclick = added ? null : () => quickAddSkill(label, ch);
-    });
-}
-
-// ═══════════════════════════════════════════════════════════
-//  Target CGPA
-// ═══════════════════════════════════════════════════════════
-async function saveTargetCgpa() {
-    const val = parseFloat(document.getElementById('target-cgpa-input').value);
-    const btn = document.getElementById('cgpa-save-btn');
-    if (isNaN(val) || val < 0 || val > 4.0) { toast('Enter a valid CGPA (0–4.0)', true); return; }
-    setLoading(btn, true);
-    const d = await api('/api/gg/target-cgpa', { target_cgpa: val });
-    setLoading(btn, false);
-    if (!d.ok) { toast('Error saving', true); return; }
-    const st = document.getElementById('cgpa-save-status');
-    st.style.opacity = 1;
-    setTimeout(() => st.style.opacity = 0, 2000);
-    toast('Target CGPA saved!');
-}
-
-// ═══════════════════════════════════════════════════════════
-//  Career Goals
-// ═══════════════════════════════════════════════════════════
-async function addManualGoal() {
-    const careerId = parseInt(document.getElementById('manual-career-select').value);
-    const goalType = document.getElementById('manual-goal-type').value;
-    const btn = document.getElementById('add-manual-goal-btn');
-    if (!careerId) { toast('Please select a career', true); return; }
-    setLoading(btn, true);
-    const d = await api('/api/gg/goal/add', { career_id: careerId, goal_type: goalType });
-    setLoading(btn, false);
-    if (!d.ok) { toast(d.msg || 'Error', true); return; }
-    document.getElementById('manual-career-select').value = '';
-    toast('Goal added!');
-    await refreshGoalsTable();
-    // Swap career row if visible
-    swapCareerRowToRemove(careerId, d.goal_id);
-}
-
-async function addGoal(careerId) {
-    const typeEl = document.getElementById(`gt-${careerId}`);
-    const goalType = typeEl ? typeEl.value : 'Long Term';
-    const btn = typeEl ? typeEl.nextElementSibling : null;
-    if (btn) setLoading(btn, true);
-    const d = await api('/api/gg/goal/add', { career_id: careerId, goal_type: goalType });
-    if (btn) setLoading(btn, false);
-    if (!d.ok) { toast(d.msg || 'Error', true); return; }
-    toast('Goal added!');
-    await refreshGoalsTable();
-}
-
-async function deleteGoal(goalId) {
-    const d = await api(`/api/gg/goal/${goalId}/delete`, {});
-    if (!d.ok) { toast('Error', true); return; }
-    document.getElementById(`goal-row-${goalId}`)?.remove();
-    // Find careerId from map and restore Add button
-    for (const [cid, gid] of careerGoalMap) {
-        if (gid === goalId) {
-            careerGoalMap.delete(cid);
-            restoreCareerRowAdd(cid);
-            break;
+            ).join('');
+            // Sync chip states
+            document.querySelectorAll('#skill-pills .s-chip').forEach(ch => {
+                const label = ch.textContent.trim().replace(/^[\u2713+]\s*/, '');
+                const added = existingSkillNames.has(label.toLowerCase());
+                ch.className = 's-chip' + (added ? ' s-added' : '');
+                ch.innerHTML = added ? `<i class="fas fa-check"></i> ${esc(label)}` : `<i class="fas fa-plus"></i> ${esc(label)}`;
+                ch.onclick = added ? null : () => quickAddSkill(label, ch);
+            });
         }
-    }
-    toast('Goal removed');
-}
 
-async function deleteGoalByCareer(careerId) {
-    const goalId = careerGoalMap.get(careerId);
-    if (!goalId) { await refreshGoalsTable(); return; }
-    const d = await api(`/api/gg/goal/${goalId}/delete`, {});
-    if (!d.ok) { toast('Error', true); return; }
-    careerGoalMap.delete(careerId);
-    document.getElementById(`goal-row-${goalId}`)?.remove();
-    restoreCareerRowAdd(careerId);
-    toast('Goal removed');
-}
+        // ═══════════════════════════════════════════════════════════
+        //  Target CGPA
+        // ═══════════════════════════════════════════════════════════
+        async function saveTargetCgpa() {
+            const val = parseFloat(document.getElementById('target-cgpa-input').value);
+            const btn = document.getElementById('cgpa-save-btn');
+            if (isNaN(val) || val < 0 || val > 4.0) { toast('Enter a valid CGPA (0–4.0)', true); return; }
+            setLoading(btn, true);
+            const d = await api('/api/gg/target-cgpa', { target_cgpa: val });
+            setLoading(btn, false);
+            if (!d.ok) { toast('Error saving', true); return; }
+            const st = document.getElementById('cgpa-save-status');
+            st.style.opacity = 1;
+            setTimeout(() => st.style.opacity = 0, 2000);
+            toast('Target CGPA saved!');
+        }
 
-function swapCareerRowToRemove(careerId, goalId) {
-    const row = document.getElementById(`cr-${careerId}`);
-    if (!row) return;
-    const h4 = row.querySelector('h4');
-    if (h4 && !h4.querySelector('.badge-added')) {
-        h4.insertAdjacentHTML('beforeend', '<span class="badge-added">ADDED</span>');
-    }
-    row.querySelector('.career-actions').innerHTML =
-        `<button class="btn-rm-g" onclick="deleteGoalByCareer(${careerId})"><i class="fas fa-times"></i> Remove</button>`;
-    if (goalId) careerGoalMap.set(careerId, goalId);
-}
+        // ═══════════════════════════════════════════════════════════
+        //  Career Goals
+        // ═══════════════════════════════════════════════════════════
+        async function addManualGoal() {
+            const careerId = parseInt(document.getElementById('manual-career-select').value);
+            const goalType = document.getElementById('manual-goal-type').value;
+            const btn = document.getElementById('add-manual-goal-btn');
+            if (!careerId) { toast('Please select a career', true); return; }
+            setLoading(btn, true);
+            const d = await api('/api/gg/goal/add', { career_id: careerId, goal_type: goalType });
+            setLoading(btn, false);
+            if (!d.ok) { toast(d.msg || 'Error', true); return; }
+            document.getElementById('manual-career-select').value = '';
+            toast('Goal added!');
+            await refreshGoalsTable();
+            // Swap career row if visible
+            swapCareerRowToRemove(careerId, d.goal_id);
+        }
 
-function restoreCareerRowAdd(careerId) {
-    const row = document.getElementById(`cr-${careerId}`);
-    if (!row) return;
-    row.querySelector('.badge-added')?.remove();
-    row.querySelector('.career-actions').innerHTML =
-        `<select class="goal-type-sel" id="gt-${careerId}">
+        async function addGoal(careerId) {
+            const typeEl = document.getElementById(`gt-${careerId}`);
+            const goalType = typeEl ? typeEl.value : 'Long Term';
+            const btn = typeEl ? typeEl.nextElementSibling : null;
+            if (btn) setLoading(btn, true);
+            const d = await api('/api/gg/goal/add', { career_id: careerId, goal_type: goalType });
+            if (btn) setLoading(btn, false);
+            if (!d.ok) { toast(d.msg || 'Error', true); return; }
+            toast('Goal added!');
+            await refreshGoalsTable();
+        }
+
+        async function deleteGoal(goalId) {
+            const d = await api(`/api/gg/goal/${goalId}/delete`, {});
+            if (!d.ok) { toast('Error', true); return; }
+            document.getElementById(`goal-row-${goalId}`)?.remove();
+            // Find careerId from map and restore Add button
+            for (const [cid, gid] of careerGoalMap) {
+                if (gid === goalId) {
+                    careerGoalMap.delete(cid);
+                    restoreCareerRowAdd(cid);
+                    break;
+                }
+            }
+            toast('Goal removed');
+        }
+
+        async function deleteGoalByCareer(careerId) {
+            const goalId = careerGoalMap.get(careerId);
+            if (!goalId) { await refreshGoalsTable(); return; }
+            const d = await api(`/api/gg/goal/${goalId}/delete`, {});
+            if (!d.ok) { toast('Error', true); return; }
+            careerGoalMap.delete(careerId);
+            document.getElementById(`goal-row-${goalId}`)?.remove();
+            restoreCareerRowAdd(careerId);
+            toast('Goal removed');
+        }
+
+        function swapCareerRowToRemove(careerId, goalId) {
+            const row = document.getElementById(`cr-${careerId}`);
+            if (!row) return;
+            const h4 = row.querySelector('h4');
+            if (h4 && !h4.querySelector('.badge-added')) {
+                h4.insertAdjacentHTML('beforeend', '<span class="badge-added">ADDED</span>');
+            }
+            row.querySelector('.career-actions').innerHTML =
+                `<button class="btn-rm-g" onclick="deleteGoalByCareer(${careerId})"><i class="fas fa-times"></i> Remove</button>`;
+            if (goalId) careerGoalMap.set(careerId, goalId);
+        }
+
+        function restoreCareerRowAdd(careerId) {
+            const row = document.getElementById(`cr-${careerId}`);
+            if (!row) return;
+            row.querySelector('.badge-added')?.remove();
+            row.querySelector('.career-actions').innerHTML =
+                `<select class="goal-type-sel" id="gt-${careerId}">
             <option value="Long Term">Long Term</option><option value="Short Term">Short Term</option>
          </select>
          <button class="btn-add-g" onclick="addGoal(${careerId})"><i class="fas fa-plus"></i> Add</button>`;
-}
-
-async function setPrimary(goalId) {
-    const d = await api(`/api/gg/goal/${goalId}/primary`, {});
-    if (!d.ok) { toast('Error', true); return; }
-    document.querySelectorAll('#goals-tbody tr').forEach(tr => {
-        const id = parseInt(tr.dataset.goalId);
-        const td = tr.cells[2];
-        if (id === goalId) {
-            td.innerHTML = '<span class="badge-primary">PRIMARY</span>';
-        } else if (td.querySelector('.badge-primary')) {
-            td.innerHTML = `<button class="btn-set-primary" onclick="setPrimary(${id})">Set Primary</button>`;
         }
-    });
-    toast('Primary goal updated!');
-}
 
-async function refreshGoalsTable() {
-    const d = await api('/api/gg/state', {});
-    if (!d.ok) return;
-    const goals = d.goals || [];
+        async function setPrimary(goalId) {
+            const d = await api(`/api/gg/goal/${goalId}/primary`, {});
+            if (!d.ok) { toast('Error', true); return; }
+            document.querySelectorAll('#goals-tbody tr').forEach(tr => {
+                const id = parseInt(tr.dataset.goalId);
+                const td = tr.cells[2];
+                if (id === goalId) {
+                    td.innerHTML = '<span class="badge-primary">PRIMARY</span>';
+                } else if (td.querySelector('.badge-primary')) {
+                    td.innerHTML = `<button class="btn-set-primary" onclick="setPrimary(${id})">Set Primary</button>`;
+                }
+            });
+            toast('Primary goal updated!');
+        }
 
-    // Update careerGoalMap and careerTitleMap
-    careerGoalMap.clear();
-    careerTitleMap.clear();
-    goals.forEach(g => {
-        careerGoalMap.set(g.career_id, g.id);
-        careerTitleMap.set(g.career_title.toLowerCase(), g.id);
-    });
+        async function refreshGoalsTable() {
+            const d = await api('/api/gg/state', {});
+            if (!d.ok) return;
+            const goals = d.goals || [];
 
-    // Ensure table exists
-    let table = document.getElementById('goals-table');
-    if (!table && goals.length) {
-        const sep = document.getElementById('goals-sep');
-        const lbl = document.getElementById('goals-saved-label');
-        if (sep) sep.style.display = '';
-        if (lbl) lbl.style.display = '';
-        // Create table dynamically
-        const body = document.querySelector('#card-goals .gg-card-body');
-        table = document.createElement('table');
-        table.className = 'mini-table';
-        table.id = 'goals-table';
-        table.innerHTML = `<thead><tr><th>Career</th><th>Type</th><th>Priority</th><th></th></tr></thead><tbody id="goals-tbody"></tbody>`;
-        body.appendChild(table);
-    }
+            // Update careerGoalMap and careerTitleMap
+            careerGoalMap.clear();
+            careerTitleMap.clear();
+            goals.forEach(g => {
+                careerGoalMap.set(g.career_id, g.id);
+                careerTitleMap.set(g.career_title.toLowerCase(), g.id);
+            });
 
-    const tbody = document.getElementById('goals-tbody');
-    if (!tbody) return;
-    if (!goals.length) { tbody.innerHTML = ''; return; }
+            // Ensure table exists
+            let table = document.getElementById('goals-table');
+            if (!table && goals.length) {
+                const sep = document.getElementById('goals-sep');
+                const lbl = document.getElementById('goals-saved-label');
+                if (sep) sep.style.display = '';
+                if (lbl) lbl.style.display = '';
+                // Create table dynamically
+                const body = document.querySelector('#card-goals .gg-card-body');
+                table = document.createElement('table');
+                table.className = 'mini-table';
+                table.id = 'goals-table';
+                table.innerHTML = `<thead><tr><th>Career</th><th>Type</th><th>Priority</th><th></th></tr></thead><tbody id="goals-tbody"></tbody>`;
+                body.appendChild(table);
+            }
 
-    tbody.innerHTML = goals.map(g =>
-        `<tr id="goal-row-${g.id}" data-goal-id="${g.id}" data-career-id="${g.career_id}">
+            const tbody = document.getElementById('goals-tbody');
+            if (!tbody) return;
+            if (!goals.length) { tbody.innerHTML = ''; return; }
+
+            tbody.innerHTML = goals.map(g =>
+                `<tr id="goal-row-${g.id}" data-goal-id="${g.id}" data-career-id="${g.career_id}">
             <td><strong>${esc(g.career_title)}</strong></td>
             <td>${esc(g.goal_type)}</td>
             <td>${g.is_primary
-                ? '<span class="badge-primary">PRIMARY</span>'
-                : `<button class="btn-set-primary" onclick="setPrimary(${g.id})">Set Primary</button>`}</td>
+                    ? '<span class="badge-primary">PRIMARY</span>'
+                    : `<button class="btn-set-primary" onclick="setPrimary(${g.id})">Set Primary</button>`}</td>
             <td><button class="btn-del" onclick="deleteGoal(${g.id})" title="Delete"><i class="fas fa-trash"></i></button></td>
         </tr>`
-    ).join('');
+            ).join('');
 
-    // ─ Rebuild Matches Block ─
-    const matchingArea = document.getElementById('matching-careers-area');
-    if (matchingArea) {
-        if (d.matching_careers && d.matching_careers.length > 0) {
-            matchingArea.innerHTML = '<div class="career-list">' + d.matching_careers.map(c => {
-                const isAdded = careerGoalMap.has(c.id);
-                const badge = isAdded ? '<span class="badge-added">ADDED</span>' : '';
-                const actions = isAdded 
-                    ? `<button class="btn-rm-g" onclick="deleteGoalByCareer(${c.id})"><i class="fas fa-times"></i> Remove</button>`
-                    : `<select class="goal-type-sel" id="gt-${c.id}">
+            // ─ Rebuild Matches Block ─
+            const matchingArea = document.getElementById('matching-careers-area');
+            if (matchingArea) {
+                if (d.matching_careers && d.matching_careers.length > 0) {
+                    matchingArea.innerHTML = '<div class="career-list">' + d.matching_careers.map(c => {
+                        const isAdded = careerGoalMap.has(c.id);
+                        const badge = isAdded ? '<span class="badge-added">ADDED</span>' : '';
+                        const actions = isAdded
+                            ? `<button class="btn-rm-g" onclick="deleteGoalByCareer(${c.id})"><i class="fas fa-times"></i> Remove</button>`
+                            : `<select class="goal-type-sel" id="gt-${c.id}">
                             <option value="Long Term">Long Term</option>
                             <option value="Short Term">Short Term</option>
                        </select>
                        <button class="btn-add-g" onclick="addGoal(${c.id})"><i class="fas fa-plus"></i> Add</button>`;
 
-                return `<div class="career-row" id="cr-${c.id}">
+                        return `<div class="career-row" id="cr-${c.id}">
                             <div>
                                 <h4>${esc(c.title)}${badge}</h4>
                                 <span><strong>${c.match_count}</strong> skills matched &middot; ${esc(c.field_category || '')}</span>
@@ -1017,105 +1543,105 @@ async function refreshGoalsTable() {
                                 ${actions}
                             </div>
                         </div>`;
-            }).join('') + '</div>';
-        } else {
-            matchingArea.innerHTML = `<div class="gg-empty">
+                    }).join('') + '</div>';
+                } else {
+                    matchingArea.innerHTML = `<div class="gg-empty">
                 <i class="fas fa-search"></i>
                 <p>Add skills above to see matching career paths here.</p>
             </div>`;
+                }
+            }
+
+            // Sync career rows
+            goals.forEach(g => swapCareerRowToRemove(g.career_id, g.id));
+
+            // Rebuild career pills so added state stays in sync without page reload
+            const dept = document.getElementById('dept-select').value;
+            if (dept && deptCache.has(dept)) {
+                buildCareerPills(deptCache.get(dept).careers || []);
+            }
         }
-    }
 
-    // Sync career rows
-    goals.forEach(g => swapCareerRowToRemove(g.career_id, g.id));
+        // ═══════════════════════════════════════════════════════════
+        //  Grades
+        // ═══════════════════════════════════════════════════════════
+        async function addGrade() {
+            const course = document.getElementById('g-course').value.trim();
+            const type = document.getElementById('g-type').value;
+            const credits = parseInt(document.getElementById('g-credits').value);
+            const sem = parseInt(document.getElementById('g-sem').value);
+            const grade = document.getElementById('g-grade').value;
+            const btn = document.getElementById('add-grade-btn');
 
-    // Rebuild career pills so added state stays in sync without page reload
-    const dept = document.getElementById('dept-select').value;
-    if (dept && deptCache.has(dept)) {
-        buildCareerPills(deptCache.get(dept).careers || []);
-    }
-}
+            if (!course) { toast('Course name required', true); return; }
+            if (!grade) { toast('Select a grade', true); return; }
 
-// ═══════════════════════════════════════════════════════════
-//  Grades
-// ═══════════════════════════════════════════════════════════
-async function addGrade() {
-    const course = document.getElementById('g-course').value.trim();
-    const type   = document.getElementById('g-type').value;
-    const credits = parseInt(document.getElementById('g-credits').value);
-    const sem    = parseInt(document.getElementById('g-sem').value);
-    const grade  = document.getElementById('g-grade').value;
-    const btn    = document.getElementById('add-grade-btn');
+            setLoading(btn, true);
+            const d = await api('/api/gg/grade/add', {
+                course_name: course, course_type: type,
+                credit_value: credits, semester: sem, grade,
+            });
+            setLoading(btn, false);
 
-    if (!course) { toast('Course name required', true); return; }
-    if (!grade)  { toast('Select a grade', true); return; }
+            if (!d.ok) { toast(d.msg || 'Error adding grade', true); return; }
 
-    setLoading(btn, true);
-    const d = await api('/api/gg/grade/add', {
-        course_name: course, course_type: type,
-        credit_value: credits, semester: sem, grade,
-    });
-    setLoading(btn, false);
+            document.getElementById('g-course').value = '';
+            document.getElementById('g-grade').value = '';
 
-    if (!d.ok) { toast(d.msg || 'Error adding grade', true); return; }
+            // The endpoint returns new_cgpa — no second fetch needed
+            updateCgpaDisplay(d.new_cgpa);
+            toast(`Grade added! CGPA → ${d.new_cgpa ?? '—'}`);
 
-    document.getElementById('g-course').value = '';
-    document.getElementById('g-grade').value = '';
+            // Fetch updated records from state
+            const state = await api('/api/gg/state', {});
+            if (state.ok) renderRecords(state.records);
+        }
 
-    // The endpoint returns new_cgpa — no second fetch needed
-    updateCgpaDisplay(d.new_cgpa);
-    toast(`Grade added! CGPA → ${d.new_cgpa ?? '—'}`);
+        async function deleteGrade(recordId) {
+            const d = await api(`/api/gg/grade/${recordId}/delete`, {});
+            if (!d.ok) { toast('Error deleting grade', true); return; }
+            const row = document.getElementById(`rec-${recordId}`);
+            if (row) { row.style.cssText = 'opacity:0;transition:opacity .25s;'; setTimeout(() => row?.remove(), 260); }
+            updateCgpaDisplay(d.new_cgpa);
+            toast(`Grade removed. CGPA → ${d.new_cgpa ?? '—'}`);
+        }
 
-    // Fetch updated records from state
-    const state = await api('/api/gg/state', {});
-    if (state.ok) renderRecords(state.records);
-}
+        function updateCgpaDisplay(val) {
+            const display = (val !== null && val !== undefined) ? val : 'N/A';
+            document.getElementById('live-cgpa').textContent = display;
+            document.getElementById('cgpa-chip-val').textContent = display;
+        }
 
-async function deleteGrade(recordId) {
-    const d = await api(`/api/gg/grade/${recordId}/delete`, {});
-    if (!d.ok) { toast('Error deleting grade', true); return; }
-    const row = document.getElementById(`rec-${recordId}`);
-    if (row) { row.style.cssText = 'opacity:0;transition:opacity .25s;'; setTimeout(() => row?.remove(), 260); }
-    updateCgpaDisplay(d.new_cgpa);
-    toast(`Grade removed. CGPA → ${d.new_cgpa ?? '—'}`);
-}
+        const TYPE_STYLE = { Core: 'type-core', GED: 'type-ged', Elective: 'type-elective' };
 
-function updateCgpaDisplay(val) {
-    const display = (val !== null && val !== undefined) ? val : 'N/A';
-    document.getElementById('live-cgpa').textContent = display;
-    document.getElementById('cgpa-chip-val').textContent = display;
-}
+        function renderRecords(records) {
+            const wrap = document.getElementById('records-wrap');
+            const empty = document.getElementById('records-empty');
+            if (!records.length) {
+                if (empty) empty.style.display = '';
+                const tbl = document.getElementById('records-table');
+                if (tbl) tbl.remove();
+                return;
+            }
+            if (empty) empty.style.display = 'none';
 
-const TYPE_STYLE = { Core: 'type-core', GED: 'type-ged', Elective: 'type-elective' };
-
-function renderRecords(records) {
-    const wrap  = document.getElementById('records-wrap');
-    const empty = document.getElementById('records-empty');
-    if (!records.length) {
-        if (empty) empty.style.display = '';
-        const tbl = document.getElementById('records-table');
-        if (tbl) tbl.remove();
-        return;
-    }
-    if (empty) empty.style.display = 'none';
-
-    let table = document.getElementById('records-table');
-    if (!table) {
-        table = document.createElement('table');
-        table.className = 'mini-table';
-        table.id = 'records-table';
-        table.style.margin = '0';
-        table.innerHTML = `<thead><tr>
+            let table = document.getElementById('records-table');
+            if (!table) {
+                table = document.createElement('table');
+                table.className = 'mini-table';
+                table.id = 'records-table';
+                table.style.margin = '0';
+                table.innerHTML = `<thead><tr>
             <th style="padding-left:24px;">Course</th>
             <th>Type</th><th>Semester</th><th>Grade</th><th>GPA pts</th><th>Credits</th>
             <th style="padding-right:24px;"></th>
         </tr></thead><tbody id="records-tbody"></tbody>`;
-        wrap.appendChild(table);
-    }
+                wrap.appendChild(table);
+            }
 
-    const tbody = document.getElementById('records-tbody');
-    tbody.innerHTML = records.map(r =>
-        `<tr id="rec-${r.id}">
+            const tbody = document.getElementById('records-tbody');
+            tbody.innerHTML = records.map(r =>
+                `<tr id="rec-${r.id}">
             <td style="padding-left:24px;font-weight:500;">${esc(r.course_name)}</td>
             <td><span class="type-badge ${TYPE_STYLE[r.course_type] || ''}">${esc(r.course_type)}</span></td>
             <td>Sem ${r.semester_taken}</td>
@@ -1126,18 +1652,19 @@ function renderRecords(records) {
                 <button class="btn-del" onclick="deleteGrade(${r.id})" title="Delete"><i class="fas fa-trash"></i></button>
             </td>
         </tr>`
-    ).join('');
+            ).join('');
 
-    // Update datalist deduped
-    const dl = document.getElementById('course-list');
-    if (dl) {
-        const seen = new Set();
-        dl.innerHTML = records.filter(r => {
-            if (seen.has(r.course_name)) return false;
-            seen.add(r.course_name); return true;
-        }).map(r => `<option value="${esc(r.course_name)}">`).join('');
-    }
-}
-</script>
+            // Update datalist deduped
+            const dl = document.getElementById('course-list');
+            if (dl) {
+                const seen = new Set();
+                dl.innerHTML = records.filter(r => {
+                    if (seen.has(r.course_name)) return false;
+                    seen.add(r.course_name); return true;
+                }).map(r => `<option value="${esc(r.course_name)}">`).join('');
+            }
+        }
+    </script>
 </body>
+
 </html>
