@@ -1095,8 +1095,8 @@
         const careerGoalMap = new Map();
         const careerTitleMap = new Map();
         {% for g in goals %}
-        careerGoalMap.set({{ g.career_id }}, {{ g.id }});
-        careerTitleMap.set({{ g.career_title | tojson | lower }}, {{ g.id }});
+        careerGoalMap.set({{ g.career_id | tojson }}, {{ g.id | tojson }});
+        careerTitleMap.set({{ (g.career_title or "") | lower | tojson }}, {{ g.id | tojson }});
         {% endfor %}
 
 
