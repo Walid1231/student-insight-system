@@ -595,6 +595,11 @@
             }
         }
     </style>
+
+    <!-- Analytics Dashboard Styles & Scripts -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/student_analytics.css') }}?v=1">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
+    <script src="{{ url_for('static', filename='js/student_analytics.js') }}?v=10" defer></script>
 </head>
 
 <body>
@@ -616,7 +621,8 @@
             <div class="cgpa-ring" style="--pct: {{ cgpa_pct }};">
                 <div class="cgpa-ring-inner">
                     <span class="cgpa-num">
-                        {% if profile_summary.current_cgpa %}{{ "%.2f" | format(profile_summary.current_cgpa) }}{% else %}N/A{% endif %}
+                        {% if profile_summary.current_cgpa %}{{ "%.2f" | format(profile_summary.current_cgpa) }}{% else
+                        %}N/A{% endif %}
                     </span>
                     <span class="cgpa-label">CGPA</span>
                 </div>
@@ -625,7 +631,8 @@
                 <h1>{{ profile_summary.full_name }}</h1>
                 {% if student.student_code %}
                 <div style="margin-bottom:6px;">
-                    <span style="font-family:'Menlo','Consolas',monospace; font-size:12px; color:var(--text-muted); background:#f3f4f6; padding:3px 10px; border-radius:6px; letter-spacing:.5px;">
+                    <span
+                        style="font-family:'Menlo','Consolas',monospace; font-size:12px; color:var(--text-muted); background:#f3f4f6; padding:3px 10px; border-radius:6px; letter-spacing:.5px;">
                         ID {{ student.student_code }}
                     </span>
                 </div>
@@ -703,224 +710,550 @@
                 </div>
             </div>
 
-            <!-- ── Two-Column Content ── -->
-            <div class="content-grid">
+            <!-- ── Full Student Dashboard ── -->
+            <!-- ═══════════════════════════════════════════════════════
+             DASHBOARD GRID  —  3-Column Responsive
+             ═══════════════════════════════════════════════════════ -->
+            <div class="dashboard-grid" id="dashboardGrid">
 
-                <!-- Academic KPI Card -->
-                <div class="card">
+                <!-- ┌─────────────────────── ROW 1 ───────────────────────┐ -->
+
+                <!-- 1 ▸ CGPA Trend -->
+                <article class="dash-card" id="cardCgpaTrend">
                     <div class="card-header">
-                        <i data-lucide="bar-chart-3"></i>
-                        <h2>Academic KPI</h2>
-                    </div>
-                    <div class="metric-row">
-                        <span class="metric-label">Current CGPA</span>
-                        <span class="metric-value" style="color:var(--primary); font-size:18px;">
-                            {{ "%.2f"|format(student.current_cgpa) if student.current_cgpa else '--' }}
-                        </span>
-                    </div>
-                    <div class="metric-row">
-                        <span class="metric-label">Attendance</span>
-                        <span class="metric-value">{{ attendance.percentage }}%</span>
-                    </div>
-                    <div class="metric-row">
-                        <span class="metric-label">Assignments Completed</span>
-                        <span class="metric-value">{{ assignments.completion_rate }}%</span>
-                    </div>
-                    <div class="metric-row">
-                        <span class="metric-label">Performance Trend</span>
-                        <span class="metric-value" style="text-transform:capitalize;">{{ performance_trend }}</span>
-                    </div>
-                    {% if academic_snapshot.total_credits %}
-                    <div class="metric-row">
-                        <span class="metric-label">Total Credits Earned</span>
-                        <span class="metric-value">{{ academic_snapshot.total_credits }}</span>
-                    </div>
-                    {% endif %}
-                </div>
-
-                <!-- At-Risk Skills -->
-                <div class="card">
-                    <div class="card-header">
-                        <i data-lucide="alert-triangle"></i>
-                        <h2>Top At-Risk Skills</h2>
-                    </div>
-                    {% if skill_snapshot %}
-                    <table class="skills-table">
-                        <thead>
-                            <tr>
-                                <th>Skill</th>
-                                <th>Proficiency</th>
-                                <th style="width:35%;">Risk Level</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for sk in skill_snapshot %}
-                            <tr>
-                                <td>{{ sk.skill_name }}</td>
-                                <td>{{ sk.proficiency_score }}/100</td>
-                                <td>
-                                    <div style="display:flex; align-items:center; gap:8px;">
-                                        <span
-                                            style="font-size:12px; font-weight:600;
-                                        color:{% if sk.risk_score >= 70 %}#dc2626{% elif sk.risk_score >= 40 %}#d97706{% else %}#059669{% endif %};">{{
-                                            sk.risk_score }}%</span>
-                                        <div class="risk-bar-wrap" style="flex:1;">
-                                            <div class="risk-bar {% if sk.risk_score >= 70 %}risk-high{% elif sk.risk_score >= 40 %}risk-medium{% else %}risk-low{% endif %}"
-                                                style="width: {{ sk.risk_score }}%;"></div>
-                                        </div>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                    {% else %}
-                    <div class="empty-state">No skill data recorded yet.</div>
-                    {% endif %}
-                </div>
-
-                <!-- Career Goal + Insight Preview -->
-                <div class="card">
-                    <div class="card-header">
-                        <i data-lucide="compass"></i>
-                        <h2>Career & Insights</h2>
-                    </div>
-
-                    <!-- Career Goal -->
-                    <div style="margin-bottom:20px;">
-                        <div class="kpi-label" style="margin-bottom:10px;">Primary Career Goal</div>
-                        {% if career_snapshot %}
-                        <div class="career-chip">
-                            <i data-lucide="rocket" style="width:16px; height:16px;"></i>
-                            {{ career_snapshot.career_title }}
-                            <span class="goal-type">· {{ career_snapshot.goal_type }}</span>
-                        </div>
-                        {% else %}
-                        <div class="empty-state" style="padding:8px 0;">No primary career goal set.</div>
+                        <h2 class="card-title">
+                            <i class="fas fa-chart-line" style="color: var(--accent-blue);"></i>
+                            CGPA Trend
+                        </h2>
+                        {% if data.has_grades and data.cgpa_values|length > 1 %}
+                        <span class="card-badge">{{ data.cgpa_values|length }} Semesters</span>
                         {% endif %}
                     </div>
-
-                    <!-- AI Insight Preview -->
-                    <div class="kpi-label" style="margin-bottom:10px;">AI Insight Preview</div>
-                    {% if insight_preview %}
-                    <div class="insight-box">
-                        <div class="insight-meta">Generated: {{ insight_preview.generated_at.strftime('%B %d, %Y') }}
-                        </div>
-                        <p class="insight-preview">{{ insight_preview.preview_text }}</p>
-                        <a href="#insight-full" class="btn-gradient">
-                            <i data-lucide="file-text" style="width:14px; height:14px;"></i> View Full Report
-                        </a>
+                    {% if data.has_grades %}
+                    <div class="chart-wrap">
+                        <canvas id="cgpaTrendChart"></canvas>
+                    </div>
+                    <div class="chart-annotation">
+                        Current: <span id="cgpaCurrentValue">{{ data.cgpa }}</span>
+                        {% if data.cgpa_values|length > 1 %}
+                        ({% if data.cgpa_values[-1] >= data.cgpa_values[-2] %}&uarr;{% else %}&darr;{% endif %})
+                        {% endif %}
+                        <small>Semester-over-semester performance</small>
                     </div>
                     {% else %}
-                    <div class="insight-box">
-                        <p class="insight-preview">No AI insight report has been generated for this student yet.</p>
+                    <div class="empty-state">
+                        <i class="fas fa-chart-line"></i>
+                        <p>Student has not added any grades yet.</p>
                     </div>
                     {% endif %}
+                </article>
+
+                <!-- 2 ▸ Strength vs Weakness Radar -->
+                <article class="dash-card" id="cardSkillRadar">
+                    <div class="card-header">
+                        <h2 class="card-title">
+                            <i class="fas fa-crosshairs" style="color: var(--accent-green);"></i>
+                            Strength vs Weakness
+                        </h2>
+                        <span class="card-badge">Radar</span>
+                    </div>
+                    {% if data.has_skills %}
+                    <div class="chart-wrap">
+                        <canvas id="skillRadarChart"></canvas>
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-crosshairs"></i>
+                        <p>Student has not selected any skills yet.</p>
+                    </div>
+                    {% endif %}
+                </article>
+
+                <!-- 3 ▸ Core vs GED Distribution -->
+                <article class="dash-card" id="cardCoreGed">
+                    <div class="card-header">
+                        <h2 class="card-title">
+                            <i class="fas fa-circle-half-stroke" style="color: var(--accent-purple);"></i>
+                            Core vs GED Distribution
+                        </h2>
+                    </div>
+                    {% if data.has_grades %}
+                    <div class="chart-wrap">
+                        <canvas id="coreGedChart"></canvas>
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-layer-group"></i>
+                        <p>Student has not added any course records yet.</p>
+                    </div>
+                    {% endif %}
+                </article>
+
+
+                <!-- ┌─────────────────────── ROW 2 ───────────────────────┐ -->
+
+                <!-- 4 ▸ Weekly Study Hours -->
+                <article class="dash-card" id="cardWeeklyHours">
+                    <div class="card-header">
+                        <h2 class="card-title">
+                            <i class="fas fa-calendar-week" style="color: var(--accent-purple);"></i>
+                            Weekly Study Hours
+                        </h2>
+                        <span class="card-badge">Last 7 Days</span>
+                    </div>
+                    {% if data.has_recent_sessions %}
+                    <div class="chart-wrap">
+                        <canvas id="weeklyHoursChart"></canvas>
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-calendar-week"></i>
+                        <p>Student has not logged any sessions in the last 7 days.</p>
+                    </div>
+                    {% endif %}
+                </article>
+
+                <!-- 5 ▸ Skill Effort Distribution -->
+                <article class="dash-card" id="cardSkillEffort">
+                    <div class="card-header">
+                        <h2 class="card-title">
+                            <i class="fas fa-fire" style="color: var(--accent-amber);"></i>
+                            Skill Effort Distribution
+                        </h2>
+                    </div>
+                    {% if data.effort_labels %}
+                    <div class="chart-wrap">
+                        <canvas id="skillEffortChart"></canvas>
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-fire"></i>
+                        <p>Student has not logged any study sessions with skill tags yet.</p>
+                    </div>
+                    {% endif %}
+                </article>
+
+                <!-- 6 ▸ Career Compatibility -->
+                <article class="dash-card career-compat-premium" id="cardCareer">
+                    <div class="career-premium-header">
+                        <i class="fas fa-briefcase" style="color: #6366f1;"></i> CAREER COMPATIBILITY
+                    </div>
+                    {% if data.careers and data.careers|length > 0 %}
+                    {% set top_career = data.careers[0] %}
+                    <div class="career-premium-body">
+                        <div class="career-premium-role">{{ top_career.role }}</div>
+
+                        <div class="career-premium-score-wrapper">
+                            <div class="career-premium-score">{{ top_career.match }}% Match</div>
+                        </div>
+
+                        <div class="career-premium-bar-wrapper">
+                            <div class="career-premium-track">
+                                <div class="career-premium-fill" style="width: {{ top_career.match }}%;"></div>
+                            </div>
+                            <div class="career-premium-bar-text">{{ top_career.match }}%</div>
+                        </div>
+
+                        <div class="career-premium-insights">
+                            <div class="insight-line">
+                                <span class="insight-dot green"></span>
+                                <span class="insight-text">+12% above average in Math</span>
+                            </div>
+                            <div class="insight-line">
+                                <span class="insight-dot amber"></span>
+                                <span class="insight-text">-8% below required in System Design</span>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-briefcase"></i>
+                        <p>Student has not added goals and skills yet.</p>
+                    </div>
+                    {% endif %}
+                </article>
+
+
+                <!-- ┌─────────────────────── ROW 3 ───────────────────────┐ -->
+
+                <!-- 7 ▸ Burnout Risk Gauge -->
+                <article class="dash-card" id="cardBurnout">
+                    <div class="card-header">
+                        <h2 class="card-title">
+                            <i class="fas fa-heartbeat" style="color: var(--accent-red);"></i>
+                            Burnout Risk Gauge
+                        </h2>
+                    </div>
+                    {% if data.has_checkin %}
+                    <div class="gauge-center">
+                        <div class="gauge-canvas-wrap">
+                            <canvas id="burnoutGauge"></canvas>
+                        </div>
+                        <div id="burnoutLabel"
+                            class="gauge-value-label {{ 'low' if data.burnout_pct < 40 else 'medium' if data.burnout_pct < 70 else 'high' }}">
+                            {{ data.burnout_label }}
+                        </div>
+                        <div id="burnoutDesc" class="gauge-desc">{{ data.burnout_message }}</div>
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-heartbeat"></i>
+                        <p>Submit your Weekly Check-in for a burnout risk assessment.</p>
+                        <a href="{{ url_for('dashboard.weekly_checkin') }}"><i class="fas fa-clipboard-check"></i> Check
+                            In</a>
+                    </div>
+                    {% endif %}
+                </article>
+
+                <!-- 8 ▸ Goal Achievability Probability -->
+                <article class="dash-card span-2" id="cardGoal">
+                    <div class="card-header">
+                        <h2 class="card-title">
+                            <i class="fas fa-trophy" style="color: var(--accent-amber);"></i>
+                            Goal Achievability Probability
+                        </h2>
+                        {% if data.has_goals %}
+                        <span class="card-badge">Bell Curve</span>
+                        {% endif %}
+                    </div>
+                    {% if data.has_goals %}
+                    <div class="chart-wrap-sm">
+                        <canvas id="goalCurveChart"></canvas>
+                    </div>
+                    <div class="goal-center">
+                        <div id="goalProbValue" class="goal-big-number">{{ data.goal_prob }}%</div>
+                        <div class="goal-label">Likelihood of Achievement</div>
+                        <div id="goalTargetInfo" class="goal-target-info">
+                            Target CGPA <strong>{{ data.target_gpa }}</strong>
+                            {% if data.target_career %} &middot; {{ data.target_career }}{% endif %}
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-trophy"></i>
+                        <p>Set a career goal in Goals & Grades to see your achievability score.</p>
+                        <a href="{{ url_for('dashboard.goals_grades') }}"><i class="fas fa-bullseye"></i> Set Goal</a>
+                    </div>
+                    {% endif %}
+                </article>
+
+            </div><!-- /.dashboard-grid -->
+
+            <!-- ═══════════════════════════════════════════════════════
+             DATA INJECTION — Backend → JS
+             ═══════════════════════════════════════════════════════ -->
+            <script>
+                // ── Data Injection (Backend → JS) ──
+                window.DASH = {{ data|tojson|safe }};
+
+                // ── Init charts ──
+                // The SPA router (sidebar.html) calls initStudentDashboardCharts() after
+                // injecting this page's HTML into .main-content. For a hard first load,
+                // student_analytics.js fires on DOMContentLoaded. We only need to ensure
+                // Chart.js is available; if it landed via SPA nav it already is.
+                (function ensureChartsInit() {
+                    function tryInit() {
+                        if (typeof initStudentDashboardCharts === 'function') {
+                            initStudentDashboardCharts();
+                        }
+                    }
+                    function loadScript(id, src, cb) {
+                        if (document.getElementById(id)) { cb(); return; }
+                        var s = document.createElement('script');
+                        s.id = id; s.src = src; s.onload = cb;
+                        document.head.appendChild(s);
+                    }
+                    // Only run in SPA mode (DOM already ready). First-page-load is handled
+                    // by the DOMContentLoaded listener in student_analytics.js.
+                    if (document.readyState !== 'loading') {
+                        if (typeof Chart === 'undefined') {
+                            loadScript('_chartjs', 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js', function () {
+                                if (typeof initStudentDashboardCharts === 'undefined') {
+                                    loadScript('_analyticsjs', '{{ url_for("static", filename="js/student_analytics.js") }}?v=11', tryInit);
+                                } else { tryInit(); }
+                            });
+                        } else {
+                            // Chart.js already loaded — defer one tick so the SPA router's
+                            // own final call doesn't race with us.
+                            setTimeout(tryInit, 0);
+                        }
+                    }
+                })();
+            </script>
+
+            <!-- Premium Teacher Notes Section -->
+            <style>
+                .notes-premium-card {
+                    background: #ffffff;
+                    border: 1px solid #e5e7eb;
+                    border-radius: 16px;
+                    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+                    padding: 24px;
+                    margin-bottom: 32px;
+                    grid-column: 1 / -1;
+                }
+                html[data-theme="dark"] .notes-premium-card {
+                    background: var(--bg-card);
+                    border-color: var(--border);
+                }
+                .notes-header-premium {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    margin-bottom: 24px;
+                    padding-bottom: 16px;
+                    border-bottom: 1px solid #f3f4f6;
+                }
+                html[data-theme="dark"] .notes-header-premium { border-bottom-color: var(--border); }
+                .notes-title-group {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                }
+                .notes-icon-wrapper {
+                    width: 40px;
+                    height: 40px;
+                    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(168, 85, 247, 0.1) 100%);
+                    color: #6366f1;
+                    border-radius: 10px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                html[data-theme="dark"] .notes-icon-wrapper { background: rgba(99, 102, 241, 0.15); color: #818cf8; }
+                .notes-title-text {
+                    font-size: 18px;
+                    font-weight: 700;
+                    color: var(--text);
+                    margin: 0;
+                    font-family: 'Inter', sans-serif;
+                }
+                .private-badge-premium {
+                    background: #fef2f2;
+                    color: #ef4444;
+                    padding: 4px 10px;
+                    border-radius: 20px;
+                    font-size: 11px;
+                    font-weight: 700;
+                    letter-spacing: 0.5px;
+                    text-transform: uppercase;
+                    display: flex;
+                    align-items: center;
+                    gap: 4px;
+                }
+                html[data-theme="dark"] .private-badge-premium { background: rgba(239, 68, 68, 0.1); }
+                .notes-list-premium {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 16px;
+                    margin-bottom: 24px;
+                }
+                .note-item-premium {
+                    background: #f9fafb;
+                    border-radius: 12px;
+                    padding: 16px 20px;
+                    border-left: 3px solid #8b5cf6;
+                    transition: transform 0.2sease, box-shadow 0.2s ease;
+                }
+                html[data-theme="dark"] .note-item-premium { background: rgba(255, 255, 255, 0.03); }
+                .note-item-premium:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+                }
+                .note-body-premium {
+                    font-size: 14px;
+                    line-height: 1.6;
+                    color: var(--text);
+                    margin-bottom: 8px;
+                }
+                .note-meta-premium {
+                    font-size: 12px;
+                    color: var(--text-muted);
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                }
+                .empty-notes-premium {
+                    text-align: center;
+                    padding: 40px 20px;
+                    background: #f9fafb;
+                    border-radius: 12px;
+                    border: 1px dashed #d1d5db;
+                }
+                html[data-theme="dark"] .empty-notes-premium { background: transparent; border-color: rgba(255,255,255,0.1); }
+                .empty-notes-premium i {
+                    font-size: 32px;
+                    color: #9ca3af;
+                    margin-bottom: 12px;
+                }
+                .empty-notes-premium p {
+                    color: var(--text-muted);
+                    font-size: 14px;
+                    margin: 0;
+                }
+                .notes-input-area {
+                    background: #f9fafb;
+                    padding: 16px;
+                    border-radius: 12px;
+                    border: 1px solid #e5e7eb;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 12px;
+                }
+                html[data-theme="dark"] .notes-input-area { background: rgba(0,0,0,0.15); border-color: var(--border); }
+                .notes-textarea-premium {
+                    width: 100%;
+                    background: transparent;
+                    border: none;
+                    outline: none;
+                    resize: vertical;
+                    min-height: 80px;
+                    font-size: 14px;
+                    color: var(--text);
+                    line-height: 1.5;
+                    font-family: inherit;
+                }
+                .notes-textarea-premium::placeholder {
+                    color: #9ca3af;
+                }
+                .notes-action-row {
+                    display: flex;
+                    justify-content: flex-end;
+                    align-items: center;
+                }
+                .btn-add-note-premium {
+                    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+                    color: white;
+                    border: none;
+                    padding: 10px 20px;
+                    border-radius: 8px;
+                    font-size: 13px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    transition: opacity 0.2s, transform 0.2s;
+                    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25);
+                }
+                .btn-add-note-premium:hover {
+                    opacity: 0.9;
+                    transform: translateY(-1px);
+                }
+            </style>
+
+            <div class="notes-premium-card">
+                <div class="notes-header-premium">
+                    <div class="notes-title-group">
+                        <div class="notes-icon-wrapper">
+                            <i data-lucide="sticky-note"></i>
+                        </div>
+                        <h2 class="notes-title-text">Teacher Notes</h2>
+                    </div>
+                    <div class="private-badge-premium">
+                        <i data-lucide="lock" style="width: 12px; height: 12px;"></i> PRIVATE
+                    </div>
                 </div>
 
-                <!-- Recent Activity -->
-                <div class="card">
-                    <div class="card-header">
-                        <i data-lucide="activity"></i>
-                        <h2>Recent Activity</h2>
-                    </div>
-                    {% if assignments.recent %}
-                    {% for sub in assignments.recent[:5] %}
-                    <div class="metric-row">
-                        <span class="metric-label" style="flex:1;">{{ sub.assignment.title }}</span>
-                        <span class="metric-value" style="font-size:14px;">{{ sub.score }} pts</span>
+                <div class="notes-list-premium" id="notesList">
+                    {% if notes %}
+                    {% for note in notes %}
+                    <div class="note-item-premium">
+                        <div class="note-body-premium">{{ note.content }}</div>
+                        <div class="note-meta-premium">
+                            <i data-lucide="clock" style="width: 12px; height: 12px;"></i>
+                            {{ note.created_at.strftime('%b %d, %Y %I:%M %p') }}
+                        </div>
                     </div>
                     {% endfor %}
                     {% else %}
-                    <div class="empty-state">No recent assignments.</div>
-                    {% endif %}
-                </div>
-
-                <!-- AI Full Report -->
-                <div class="card full-width" id="insight-full">
-                    <div class="card-header">
-                        <i data-lucide="brain"></i>
-                        <h2>AI Career & Academic Insights</h2>
-                        <span class="section-badge">AI Generated</span>
-                    </div>
-                    {% if insight %}
-                    <div class="report-date">Generated on: {{ insight.generated_at.strftime('%B %d, %Y') }}</div>
-                    <div class="ai-report-content">
-                        {{ insight.content|safe }}
-                    </div>
-                    {% else %}
-                    <div class="empty-state" style="padding:40px;">
-                        <p style="margin-bottom:4px;">No AI insight report generated yet.</p>
-                        <p style="font-size:12px;">The student needs to generate a report from their dashboard.</p>
+                    <div class="empty-notes-premium">
+                        <i data-lucide="file-edit"></i>
+                        <p>No internal notes added for {{ student.full_name }} yet.</p>
                     </div>
                     {% endif %}
                 </div>
-                {% endif %}
 
-                <!-- Teacher Notes -->
-                <div class="card full-width">
-                    <div class="card-header">
-                        <i data-lucide="sticky-note"></i>
-                        <h2>Teacher Notes</h2>
-                        <span class="section-badge">Private</span>
-                    </div>
-                    <div class="notes-list" id="notesList">
-                        {% if notes %}
-                        {% for note in notes %}
-                        <div class="note-item">
-                            <div class="note-content">{{ note.content }}</div>
-                            <div class="note-date">{{ note.created_at.strftime('%b %d, %Y %I:%M %p') }}</div>
-                        </div>
-                        {% endfor %}
-                        {% else %}
-                        <div class="empty-state">No notes added yet.</div>
-                        {% endif %}
-                    </div>
-
-                    <div style="margin-top:16px; border-top:1px solid var(--border); padding-top:16px;">
-                        <textarea id="noteContent"
-                            placeholder="Write a private note about {{ student.full_name }}..."></textarea>
-                        <div style="text-align:right;">
-                            <button class="btn-primary" onclick="addNote()">
-                                Add Note
-                            </button>
-                        </div>
+                <div class="notes-input-area">
+                    <textarea id="noteContent" class="notes-textarea-premium" placeholder="Write a new private observation or note about {{ student.full_name }}..."></textarea>
+                    <div class="notes-action-row">
+                        <button class="btn-add-note-premium" onclick="addNote()">
+                            <i data-lucide="send" style="width: 14px; height: 14px;"></i> Add Note
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
 
-        <script>
-            // Initialize Lucide icons
-            lucide.createIcons();
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
 
-            // Add Note
-            async function addNote() {
-                const content = document.getElementById('noteContent').value;
-                if (!content) return;
+        // Add Note
+        async function addNote() {
+            const contentEl = document.getElementById('noteContent');
+            const content = contentEl.value.trim();
+            if (!content) return;
+            const btn = document.querySelector('.btn-add-note-premium');
+            const originalBtnHtml = btn.innerHTML;
+            btn.innerHTML = 'Saving...';
+            btn.disabled = true;
 
-                try {
-                    const response = await fetch('/api/teacher/notes', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            student_id: {{ student.id }},
+            try {
+                const response = await fetch('/api/teacher/notes', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        student_id: {{ student.id }},
                         content: content
                     })
-            });
+                });
 
-            if (response.ok) {
-                showToast('Note added successfully!', 'success');
-                setTimeout(() => window.location.reload(), 1500);
-            } else {
-                showToast("Failed to add note.", 'error');
-            }
+                if (response.ok) {
+                    showToast('Note added successfully!', 'success');
+                    
+                    // Create formatted date (e.g., Mar 28, 2026 05:45 PM)
+                    const now = new Date();
+                    const formattedDate = now.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
+                    
+                    // Build the new note HTML
+                    const newHtml = `
+                    <div class="note-item-premium">
+                        <div class="note-body-premium">${content}</div>
+                        <div class="note-meta-premium">
+                            <i data-lucide="clock" style="width: 12px; height: 12px;"></i>
+                            ${formattedDate}
+                        </div>
+                    </div>`;
+                    
+                    const notesList = document.getElementById('notesList');
+                    const emptyState = notesList.querySelector('.empty-notes-premium');
+                    if (emptyState) {
+                        emptyState.remove();
+                    }
+                    
+                    // Prepend to the top of the list
+                    notesList.insertAdjacentHTML('afterbegin', newHtml);
+                    
+                    // Refresh lucide icons for the newly injected HTML
+                    lucide.createIcons();
+                    
+                    // Clear the textarea
+                    contentEl.value = '';
+                } else {
+                    showToast("Failed to add note.", 'error');
+                }
             } catch (e) {
                 console.error(e);
                 showToast("An error occurred while adding the note.", 'error');
+            } finally {
+                btn.innerHTML = originalBtnHtml;
+                btn.disabled = false;
             }
         }
-        </script>
+    </script>
+
 </body>
 
 </html>

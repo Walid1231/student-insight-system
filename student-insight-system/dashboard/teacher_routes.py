@@ -20,6 +20,7 @@ from ml.analytics_engine import AnalyticsEngine
 from sqlalchemy import func, case
 from sqlalchemy.orm import selectinload
 from collections import defaultdict
+from services.dashboard_service import DashboardService
 from datetime import datetime
 import re
 import os
@@ -383,10 +384,14 @@ def teacher_student_detail(student_id):
             "insight_id":   latest_insight.id,
         }
 
+    # G) Full Dashboard Data (for rendering interactive charts)
+    dashboard_data = DashboardService.get_dashboard_data(student_id)
+
     return render_template(
         "student_detail.html",
         teacher=teacher,
         student=student,
+        data=dashboard_data,
         attendance=attendance,
         assignments=assignments_data,
         assessments=assessments,
