@@ -1,3 +1,5 @@
+# Install base dependencies (same as requirements/base.txt)
+-r requirements/base.txt
 blinker==1.9.0
 click==8.3.1
 colorama==0.4.6

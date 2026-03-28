@@ -6,19 +6,31 @@
     <title>Student Detail | {{ student.full_name }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="{{ url_for('static', filename='css/ui_alerts.css') }}" rel="stylesheet">
+    <script src="{{ url_for('static', filename='js/ui_alerts.js') }}"></script>
     <style>
         :root {
-            --primary: #002D62;
-            --accent: #D4AF37;
             --bg-body: #f3f4f6;
-            --white: #ffffff;
-            --gray-100: #f3f4f6;
-            --gray-200: #e5e7eb;
-            --gray-500: #6b7280;
-            --gray-700: #374151;
+            --bg-card: #ffffff;
+            --bg-card-hover: #fafafa;
+            --border: #e5e7eb;
+            --border-accent: rgba(99, 102, 241, 0.35);
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --primary-soft: rgba(99, 102, 241, 0.08);
+            --text-primary: #111827;
+            --text-secondary: #6b7280;
+            --text-muted: #9ca3af;
             --success: #10b981;
+            --success-soft: rgba(16, 185, 129, 0.1);
             --warning: #f59e0b;
+            --warning-soft: rgba(245, 158, 11, 0.1);
             --danger: #ef4444;
+            --danger-soft: rgba(239, 68, 68, 0.1);
+            --radius: 14px;
+            --shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+            --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.06);
         }
 
         * {
@@ -29,10 +41,10 @@
         }
 
         body {
-            background-color: var(--bg-body);
-            color: var(--gray-700);
-            padding: 32px;
+            background: var(--bg-body);
+            color: var(--text-primary);
             min-height: 100vh;
+            padding: 28px;
         }
 
         .container {
@@ -40,51 +52,135 @@
             margin: 0 auto;
         }
 
-        .back-link {
+        /* ── Navigation Bar ── */
+        .nav-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 28px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .nav-back {
             display: inline-flex;
             align-items: center;
-            margin-bottom: 24px;
-            color: var(--primary);
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 14px;
             gap: 8px;
+            padding: 8px 18px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all .2s;
+            box-shadow: var(--shadow);
         }
 
-        .back-link:hover {
-            text-decoration: underline;
+        .nav-back:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: var(--primary-soft);
         }
 
-        .header-card {
-            background: var(--white);
-            padding: 32px;
-            border-radius: 12px;
+        .nav-back i {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* ── Profile Hero ── */
+        .profile-hero {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 28px 32px;
             margin-bottom: 24px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
             display: flex;
-            justify-content: space-between;
             align-items: center;
-        }
-
-        .header-info h1 {
-            color: var(--gray-900);
-            font-size: 28px;
-            margin-bottom: 8px;
-        }
-
-        .header-meta {
-            display: flex;
             gap: 24px;
-            font-size: 14px;
-            color: var(--gray-500);
+            flex-wrap: wrap;
+            box-shadow: var(--shadow);
         }
 
-        .status-badge {
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 14px;
+        .cgpa-ring {
+            width: 84px;
+            height: 84px;
+            border-radius: 50%;
+            background: conic-gradient(var(--primary) calc(var(--pct, 0) * 1%), #e5e7eb 0);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .cgpa-ring-inner {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: var(--bg-card);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        .cgpa-num {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--primary);
+            line-height: 1;
+        }
+
+        .cgpa-label {
+            font-size: 9px;
+            color: var(--text-muted);
             font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            margin-top: 2px;
+        }
+
+        .profile-info {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .profile-info h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+        }
+
+        .profile-meta {
+            display: flex;
+            gap: 18px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            flex-wrap: wrap;
+        }
+
+        .profile-meta span {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .profile-meta i {
+            width: 14px;
+            height: 14px;
+            opacity: .5;
+        }
+
+        .status-pill {
+            padding: 5px 16px;
+            border-radius: 99px;
+            font-size: 12px;
+            font-weight: 700;
             text-transform: capitalize;
+            letter-spacing: .3px;
+            flex-shrink: 0;
         }
 
         .status-good {
@@ -102,34 +198,192 @@
             color: #991b1b;
         }
 
-        .grid {
+        .status-unknown {
+            background: #f3f4f6;
+            color: var(--text-secondary);
+        }
+
+        /* ── KPI Grid ── */
+        .kpi-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            /* 3 columns */
-            gap: 24px;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .kpi-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            text-align: center;
+            transition: all .2s;
+            box-shadow: var(--shadow);
+        }
+
+        .kpi-card:hover {
+            border-color: var(--border-accent);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .kpi-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: .6px;
+            margin-bottom: 8px;
+        }
+
+        .kpi-value {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--text-primary);
+            line-height: 1;
+        }
+
+        .kpi-sub {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 5px;
+        }
+
+        .kpi-value.good {
+            color: #059669;
+        }
+
+        .kpi-value.warning {
+            color: #d97706;
+        }
+
+        .kpi-value.danger {
+            color: #dc2626;
+        }
+
+        /* ── Content Grid ── */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 24px;
         }
 
         .card {
-            background: var(--white);
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
             padding: 24px;
-            border-radius: 12px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            box-shadow: var(--shadow);
         }
 
-        .card h2 {
-            font-size: 18px;
-            color: var(--gray-900);
-            margin-bottom: 20px;
+        .card-header {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
+            margin-bottom: 18px;
         }
 
+        .card-header h2 {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .card-header i {
+            width: 18px;
+            height: 18px;
+            color: var(--primary);
+        }
+
+        .section-badge {
+            background: linear-gradient(90deg, #6366f1, #8b5cf6);
+            color: white;
+            font-size: 10px;
+            font-weight: 600;
+            padding: 2px 9px;
+            border-radius: 99px;
+            letter-spacing: .5px;
+            text-transform: uppercase;
+            margin-left: auto;
+        }
+
+        /* ── Skills Table ── */
+        .skills-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .skills-table th {
+            text-align: left;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            padding: 8px 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .skills-table td {
+            padding: 10px;
+            font-size: 13px;
+            color: var(--text-primary);
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .risk-bar-wrap {
+            background: #e5e7eb;
+            border-radius: 99px;
+            height: 6px;
+            width: 100%;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+
+        .risk-bar {
+            height: 6px;
+            border-radius: 99px;
+            transition: width .5s ease;
+        }
+
+        .risk-low {
+            background: var(--success);
+        }
+
+        .risk-medium {
+            background: var(--warning);
+        }
+
+        .risk-high {
+            background: var(--danger);
+        }
+
+        /* ── Career Chip ── */
+        .career-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--primary-soft);
+            border: 1px solid var(--border-accent);
+            color: var(--primary-dark);
+            border-radius: 99px;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .career-chip .goal-type {
+            font-size: 11px;
+            opacity: .65;
+        }
+
+        /* ── Metric Rows ── */
         .metric-row {
             display: flex;
             justify-content: space-between;
+            align-items: center;
             padding: 12px 0;
-            border-bottom: 1px solid var(--gray-100);
+            border-bottom: 1px solid #f3f4f6;
         }
 
         .metric-row:last-child {
@@ -137,69 +391,207 @@
         }
 
         .metric-label {
-            font-size: 14px;
-            color: var(--gray-500);
+            font-size: 13px;
+            color: var(--text-secondary);
         }
 
         .metric-value {
             font-weight: 600;
-            color: var(--gray-900);
-            font-size: 16px;
+            color: var(--text-primary);
+            font-size: 15px;
         }
 
-        /* Notes Section */
+        /* ── Insight Box ── */
+        .insight-box {
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--primary);
+            border-radius: 10px;
+            padding: 18px 20px;
+        }
+
+        .insight-preview {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.7;
+            margin-bottom: 14px;
+        }
+
+        .insight-meta {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+
+        .btn-gradient {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: linear-gradient(90deg, #6366f1, #8b5cf6);
+            color: white;
+            text-decoration: none;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 18px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity .2s;
+        }
+
+        .btn-gradient:hover {
+            opacity: .85;
+        }
+
+        /* ── Notes ── */
         .notes-list {
-            max-height: 300px;
+            max-height: 280px;
             overflow-y: auto;
             margin-bottom: 16px;
         }
 
         .note-item {
-            background: var(--gray-100);
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 8px;
-            border-left: 3px solid var(--secondary);
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+            border-left: 3px solid var(--primary);
+            padding: 14px 16px;
+            border-radius: 10px;
+            margin-bottom: 10px;
         }
 
         .note-content {
-            margin-bottom: 4px;
-            font-size: 14px;
+            font-size: 13px;
+            color: #374151;
+            line-height: 1.6;
+            margin-bottom: 6px;
         }
 
         .note-date {
             font-size: 11px;
-            color: var(--gray-500);
+            color: var(--text-muted);
         }
 
         textarea {
             width: 100%;
             height: 80px;
-            padding: 12px;
-            border: 1px solid var(--gray-200);
-            border-radius: 8px;
-            margin-bottom: 8px;
-            resize: vertical;
+            padding: 12px 14px;
+            background: #f9fafb;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text-primary);
             font-family: inherit;
+            font-size: 13px;
+            resize: vertical;
+            margin-bottom: 10px;
+            transition: border-color .2s;
         }
 
-        button {
-            padding: 8px 16px;
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: white;
+        }
+
+        textarea::placeholder {
+            color: var(--text-muted);
+        }
+
+        .btn-primary {
+            padding: 8px 20px;
             background: var(--primary);
             color: white;
             border: none;
-            border-radius: 6px;
+            border-radius: 8px;
             cursor: pointer;
-            font-weight: 500;
+            font-weight: 600;
+            font-size: 13px;
+            transition: background .2s;
         }
 
-        button:hover {
-            background: #001f4d;
+        .btn-primary:hover {
+            background: var(--primary-dark);
         }
 
+        /* ── Full-Width Cards ── */
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        /* ── Empty State ── */
+        .empty-state {
+            text-align: center;
+            padding: 24px;
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        /* ── AI Report Content ── */
+        .ai-report-content {
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 24px;
+            color: #374151;
+            font-size: 14px;
+            line-height: 1.8;
+        }
+
+        .ai-report-content h1,
+        .ai-report-content h2,
+        .ai-report-content h3 {
+            color: var(--text-primary);
+            margin: 16px 0 8px;
+        }
+
+        .ai-report-content ul,
+        .ai-report-content ol {
+            margin-left: 20px;
+            margin-bottom: 12px;
+        }
+
+        .ai-report-content p {
+            margin-bottom: 10px;
+        }
+
+        .report-date {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-align: right;
+            margin-bottom: 12px;
+        }
+
+        /* ── Responsive ── */
         @media (max-width: 1024px) {
-            .grid {
+            .kpi-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .content-grid {
                 grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding: 16px;
+            }
+
+            .profile-hero {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .profile-meta {
+                justify-content: center;
+            }
+
+            .kpi-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .nav-bar {
+                flex-direction: column;
+                align-items: flex-start;
             }
         }
     </style>
@@ -207,137 +599,328 @@
 
 <body>
     <div class="container">
-        <a href="/teacher/dashboard" class="back-link">← Back to Dashboard</a>
-
-        <div class="header-card">
-            <div class="header-info">
-                <h1>{{ student.full_name }}</h1>
-                <div class="header-meta">
-                    <span>ID: #{{ student.id }}</span>
-                    <span>Class: {{ student.class_level }}-{{ student.section }}</span>
-                    <span>Last Active: {{ student.last_activity.strftime('%b %d') if student.last_activity else '--'
-                        }}</span>
-                </div>
-            </div>
-            <div>
-                <span class="status-badge status-{{ student.performance_status }}">
-                    {{ student.performance_status }}
-                </span>
-            </div>
+        <!-- ── Navigation Bar ── -->
+        <div class="nav-bar">
+            <a href="/teacher/students" class="nav-back">
+                <i data-lucide="arrow-left"></i> Students List
+            </a>
+            <a href="/teacher/dashboard" class="nav-back">
+                <i data-lucide="layout-dashboard"></i> Dashboard
+            </a>
         </div>
 
-        <div class="grid">
-            <!-- Academic Stats -->
-            <div class="card">
-                <h2>📊 Academic KPI</h2>
-                <div class="metric-row">
-                    <span class="metric-label">Current CGPA</span>
-                    <span class="metric-value" style="font-size:24px; color:var(--primary);">{{
-                        "%.2f"|format(student.current_cgpa) if student.current_cgpa else '--' }}</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Attendance</span>
-                    <span class="metric-value">{{ attendance.percentage }}%</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Assignments</span>
-                    <span class="metric-value">{{ assignments.completion_rate }}% Complete</span>
-                </div>
-                <div class="metric-row">
-                    <span class="metric-label">Performance Trend</span>
-                    <span class="metric-value" style="text-transform:capitalize;">{{ performance_trend }}</span>
+        <!-- ── Profile Hero ── -->
+        {% set cgpa_val = profile_summary.current_cgpa or 0 %}
+        {% set cgpa_pct = (cgpa_val / 4.0 * 100) | round | int %}
+        <div class="profile-hero">
+            <div class="cgpa-ring" style="--pct: {{ cgpa_pct }};">
+                <div class="cgpa-ring-inner">
+                    <span class="cgpa-num">
+                        {% if profile_summary.current_cgpa %}{{ "%.2f" | format(profile_summary.current_cgpa) }}{% else %}N/A{% endif %}
+                    </span>
+                    <span class="cgpa-label">CGPA</span>
                 </div>
             </div>
+            <div class="profile-info">
+                <h1>{{ profile_summary.full_name }}</h1>
+                {% if student.student_code %}
+                <div style="margin-bottom:6px;">
+                    <span style="font-family:'Menlo','Consolas',monospace; font-size:12px; color:var(--text-muted); background:#f3f4f6; padding:3px 10px; border-radius:6px; letter-spacing:.5px;">
+                        ID {{ student.student_code }}
+                    </span>
+                </div>
+                {% endif %}
+                <div class="profile-meta">
+                    <span><i data-lucide="building-2"></i> {{ profile_summary.department }}</span>
+                    <span><i data-lucide="book-open"></i> Class {{ profile_summary.class_level }}-{{
+                        profile_summary.section }}</span>
+                    {% if profile_summary.target_cgpa %}
+                    <span><i data-lucide="target"></i> Target: {{ "%.2f" | format(profile_summary.target_cgpa) }}</span>
+                    {% endif %}
+                    {% if days_since_active is not none %}
+                    <span><i data-lucide="clock"></i> Active {{ days_since_active }}d ago</span>
+                    {% endif %}
+                </div>
+            </div>
+            <span class="status-pill status-{{ profile_summary.performance_status or 'unknown' }}">
+                {{ (profile_summary.performance_status or 'unknown') | replace('-', ' ') }}
+            </span>
+        </div>
 
-            <!-- AI Insight Report -->
-            <div class="card" style="grid-column: span 3;">
-                <h2>🤖 AI Career & Academic Insights</h2>
-                {% if insight %}
-                <div style="background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0;">
-                    <div style="font-size: 12px; color: var(--gray-500); margin-bottom: 10px; text-align: right;">
-                        Generated on: {{ insight.generated_at.strftime('%B %d, %Y') }}
-                    </div>
-                    <div class="insight-content">
-                        {{ insight.content|safe }}
-                    </div>
+        <!-- ── KPI Cards ── -->
+        <div class="kpi-grid">
+            <!-- Predicted GPA -->
+            <div class="kpi-card">
+                <div class="kpi-label">Predicted Next GPA</div>
+                {% if academic_snapshot.predicted_next_gpa %}
+                {% set pgpa = academic_snapshot.predicted_next_gpa %}
+                <div class="kpi-value {% if pgpa >= 3.5 %}good{% elif pgpa >= 2.5 %}warning{% else %}danger{% endif %}">
+                    {{ "%.2f" | format(pgpa) }}
                 </div>
+                <div class="kpi-sub">/ 4.00 scale</div>
                 {% else %}
-                <div style="text-align: center; padding: 40px; color: var(--gray-500);">
-                    <i class="fas fa-robot" style="font-size: 48px; margin-bottom: 16px; opacity: 0.5;"></i>
-                    <p>No AI insight report generated yet.</p>
-                    <p style="font-size: 13px;">The student needs to generate a report from their dashboard.</p>
-                </div>
+                <div class="kpi-value" style="font-size:16px; color:var(--text-muted);">—</div>
+                <div class="kpi-sub">Not enough data</div>
                 {% endif %}
             </div>
 
-            <!-- Notes Section -->
-            <div class="card" style="grid-column: span 2;">
-                <h2>📝 Teacher Notes (Private)</h2>
-                <div class="notes-list" id="notesList">
-                    {% if notes %}
-                    {% for note in notes %}
-                    <div class="note-item">
-                        <div class="note-content">{{ note.content }}</div>
-                        <div class="note-date">{{ note.created_at.strftime('%b %d, %Y %I:%M %p') }}</div>
-                    </div>
-                    {% endfor %}
+            <!-- Attendance -->
+            <div class="kpi-card">
+                <div class="kpi-label">Attendance</div>
+                <div
+                    class="kpi-value {% if attendance.percentage >= 85 %}good{% elif attendance.percentage >= 70 %}warning{% else %}danger{% endif %}">
+                    {{ attendance.percentage }}%
+                </div>
+                <div class="kpi-sub">present rate</div>
+            </div>
+
+            <!-- Burnout Risk -->
+            <div class="kpi-card">
+                <div class="kpi-label">Burnout Risk</div>
+                {% if weekly_snapshot %}
+                {% set brisk = weekly_snapshot.burnout_risk_pct %}
+                <div class="kpi-value {% if brisk < 40 %}good{% elif brisk < 70 %}warning{% else %}danger{% endif %}">
+                    {{ brisk }}%
+                </div>
+                <div class="kpi-sub">{% if brisk < 40 %}Low Risk{% elif brisk < 70 %}Moderate{% else %}High Risk{% endif
+                        %}</div>
+                        {% else %}
+                        <div class="kpi-value" style="font-size:16px; color:var(--text-muted);">—</div>
+                        <div class="kpi-sub">No check-in data</div>
+                        {% endif %}
+                </div>
+
+                <!-- Weekly Hours -->
+                <div class="kpi-card">
+                    <div class="kpi-label">Weekly Study Hours</div>
+                    {% if weekly_snapshot %}
+                    <div class="kpi-value">{{ weekly_snapshot.total_hours_studied | round(1) }}</div>
+                    <div class="kpi-sub">hrs · {{ weekly_snapshot.status_label }}</div>
                     {% else %}
-                    <div style="text-align:center; color:var(--gray-500); padding:20px;">No notes added yet.</div>
+                    <div class="kpi-value" style="font-size:16px; color:var(--text-muted);">—</div>
+                    <div class="kpi-sub">No data yet</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- ── Two-Column Content ── -->
+            <div class="content-grid">
+
+                <!-- Academic KPI Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <i data-lucide="bar-chart-3"></i>
+                        <h2>Academic KPI</h2>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Current CGPA</span>
+                        <span class="metric-value" style="color:var(--primary); font-size:18px;">
+                            {{ "%.2f"|format(student.current_cgpa) if student.current_cgpa else '--' }}
+                        </span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Attendance</span>
+                        <span class="metric-value">{{ attendance.percentage }}%</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Assignments Completed</span>
+                        <span class="metric-value">{{ assignments.completion_rate }}%</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Performance Trend</span>
+                        <span class="metric-value" style="text-transform:capitalize;">{{ performance_trend }}</span>
+                    </div>
+                    {% if academic_snapshot.total_credits %}
+                    <div class="metric-row">
+                        <span class="metric-label">Total Credits Earned</span>
+                        <span class="metric-value">{{ academic_snapshot.total_credits }}</span>
+                    </div>
                     {% endif %}
                 </div>
 
-                <div style="margin-top:16px; border-top:1px solid var(--gray-100); padding-top:16px;">
-                    <textarea id="noteContent"
-                        placeholder="Write a private note about {{ student.full_name }}..."></textarea>
-                    <div style="text-align:right;">
-                        <button onclick="addNote()">Add Note</button>
+                <!-- At-Risk Skills -->
+                <div class="card">
+                    <div class="card-header">
+                        <i data-lucide="alert-triangle"></i>
+                        <h2>Top At-Risk Skills</h2>
+                    </div>
+                    {% if skill_snapshot %}
+                    <table class="skills-table">
+                        <thead>
+                            <tr>
+                                <th>Skill</th>
+                                <th>Proficiency</th>
+                                <th style="width:35%;">Risk Level</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for sk in skill_snapshot %}
+                            <tr>
+                                <td>{{ sk.skill_name }}</td>
+                                <td>{{ sk.proficiency_score }}/100</td>
+                                <td>
+                                    <div style="display:flex; align-items:center; gap:8px;">
+                                        <span
+                                            style="font-size:12px; font-weight:600;
+                                        color:{% if sk.risk_score >= 70 %}#dc2626{% elif sk.risk_score >= 40 %}#d97706{% else %}#059669{% endif %};">{{
+                                            sk.risk_score }}%</span>
+                                        <div class="risk-bar-wrap" style="flex:1;">
+                                            <div class="risk-bar {% if sk.risk_score >= 70 %}risk-high{% elif sk.risk_score >= 40 %}risk-medium{% else %}risk-low{% endif %}"
+                                                style="width: {{ sk.risk_score }}%;"></div>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <div class="empty-state">No skill data recorded yet.</div>
+                    {% endif %}
+                </div>
+
+                <!-- Career Goal + Insight Preview -->
+                <div class="card">
+                    <div class="card-header">
+                        <i data-lucide="compass"></i>
+                        <h2>Career & Insights</h2>
+                    </div>
+
+                    <!-- Career Goal -->
+                    <div style="margin-bottom:20px;">
+                        <div class="kpi-label" style="margin-bottom:10px;">Primary Career Goal</div>
+                        {% if career_snapshot %}
+                        <div class="career-chip">
+                            <i data-lucide="rocket" style="width:16px; height:16px;"></i>
+                            {{ career_snapshot.career_title }}
+                            <span class="goal-type">· {{ career_snapshot.goal_type }}</span>
+                        </div>
+                        {% else %}
+                        <div class="empty-state" style="padding:8px 0;">No primary career goal set.</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- AI Insight Preview -->
+                    <div class="kpi-label" style="margin-bottom:10px;">AI Insight Preview</div>
+                    {% if insight_preview %}
+                    <div class="insight-box">
+                        <div class="insight-meta">Generated: {{ insight_preview.generated_at.strftime('%B %d, %Y') }}
+                        </div>
+                        <p class="insight-preview">{{ insight_preview.preview_text }}</p>
+                        <a href="#insight-full" class="btn-gradient">
+                            <i data-lucide="file-text" style="width:14px; height:14px;"></i> View Full Report
+                        </a>
+                    </div>
+                    {% else %}
+                    <div class="insight-box">
+                        <p class="insight-preview">No AI insight report has been generated for this student yet.</p>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="card">
+                    <div class="card-header">
+                        <i data-lucide="activity"></i>
+                        <h2>Recent Activity</h2>
+                    </div>
+                    {% if assignments.recent %}
+                    {% for sub in assignments.recent[:5] %}
+                    <div class="metric-row">
+                        <span class="metric-label" style="flex:1;">{{ sub.assignment.title }}</span>
+                        <span class="metric-value" style="font-size:14px;">{{ sub.score }} pts</span>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <div class="empty-state">No recent assignments.</div>
+                    {% endif %}
+                </div>
+
+                <!-- AI Full Report -->
+                <div class="card full-width" id="insight-full">
+                    <div class="card-header">
+                        <i data-lucide="brain"></i>
+                        <h2>AI Career & Academic Insights</h2>
+                        <span class="section-badge">AI Generated</span>
+                    </div>
+                    {% if insight %}
+                    <div class="report-date">Generated on: {{ insight.generated_at.strftime('%B %d, %Y') }}</div>
+                    <div class="ai-report-content">
+                        {{ insight.content|safe }}
+                    </div>
+                    {% else %}
+                    <div class="empty-state" style="padding:40px;">
+                        <p style="margin-bottom:4px;">No AI insight report generated yet.</p>
+                        <p style="font-size:12px;">The student needs to generate a report from their dashboard.</p>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                <!-- Teacher Notes -->
+                <div class="card full-width">
+                    <div class="card-header">
+                        <i data-lucide="sticky-note"></i>
+                        <h2>Teacher Notes</h2>
+                        <span class="section-badge">Private</span>
+                    </div>
+                    <div class="notes-list" id="notesList">
+                        {% if notes %}
+                        {% for note in notes %}
+                        <div class="note-item">
+                            <div class="note-content">{{ note.content }}</div>
+                            <div class="note-date">{{ note.created_at.strftime('%b %d, %Y %I:%M %p') }}</div>
+                        </div>
+                        {% endfor %}
+                        {% else %}
+                        <div class="empty-state">No notes added yet.</div>
+                        {% endif %}
+                    </div>
+
+                    <div style="margin-top:16px; border-top:1px solid var(--border); padding-top:16px;">
+                        <textarea id="noteContent"
+                            placeholder="Write a private note about {{ student.full_name }}..."></textarea>
+                        <div style="text-align:right;">
+                            <button class="btn-primary" onclick="addNote()">
+                                Add Note
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
-
-            <!-- Recent Activity -->
-            <div class="card">
-                <h2>🕒 Recent Activity</h2>
-                {% if assignments.recent %}
-                {% for sub in assignments.recent[:3] %}
-                <div class="metric-row">
-                    <span class="metric-label" style="flex:1;">{{ sub.assignment.title }}</span>
-                    <span class="metric-value" style="font-size:14px;">{{ sub.score }} pts</span>
-                </div>
-                {% endfor %}
-                {% else %}
-                <div style="color:var(--gray-500); font-size:14px;">No recent assignments.</div>
-                {% endif %}
-            </div>
         </div>
-    </div>
 
-    <script>
-        async function addNote() {
-            const content = document.getElementById('noteContent').value;
-            if (!content) return;
+        <script>
+            // Initialize Lucide icons
+            lucide.createIcons();
 
-            try {
-                const response = await fetch('/api/teacher/notes', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        student_id: {{ student.id }},
-                    content: content
+            // Add Note
+            async function addNote() {
+                const content = document.getElementById('noteContent').value;
+                if (!content) return;
+
+                try {
+                    const response = await fetch('/api/teacher/notes', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            student_id: {{ student.id }},
+                        content: content
                     })
-        });
+            });
 
-        if (response.ok) {
-            // Ideally reload list via JS, but reload page is simpler for now
-            window.location.reload();
-        } else {
-            alert("Failed to add note");
-        }
+            if (response.ok) {
+                showToast('Note added successfully!', 'success');
+                setTimeout(() => window.location.reload(), 1500);
+            } else {
+                showToast("Failed to add note.", 'error');
+            }
             } catch (e) {
-            console.error(e);
+                console.error(e);
+                showToast("An error occurred while adding the note.", 'error');
+            }
         }
-        }
-    </script>
+        </script>
 </body>
 
 </html>

@@ -1,714 +1,1193 @@
-from flask import Blueprint, render_template, jsonify, request, redirect, url_for, current_app
+"""
+dashboard/routes.py — Thin controllers for student-facing routes.
+
+All business logic has been extracted into the services/ package.
+Each handler: validates input → calls service → returns response.
+"""
+
+import os
+from flask import (
+    Blueprint, render_template, jsonify, request,
+    redirect, url_for, current_app,
+)
 from flask_jwt_extended import jwt_required, get_jwt, get_jwt_identity
-from models import StudentProfile, AcademicMetric, StudentSkill, StudentCourse, CareerInterest, AnalyticsResult, TeacherProfile, User, TeacherAssignment, StudentSkillProgress, ActionPlan, db
-from ml.analytics_engine import AnalyticsEngine
-from datetime import datetime
-from dashboard.utils import calculate_student_overview_stats
-import json
-import google.generativeai as genai
+from core.security import require_role
+from core.errors import NotFoundError
+
+from services.dashboard_service import DashboardService
+from services.session_service import SessionService
+from services.academic_service import AcademicService
+from services.skill_service import SkillService
+from services.checkin_service import CheckinService
+from services.profile_service import ProfileService
+from services.analytics_service import AnalyticsService
 
 dashboard_bp = Blueprint("dashboard", __name__)
-analytics_engine = AnalyticsEngine()
 
-from dashboard.utils import calculate_student_overview_stats
-from datetime import datetime
-from models import StudentInsight
+# =============================================================
+# DEPARTMENT → CAREERS & SKILLS REFERENCE DATA
+# =============================================================
 
-# ... (imports)
+DEPT_CAREERS_SKILLS = {
+    "Computer Science & Engineering (CSE)": {
+        "careers": [
+            "Software Developer", "Web Developer", "Mobile App Developer",
+            "Data Scientist", "AI / Machine Learning Engineer",
+            "Cybersecurity Specialist", "Cloud Engineer", "DevOps Engineer",
+            "Game Developer", "Database Administrator", "Systems Analyst",
+            "IT Project Manager", "University Lecturer / Researcher",
+        ],
+        "skills": [
+            "Python", "Java", "C++", "JavaScript", "SQL", "HTML/CSS",
+            "React", "Node.js", "Git", "Docker", "Linux",
+            "Data Structures", "Algorithms", "Machine Learning",
+            "Data Analysis", "Cloud Computing", "Web Development",
+            "Cybersecurity", "REST APIs", "Databases",
+        ],
+    },
+    "Software Engineering": {
+        "careers": [
+            "Software Developer", "Web Developer", "Mobile App Developer",
+            "Data Scientist", "AI / Machine Learning Engineer",
+            "Cybersecurity Specialist", "Cloud Engineer", "DevOps Engineer",
+            "Game Developer", "Database Administrator", "Systems Analyst",
+            "IT Project Manager", "University Lecturer / Researcher",
+        ],
+        "skills": [
+            "Python", "Java", "C#", "JavaScript", "TypeScript", "SQL",
+            "React", "Spring Boot", "Docker", "Kubernetes", "Git",
+            "Agile / Scrum", "REST APIs", "System Design", "Testing",
+        ],
+    },
+    "Electrical & Electronic Engineering (EEE)": {
+        "careers": [
+            "Electrical Engineer", "Power System Engineer", "Electronics Engineer",
+            "Telecommunications Engineer", "Embedded Systems Engineer",
+            "Robotics Engineer", "Automation Engineer", "Renewable Energy Engineer",
+            "Research Engineer", "Engineering Consultant",
+        ],
+        "skills": [
+            "Circuit Analysis", "MATLAB", "Control Systems", "Embedded Systems",
+            "Arduino", "Signal Processing", "Power Systems", "PCB Design",
+            "PLC Programming", "AutoCAD Electrical", "VHDL", "Microcontrollers",
+            "Communication", "Problem Solving", "Critical Thinking",
+        ],
+    },
+    "Civil Engineering": {
+        "careers": [
+            "Structural Engineer", "Construction Engineer", "Transportation Engineer",
+            "Urban Planner", "Environmental Engineer", "Geotechnical Engineer",
+            "Project Manager (Construction)", "Site Engineer", "Government Engineer",
+        ],
+        "skills": [
+            "AutoCAD Civil", "Structural Analysis", "Revit", "Surveying", "GIS",
+            "Concrete Design", "Project Scheduling", "Construction Management",
+            "Geotechnical Analysis", "ETABS", "Highway Design",
+            "Environmental Engineering", "Problem Solving", "Project Management",
+        ],
+    },
+    "Mechanical Engineering": {
+        "careers": [
+            "Mechanical Engineer", "Manufacturing Engineer", "Automotive Engineer",
+            "Aerospace Engineer", "Energy Systems Engineer", "Robotics Engineer",
+            "Maintenance Engineer", "Product Design Engineer",
+        ],
+        "skills": [
+            "AutoCAD", "SolidWorks", "ANSYS", "Thermodynamics", "Fluid Mechanics",
+            "CNC Machining", "MATLAB", "3D Modeling", "Materials Science",
+            "Manufacturing Processes", "FEA Analysis", "Robot Programming",
+            "Problem Solving", "Critical Thinking",
+        ],
+    },
+    "Information Technology (IT)": {
+        "careers": [
+            "IT Support Specialist", "Network Administrator", "Systems Administrator",
+            "Cloud Engineer", "Cybersecurity Analyst", "Database Administrator",
+            "IT Project Manager", "Business Analyst",
+        ],
+        "skills": [
+            "Networking", "Cybersecurity", "Windows Server", "Linux",
+            "Cloud Computing", "Virtualization", "IT Support",
+            "Database Administration", "Active Directory",
+            "Cisco Networking", "Python", "PowerShell",
+        ],
+    },
+    "Industrial & Production Engineering (IPE)": {
+        "careers": [
+            "Industrial Engineer", "Production Manager", "Quality Assurance Engineer",
+            "Supply Chain Analyst", "Operations Manager", "Process Improvement Engineer",
+        ],
+        "skills": [
+            "Lean Manufacturing", "Six Sigma", "AutoCAD", "MATLAB", "ERP Systems",
+            "Project Management", "Supply Chain Management", "Quality Control",
+            "Operations Research", "Simulation Tools", "Teamwork",
+        ],
+    },
+    "Business Administration (BBA)": {
+        "careers": [
+            "Business Manager", "Marketing Manager", "Financial Analyst",
+            "HR Manager", "Operations Manager", "Business Consultant",
+            "Entrepreneur / Startup Founder", "Supply Chain Manager",
+            "Corporate Executive",
+        ],
+        "skills": [
+            "Business Strategy", "Marketing", "Sales", "Supply Chain",
+            "Excel Advanced", "Business Communication", "Economics",
+            "Market Research", "SAP ERP", "Digital Marketing",
+            "Leadership", "Project Management", "Teamwork",
+        ],
+    },
+    "Accounting": {
+        "careers": [
+            "Accountant", "Auditor", "Financial Analyst", "Investment Banker",
+            "Tax Consultant", "Chartered Accountant", "Risk Analyst", "Banking Officer",
+        ],
+        "skills": [
+            "Financial Analysis", "Accounting", "Bloomberg Terminal",
+            "Excel Advanced", "Corporate Finance", "Financial Reporting",
+            "QuickBooks", "Taxation", "Auditing", "Cost Accounting",
+            "Communication", "Critical Thinking",
+        ],
+    },
+    "Finance": {
+        "careers": [
+            "Accountant", "Auditor", "Financial Analyst", "Investment Banker",
+            "Tax Consultant", "Chartered Accountant", "Risk Analyst", "Banking Officer",
+        ],
+        "skills": [
+            "Financial Modelling", "Accounting", "Bloomberg Terminal",
+            "Investment Analysis", "Risk Management", "Excel Advanced",
+            "Corporate Finance", "Derivatives", "Portfolio Management",
+            "Financial Reporting", "QuickBooks",
+        ],
+    },
+    "Marketing": {
+        "careers": [
+            "Marketing Manager", "Digital Marketing Specialist", "Brand Manager",
+            "Content Strategist", "SEO Specialist", "Social Media Manager",
+            "Market Research Analyst", "Product Manager",
+        ],
+        "skills": [
+            "Digital Marketing", "SEO / SEM", "Content Marketing", "Social Media",
+            "Google Analytics", "Market Research", "Branding", "Copywriting",
+            "Email Marketing", "CRM Tools", "Communication", "Creativity",
+        ],
+    },
+    "Management": {
+        "careers": [
+            "Operations Manager", "Project Manager", "Consultant",
+            "HR Manager", "General Manager", "Team Lead",
+            "Entrepreneur / Startup Founder",
+        ],
+        "skills": [
+            "Leadership", "Project Management", "Teamwork", "Communication",
+            "Problem Solving", "Strategic Planning", "Decision Making",
+            "Negotiation", "Microsoft Office", "Time Management",
+        ],
+    },
+    "Human Resource Management (HRM)": {
+        "careers": [
+            "HR Manager", "Recruiter", "Talent Acquisition Specialist",
+            "Training & Development Manager", "Compensation & Benefits Analyst",
+            "HR Business Partner", "Organizational Development Specialist",
+        ],
+        "skills": [
+            "Recruitment", "Employee Relations", "Performance Management",
+            "Training & Development", "HR Analytics", "Labor Law",
+            "Communication", "Leadership", "Microsoft Office", "Teamwork",
+        ],
+    },
+    "Mathematics": {
+        "careers": [
+            "Data Analyst", "Data Scientist", "Statistician",
+            "Actuary", "University Lecturer", "Research Scientist",
+            "Operations Research Analyst", "Financial Analyst",
+        ],
+        "skills": [
+            "Python", "R", "MATLAB", "Statistics", "Linear Algebra",
+            "Calculus", "Numerical Methods", "Machine Learning",
+            "Data Analysis", "Problem Solving", "Critical Thinking", "Research",
+        ],
+    },
+    "Physics": {
+        "careers": [
+            "Research Scientist", "University Lecturer / Researcher",
+            "Medical Physicist", "Data Analyst", "Optics Engineer",
+            "Semiconductor Engineer",
+        ],
+        "skills": [
+            "MATLAB", "Python", "Research", "Laboratory Skills",
+            "Data Analysis", "Quantum Mechanics", "Electromagnetism",
+            "Problem Solving", "Critical Thinking", "Mathematics",
+        ],
+    },
+    "Chemistry": {
+        "careers": [
+            "Research Chemist", "Chemical Engineer", "Quality Control Analyst",
+            "Pharmaceutical Researcher", "Environmental Chemist",
+            "University Lecturer / Researcher",
+        ],
+        "skills": [
+            "Laboratory Skills", "Research", "Analytical Chemistry",
+            "Organic Chemistry", "Mass Spectrometry", "Python",
+            "Data Analysis", "Problem Solving", "Critical Thinking",
+        ],
+    },
+    "Statistics": {
+        "careers": [
+            "Data Analyst", "Data Scientist", "Statistician",
+            "Machine Learning Engineer", "Business Intelligence Analyst",
+            "Risk Analyst",
+        ],
+        "skills": [
+            "Python", "R", "SQL", "Machine Learning", "Deep Learning",
+            "Statistics", "Data Visualization", "Pandas", "NumPy",
+            "Power BI", "Tableau", "Research",
+        ],
+    },
+    "Biotechnology": {
+        "careers": [
+            "Biotechnologist", "Research Scientist", "Bioinformatician",
+            "Pharmaceutical Researcher", "Quality Control Scientist",
+            "University Lecturer / Researcher",
+        ],
+        "skills": [
+            "Molecular Biology", "Genetics", "Bioinformatics",
+            "Laboratory Skills", "Python", "R", "Research",
+            "Data Analysis", "Critical Thinking", "Communication",
+        ],
+    },
+    "Environmental Science": {
+        "careers": [
+            "Environmental Consultant", "Environmental Engineer",
+            "Policy Analyst", "Research Scientist", "Government Advisor",
+            "NGO Specialist",
+        ],
+        "skills": [
+            "GIS", "Environmental Impact Assessment", "Research",
+            "Data Analysis", "Policy Writing", "Laboratory Skills",
+            "Communication", "Project Management",
+        ],
+    },
+    "English": {
+        "careers": [
+            "Teacher / Lecturer", "Journalist", "Content Writer",
+            "Editor / Publisher", "Public Relations Specialist",
+            "Translator", "Media Professional",
+        ],
+        "skills": [
+            "Creative Writing", "Academic Writing", "Research",
+            "Public Speaking", "Editing", "Translation",
+            "Communication", "Presentation", "Critical Thinking",
+        ],
+    },
+    "Bangla": {
+        "careers": [
+            "Teacher / Lecturer", "Journalist", "Author / Writer",
+            "Editor", "Cultural Researcher", "Translator",
+        ],
+        "skills": [
+            "Creative Writing", "Research", "Journalism",
+            "Communication", "Editing", "Presentation",
+            "Critical Thinking", "Leadership",
+        ],
+    },
+    "History": {
+        "careers": [
+            "Historian", "University Lecturer / Researcher", "Museum Curator",
+            "Archivist", "Policy Analyst", "Journalist",
+        ],
+        "skills": [
+            "Research", "Academic Writing", "Critical Thinking",
+            "Communication", "Presentation", "Data Analysis",
+        ],
+    },
+    "Philosophy": {
+        "careers": [
+            "University Lecturer / Researcher", "Ethicist", "Policy Analyst",
+            "Writer / Author", "Human Rights Advocate",
+        ],
+        "skills": [
+            "Critical Thinking", "Academic Writing", "Research",
+            "Communication", "Leadership", "Presentation",
+        ],
+    },
+    "Economics": {
+        "careers": [
+            "Economist", "Policy Analyst", "Research Analyst",
+            "Financial Analyst", "Development Specialist",
+            "Data Analyst", "Government Economic Advisor",
+        ],
+        "skills": [
+            "Economic Modelling", "R", "Python", "Statistics",
+            "Research", "Data Analysis", "Policy Writing",
+            "Excel Advanced", "Communication", "Critical Thinking",
+        ],
+    },
+    "Sociology": {
+        "careers": [
+            "Sociologist", "Social Worker", "NGO Specialist",
+            "Policy Analyst", "Research Analyst", "Community Developer",
+        ],
+        "skills": [
+            "Research", "Data Analysis", "Communication",
+            "Community Outreach", "Presentation", "Critical Thinking",
+            "Project Management",
+        ],
+    },
+    "Political Science": {
+        "careers": [
+            "Political Analyst", "Policy Advisor", "Government Officer",
+            "Diplomat", "Journalist", "NGO Specialist",
+            "University Lecturer / Researcher",
+        ],
+        "skills": [
+            "Research", "Policy Writing", "Communication",
+            "Critical Thinking", "Presentation", "Data Analysis",
+            "Leadership",
+        ],
+    },
+    "International Relations": {
+        "careers": [
+            "Diplomat", "Foreign Service Officer", "Policy Analyst",
+            "International Development Specialist", "NGO Specialist",
+            "Journalist", "University Lecturer / Researcher",
+        ],
+        "skills": [
+            "Research", "Policy Writing", "Communication",
+            "Negotiation", "Cross-Cultural Communication", "Languages",
+            "Presentation", "Critical Thinking", "Leadership",
+        ],
+    },
+    "Public Administration": {
+        "careers": [
+            "Government Officer", "Policy Analyst", "Public Administrator",
+            "NGO Manager", "Civil Servant", "Development Specialist",
+        ],
+        "skills": [
+            "Public Policy", "Administration", "Leadership",
+            "Communication", "Research", "Project Management",
+            "Microsoft Office", "Teamwork",
+        ],
+    },
+    "Pharmacy": {
+        "careers": [
+            "Pharmacist", "Drug Research Scientist",
+            "Pharmaceutical Industry Manager", "Clinical Researcher",
+            "Regulatory Affairs Specialist", "Quality Control Analyst",
+        ],
+        "skills": [
+            "Pharmacology", "Biochemistry", "Laboratory Skills",
+            "Clinical Research", "Regulatory Affairs", "Quality Control",
+            "Research", "Communication", "Critical Thinking", "Data Analysis",
+        ],
+    },
+    "Public Health": {
+        "careers": [
+            "Public Health Officer", "Epidemiologist", "Health Policy Analyst",
+            "NGO Health Specialist", "Community Health Worker",
+            "Research Scientist",
+        ],
+        "skills": [
+            "Epidemiology", "Research", "Data Analysis", "Policy Writing",
+            "Community Outreach", "Communication", "Microsoft Office",
+            "Project Management",
+        ],
+    },
+    "Nursing": {
+        "careers": [
+            "Registered Nurse", "Clinical Nurse Specialist",
+            "Nurse Educator", "Healthcare Administrator",
+            "Community Health Nurse",
+        ],
+        "skills": [
+            "Clinical Skills", "Patient Care", "First Aid",
+            "Communication", "Teamwork", "Critical Thinking",
+            "Medical Ethics", "EMR Systems",
+        ],
+    },
+    "Law (LLB)": {
+        "careers": [
+            "Lawyer / Advocate", "Legal Consultant", "Judge",
+            "Corporate Legal Advisor", "Public Prosecutor",
+            "Legal Researcher", "Human Rights Lawyer",
+        ],
+        "skills": [
+            "Legal Research", "Case Analysis", "Contract Law",
+            "Communication", "Negotiation", "Critical Thinking",
+            "Academic Writing", "Presentation", "Leadership",
+        ],
+    },
+}
 
-@dashboard_bp.route("/student/dashboard")
-@jwt_required()
-def student_dashboard():
-    claims = get_jwt()
-    role = claims.get("role")
-    user_id = get_jwt_identity()
+# Grouped for the HTML <optgroup> select
+DEPT_GROUPS = [
+    ("💻 Engineering & Technology", [
+        "Computer Science & Engineering (CSE)",
+        "Electrical & Electronic Engineering (EEE)",
+        "Civil Engineering",
+        "Mechanical Engineering",
+        "Software Engineering",
+        "Information Technology (IT)",
+        "Industrial & Production Engineering (IPE)",
+    ]),
+    ("📊 Business & Management", [
+        "Business Administration (BBA)",
+        "Accounting",
+        "Finance",
+        "Marketing",
+        "Management",
+        "Human Resource Management (HRM)",
+    ]),
+    ("🔬 Science", [
+        "Mathematics",
+        "Physics",
+        "Chemistry",
+        "Statistics",
+        "Biotechnology",
+        "Environmental Science",
+    ]),
+    ("📚 Arts & Humanities", [
+        "English",
+        "Bangla",
+        "History",
+        "Philosophy",
+    ]),
+    ("🌍 Social Science", [
+        "Economics",
+        "Sociology",
+        "Political Science",
+        "International Relations",
+        "Public Administration",
+    ]),
+    ("⚕️ Health & Pharmacy", [
+        "Pharmacy",
+        "Public Health",
+        "Nursing",
+    ]),
+    ("⚖️ Law", [
+        "Law (LLB)",
+    ]),
+]
 
-    if role != "student":
-        return jsonify({"msg": "Access denied"}), 403
 
-    try:
-        student = StudentProfile.query.filter_by(user_id=int(user_id)).first()
-    except (ValueError, TypeError):
-        # If no profile exists yet (should be created at register, but safety check)
-        return jsonify({"msg": "Invalid user identity"}), 400
+# =============================================================
+# API: Department → Careers & Skills
+# =============================================================
 
-    if not student:
-        return jsonify({"msg": "Student profile not found"}), 404
-    
-    # Get Academic Metrics for easy access in template
-    metric = AcademicMetric.query.filter_by(student_id=student.id).first()
-    stats = {
-        "rank": metric.department_rank if metric else 0,
-        "credits": metric.total_credits if metric else 0,
-        "gpa_trend": metric.get_gpas() if metric else []
-    }
-    
-    return render_template("student_dashboard.html", student=student, stats=stats, now_date=datetime.now().strftime("%d %B, %Y"))
-
-# ... (API endpoints)
-
-@dashboard_bp.route("/teacher/dashboard")
-@jwt_required()
-def teacher_dashboard():
-    claims = get_jwt()
-    role = claims.get("role")
-    user_id = get_jwt_identity()
-
-    if role != "teacher":
-        return jsonify({"msg": "Access denied"}), 403
-        
-    try:
-        teacher = TeacherProfile.query.filter_by(user_id=int(user_id)).first()
-    except (ValueError, TypeError):
-        return jsonify({"msg": "Invalid user identity"}), 400
-    
-    if not teacher:
-        return jsonify({"msg": "Teacher profile not found"}), 404
-    
-    # Get all assigned students via TeacherAssignment
-    from models import TeacherAssignment, StudentAlert, StudentNote
-    assignments = TeacherAssignment.query.filter_by(teacher_id=teacher.id).all()
-    
-    # Get unique students (a student may appear in multiple assignments)
-    student_ids = list(set([a.student_id for a in assignments]))
-    students = StudentProfile.query.filter(StudentProfile.id.in_(student_ids)).all() if student_ids else []
-    
-    # Get Alerts
-    alerts = StudentAlert.query.filter(StudentAlert.student_id.in_(student_ids), StudentAlert.is_resolved == False).order_by(StudentAlert.created_at.desc()).all() if student_ids else []
-    
-    # Calculate Overview Data using Utility
-    overview_data = calculate_student_overview_stats(students, alerts)
-    
-    return render_template("teacher_dashboard.html", teacher=teacher, overview=overview_data, students=students, alerts=alerts, now_date=datetime.now().strftime("%d %B, %Y"))
-
-# --- API ENDPOINTS FOR TEACHER DASHBOARD ---
-
-@dashboard_bp.route("/api/teacher/students", methods=["GET"])
-@jwt_required()
-def api_teacher_students():
-    claims = get_jwt()
-    if claims.get("role") != "teacher": return jsonify({"msg": "Access denied"}), 403
-    user_id = get_jwt_identity()
-    
-    teacher = TeacherProfile.query.filter_by(user_id=int(user_id)).first()
-    if not teacher: return jsonify({"msg": "Profile not found"}), 404
-
-    # Get filters
-    class_filter = request.args.get('class')
-    section_filter = request.args.get('section')
-    status_filter = request.args.get('status')
-    
-    # Base Query: Start from Assignments to ensure scope
-    query = db.session.query(StudentProfile).join(TeacherAssignment).filter(TeacherAssignment.teacher_id == teacher.id)
-    
-    if class_filter:
-        query = query.filter(StudentProfile.class_level == class_filter)
-    if section_filter:
-        query = query.filter(StudentProfile.section == section_filter)
-    # Status filter needs post-processing or complex query since status is a property
-    # For now, fetch all assigned and filter in python if status is requested
-    
-    students = query.distinct().all()
-    
-    result = []
-    for s in students:
-        if status_filter and s.performance_status != status_filter:
-            continue
-            
-        result.append({
-            "id": s.id,
-            "name": s.full_name,
-            "class_level": s.class_level,
-            "section": s.section,
-            "cgpa": s.current_cgpa,
-            "status": s.performance_status,
-            "last_active": s.last_active.isoformat() if s.last_active else None
-        })
-        
-    return jsonify(result)
-
-@dashboard_bp.route("/api/teacher/notes", methods=["POST"])
-@jwt_required()
-def api_create_note():
-    claims = get_jwt()
-    if claims.get("role") != "teacher": return jsonify({"msg": "Access denied"}), 403
-    user_id = get_jwt_identity()
-    teacher = TeacherProfile.query.filter_by(user_id=int(user_id)).first()
-    
-    data = request.get_json()
-    student_id = data.get('student_id')
-    content = data.get('content')
-    
-    if not student_id or not content:
-        return jsonify({"msg": "Missing data"}), 400
-        
-    # Verify assignment scope? For simplicity, assume yes if valid ID
-    # Better: check if teacher assignments include student_id
-    
-    note = StudentNote(
-        student_id=student_id,
-        teacher_id=teacher.id,
-        content=content,
-        is_private=True
-    )
-    db.session.add(note)
-    db.session.commit()
-    
-    return jsonify({"msg": "Note created", "id": note.id})
-
-@dashboard_bp.route("/api/teacher/alerts/<int:alert_id>/resolve", methods=["POST"])
-@jwt_required()
-def api_resolve_alert(alert_id):
-    claims = get_jwt()
-    if claims.get("role") != "teacher": return jsonify({"msg": "Access denied"}), 403
-    
-    alert = StudentAlert.query.get(alert_id)
-    if not alert: return jsonify({"msg": "Alert not found"}), 404
-    
-    # Ideally check ownership via student -> teacher assignment
-    
-    alert.is_resolved = True
-    db.session.commit()
-    return jsonify({"msg": "Alert resolved"})
-
-@dashboard_bp.route("/api/teacher/class-skills", methods=["GET"])
-@jwt_required()
-def api_teacher_class_skills():
-    claims = get_jwt()
-    if claims.get("role") != "teacher": return jsonify({"msg": "Access denied"}), 403
-    user_id = get_jwt_identity()
-    
-    teacher = TeacherProfile.query.filter_by(user_id=int(user_id)).first()
-    if not teacher: return jsonify({"msg": "Profile not found"}), 404
-    
-    # Get assigned students
-    assignments = TeacherAssignment.query.filter_by(teacher_id=teacher.id).all()
-    student_ids = list(set([a.student_id for a in assignments]))
-    
-    # Fetch data
-    data = []
-    students = StudentProfile.query.filter(StudentProfile.id.in_(student_ids)).all()
-    
-    for s in students:
-        skills = StudentSkill.query.filter_by(student_id=s.id).all()
-        skill_data = [{"name": sk.skill_name, "score": sk.proficiency_score, "risk": sk.risk_score} for sk in skills]
-        if skill_data:
-            data.append({
-                "student_id": s.id,
-                "name": s.full_name,
-                "skills": skill_data
-            })
-            
+@dashboard_bp.route("/api/department-data")
+@require_role("student")
+def api_department_data():
+    dept = request.args.get("dept", "").strip()
+    data = DEPT_CAREERS_SKILLS.get(dept, {"careers": [], "skills": []})
     return jsonify(data)
 
 
-@dashboard_bp.route("/teacher/student/<int:student_id>")
-@jwt_required()
-def teacher_student_detail(student_id):
-    claims = get_jwt()
-    role = claims.get("role")
+# =============================================================
+# STUDENT DASHBOARD
+# =============================================================
+
+@dashboard_bp.route("/student/dashboard")
+@require_role("student")
+def student_dashboard():
     user_id = get_jwt_identity()
+    data = DashboardService.get_dashboard_data(user_id)
 
-    if role != "teacher":
-        return jsonify({"msg": "Access denied"}), 403
-        
-    try:
-        teacher = TeacherProfile.query.filter_by(user_id=int(user_id)).first()
-    except (ValueError, TypeError):
-        return jsonify({"msg": "Invalid user identity"}), 400
-    
-    if not teacher:
-        return jsonify({"msg": "Teacher profile not found"}), 404
-    
-    # Verify teacher is assigned to this student
-    assignment = TeacherAssignment.query.filter_by(
-        teacher_id=teacher.id,
-        student_id=student_id
-    ).first()
-    
-    if not assignment:
-        return jsonify({"msg": "You are not assigned to this student"}), 403
-    
-    # Get student
-    student = StudentProfile.query.get(student_id)
-    if not student:
-        return jsonify({"msg": "Student not found"}), 404
-    
-    # Import helper functions
-    from dashboard.student_stats import (
-        calculate_attendance_stats,
-        calculate_assignment_stats,
-        calculate_assessment_stats,
-        calculate_performance_trend
-    )
-    
-    # Calculate all stats
-    attendance = calculate_attendance_stats(student_id)
-    assignments = calculate_assignment_stats(student_id)
-    assessments = calculate_assessment_stats(student_id)
-    performance_trend = calculate_performance_trend(student_id)
-    
-    # Calculate time since last activity
-    days_since_active = None
-    if student.last_activity:
-        delta = datetime.utcnow() - student.last_activity
-        days_since_active = delta.days
-        
-    # Get Notes (Teacher specific)
-    from models import StudentNote
-    notes = StudentNote.query.filter_by(
-        student_id=student_id,
-        teacher_id=teacher.id
-    ).order_by(StudentNote.created_at.desc()).all()
-    
-    # Get latest Insight Report
-    latest_insight = StudentInsight.query.filter_by(student_id=student_id).order_by(StudentInsight.generated_at.desc()).first()
+    if data.pop("_is_new_student", False):
+        return redirect(url_for('dashboard.onboarding_checklist'))
 
-    return render_template(
-        "student_detail.html",
-        teacher=teacher,
-        student=student,
-        attendance=attendance,
-        assignments=assignments,
-        assessments=assessments,
-        performance_trend=performance_trend,
-        days_since_active=days_since_active,
-        notes=notes,
-        insight=latest_insight
-    )
+    return render_template("student_analytics.html", data=data)
 
 
+# =============================================================
+# STUDENT ONBOARDING
+# =============================================================
 
-import os
-from werkzeug.utils import secure_filename
+@dashboard_bp.route("/student/onboarding")
+@require_role("student")
+def onboarding_checklist():
+    user_id = get_jwt_identity()
+    data = DashboardService.get_onboarding_data(user_id)
+
+    if data["all_complete"]:
+        return redirect(url_for('dashboard.student_dashboard'))
+
+    return render_template("student_onboarding.html", data=data)
+
+
+# =============================================================
+# CV / PROFILE CREATION
+# =============================================================
 
 @dashboard_bp.route("/create-profile", methods=["GET", "POST"])
-# @jwt_required()
-@jwt_required()
+@require_role("student")
 def create_profile():
-    claims = get_jwt()
-    role = claims.get("role")
-    
-    # Optional: Restrict to students only
-    if role and role != "student":
-         return jsonify({"msg": "Access denied"}), 403
-
     if request.method == "POST":
-        # Handle Photo Upload
+        # Handle optional photo upload
         photo_filename = None
         if 'photo' in request.files:
+            from werkzeug.utils import secure_filename
             file = request.files['photo']
             if file and file.filename != '':
                 filename = secure_filename(file.filename)
-                # Absolute path for safety
                 upload_folder = os.path.join(request.root_path, '..', 'static', 'uploads')
                 os.makedirs(upload_folder, exist_ok=True)
                 file.save(os.path.join(upload_folder, filename))
                 photo_filename = filename
 
-        # Capture form data
-        user_cv_data = {
-            "photo": photo_filename,
-            "full_name": request.form.get("full_name"),
-            "job_title": request.form.get("job_title"),
-            "email": request.form.get("email"),
-            "phone": request.form.get("phone"),
-            "dob": request.form.get("dob"),
-            "gender": request.form.get("gender"),
-            "address": request.form.get("address"),
-            "website": request.form.get("website"),
-            "summary": request.form.get("summary"),
-            "education": [
-                {
-                    "date": request.form.get("edu_date_1"),
-                    "school": request.form.get("edu_school_1"),
-                    "details": request.form.get("edu_detail_1")
-                },
-                {
-                    "date": request.form.get("edu_date_2"),
-                    "school": request.form.get("edu_school_2"),
-                    "details": request.form.get("edu_detail_2")
-                }
-            ],
-            "experience": [
-               {
-                    "date": request.form.get("work_date_1"),
-                    "company": request.form.get("work_company_1"),
-                    "title": request.form.get("work_title_1"),
-                    "desc": request.form.get("work_desc_1")
-                },
-                {
-                    "date": request.form.get("work_date_2"),
-                    "company": request.form.get("work_company_2"),
-                    "title": request.form.get("work_title_2"),
-                    "desc": request.form.get("work_desc_2")
-                } 
-            ]
-        }
-        return render_template("cv_classic.html", cv=user_cv_data)
+        cv_data = ProfileService.build_cv_data(request.form)
+        cv_data["photo"] = photo_filename
+        return render_template("cv_classic.html", cv=cv_data)
 
     return render_template("create_profile.html")
 
 
-# --- STUDENT INSIGHT REPORT (AI-Powered) ---
-import google.generativeai as genai
-from flask import current_app
+# =============================================================
+# AI INSIGHT REPORT
+# =============================================================
 
 @dashboard_bp.route("/student/insight-report", methods=["GET", "POST"])
-@jwt_required()
+@require_role("student")
 def student_insight_report():
-    claims = get_jwt()
-    role = claims.get("role")
-
-    if role != "student":
-        return jsonify({"msg": "Access denied"}), 403
-
     if request.method == "POST":
-        # Get student data from form
-        department = request.form.get("department", "Computer Science")
-        cgpa = request.form.get("cgpa", "3.0")
-        semester_gpas = request.form.get("semester_gpas", "2.8, 3.0, 3.2")
-        skills = request.form.get("skills", "Python, HTML")
-        strong_courses = request.form.get("strong_courses", "Programming")
-        weak_courses = request.form.get("weak_courses", "Math")
-        interests = request.form.get("interests", "Web Development")
+        user_id = get_jwt_identity()
 
-        # Build the prompt
-        prompt = f"""
-        You are a Senior Academic Advisor and Technical Career Mentor for a {department} student. 
-        Your goal is to provide a harsh but constructive reality check and a clear roadmap for their career.
+        # Get AI service from app config or create one
+        ai_service = current_app.config.get("AI_SERVICE")
+        if not ai_service:
+            from infrastructure.ai.gemini_service import GeminiAIService
+            api_key = current_app.config.get("GEMINI_API_KEY")
+            ai_service = GeminiAIService(api_key)
 
-        ### STUDENT PROFILE
-        - **Current CGPA:** {cgpa}
-        - **Semester GPA Trend:** {semester_gpas}
-        - **Reported Skills:** {skills}
-        - **Strong Areas:** {strong_courses}
-        - **Weak Areas:** {weak_courses}
-        - **Interests:** {interests}
+        report_html = AnalyticsService.generate_insight_report(
+            user_id, dict(request.form), ai_service
+        )
+        return jsonify({"success": True, "report": report_html})
 
-        ### INSTRUCTIONS
-        Analyze the data above and generate a "Student Insight Report" in **HTML format**. 
-        Do NOT use markdown (like ** or ##). Use only HTML tags: <h3>, <p>, <ul>, <li>, <strong>, <em>, and <div class="alert"> for warnings.
-
-        ### REQUIRED SECTIONS IN OUTPUT:
-
-        1. <h3>📊 Executive Summary</h3>
-           <p>A 2-sentence summary of their current standing. Is their CGPA competitive? Does their GPA trend show improvement or decline?</p>
-
-        2. <h3>🛠 Skills vs. Industry Standards (Gap Analysis)</h3>
-           <p>Compare their reported skills ({skills}) against modern industry requirements for {department} graduates. What critical tools are they missing?</p>
-
-        3. <h3>📉 Remedial Action Plan</h3>
-           <ul>
-             <li>Identify why they might be struggling in <strong>{weak_courses}</strong>.</li>
-             <li>Suggest 2 specific resources (books, websites, or practice concepts) to fix these weak areas.</li>
-           </ul>
-
-        4. <h3>🚀 Career Trajectory & Niche</h3>
-           <p>Based on their interest in <strong>{interests}</strong> and strength in <strong>{strong_courses}</strong>, suggest 2 specific job titles they should aim for.</p>
-        """
-
-        try:
-            # Configure Gemini
-            genai.configure(api_key=current_app.config.get("GEMINI_API_KEY"))
-            model = genai.GenerativeModel("gemini-2.0-flash")
-            
-            # Generate response
-            response = model.generate_content(prompt)
-            report_html = response.text
-
-            # SAVE TO DATABASE
-            user_id = get_jwt_identity()
-            student = StudentProfile.query.filter_by(user_id=int(user_id)).first()
-            if student:
-                insight = StudentInsight(
-                    student_id=student.id,
-                    content=report_html,
-                    generated_at=datetime.utcnow()
-                )
-                db.session.add(insight)
-                db.session.commit()
-
-            return jsonify({"success": True, "report": report_html})
-
-        except Exception as e:
-            return jsonify({"success": False, "error": str(e)}), 500
-
-    # GET request - render the form page
     return render_template("student_insight_form.html")
 
 
-# --- SKILL TRACKING & ACTION PLAN API ---
+# =============================================================
+# SKILL TRACKING & ACTION PLAN API
+# =============================================================
 
 @dashboard_bp.route("/api/skills/update", methods=["POST"])
-@jwt_required()
+@require_role("student")
 def api_update_skill():
     user_id = get_jwt_identity()
-    student = StudentProfile.query.filter_by(user_id=int(user_id)).first()
-    if not student: return jsonify({"msg": "Student not found"}), 404
-    
     data = request.get_json()
     skill_name = data.get('skill_name')
-    proficiency = int(data.get('proficiency', 0)) # 0-100
-    
-    if not skill_name: return jsonify({"msg": "Skill name required"}), 400
-    
-    # Find or Create Skill
-    skill = StudentSkill.query.filter_by(student_id=student.id, skill_name=skill_name).first()
-    if not skill:
-        skill = StudentSkill(student_id=student.id, skill_name=skill_name)
-        db.session.add(skill)
-    
-    # Update Stats
-    skill.proficiency_score = proficiency
-    skill.last_updated = datetime.utcnow()
-    
-    # Calculate Risk
-    skill.risk_score = analytics_engine.calculate_risk_score(proficiency, student.current_cgpa)
-    
-    # Log History
-    history = StudentSkillProgress(
-        student_skill_id=skill.id,
-        proficiency_score=skill.proficiency_score,
-        risk_score=skill.risk_score,
-        date=datetime.utcnow().date()
-    )
-    db.session.add(history)
-    db.session.commit()
-    
-    return jsonify({
-        "msg": "Skill updated", 
-        "skill": skill.skill_name, 
-        "proficiency": skill.proficiency_score,
-        "risk": skill.risk_score
-    })
+    proficiency = int(data.get('proficiency', 0))
+
+    if not skill_name:
+        return jsonify({"msg": "Skill name required"}), 400
+
+    result = SkillService.update_skill(user_id, skill_name, proficiency)
+    return jsonify({"msg": "Skill updated", **result})
+
 
 @dashboard_bp.route("/api/skills/history", methods=["GET"])
-@jwt_required()
+@require_role("student")
 def api_get_skill_history():
     user_id = get_jwt_identity()
-    student = StudentProfile.query.filter_by(user_id=int(user_id)).first()
-    if not student: return jsonify({"msg": "Student not found"}), 404
-    
-    skills = StudentSkill.query.filter_by(student_id=student.id).all()
-    data = []
-    
-    for skill in skills:
-        history = StudentSkillProgress.query.filter_by(student_skill_id=skill.id).order_by(StudentSkillProgress.date).all()
-        data.append({
-            "skill": skill.skill_name,
-            "current_score": skill.proficiency_score,
-            "current_risk": skill.risk_score,
-            "history": [{"date": h.date.isoformat(), "score": h.proficiency_score} for h in history]
-        })
-        
+    data = SkillService.get_skill_history(user_id)
     return jsonify(data)
 
+
 @dashboard_bp.route("/api/action-plans", methods=["GET"])
-@jwt_required()
+@require_role("student")
 def api_get_action_plans():
     user_id = get_jwt_identity()
-    student = StudentProfile.query.filter_by(user_id=int(user_id)).first()
-    if not student: return jsonify({"msg": "Student not found"}), 404
-    
-    plans = ActionPlan.query.filter_by(student_id=student.id).order_by(ActionPlan.status.desc(), ActionPlan.due_date).all()
-    
-    return jsonify([{
-        "id": p.id,
-        "title": p.title,
-        "description": p.description,
-        "status": p.status,
-        "due_date": p.due_date.isoformat() if p.due_date else None
-    } for p in plans])
+    plans = SkillService.get_action_plans(user_id)
+    return jsonify(plans)
+
 
 @dashboard_bp.route("/api/action-plans/generate", methods=["POST"])
-@jwt_required()
+@require_role("student")
 def api_generate_action_plan():
     user_id = get_jwt_identity()
-    student = StudentProfile.query.filter_by(user_id=int(user_id)).first()
-    if not student: return jsonify({"msg": "Student not found"}), 404
-    
-    # Identifying weak skills (Risk > 0.5)
-    weak_skills = StudentSkill.query.filter(StudentSkill.student_id == student.id, StudentSkill.risk_score > 0.5).all()
-    
-    if not weak_skills:
-        return jsonify({"msg": "No high-risk skills found to generate plan for."})
-        
-    target_skill = weak_skills[0] # Focus on the first critical one for now
-    
-    # Prompt Gemini
-    prompt = f"""
-    Generate a JSON list of 3 specific, actionable tasks for a student to improve their {target_skill.skill_name} skill 
-    from level {target_skill.proficiency_score}/100 to {target_skill.proficiency_score + 20}/100.
-    Format: [{{"title": "Task Title", "description": "Details", "days_to_complete": 5}}]
-    """
-    
-    try:
+
+    ai_service = current_app.config.get("AI_SERVICE")
+    if not ai_service:
+        from infrastructure.ai.gemini_service import GeminiAIService
         api_key = current_app.config.get("GEMINI_API_KEY")
         if not api_key:
-            return jsonify({"success": False, "msg": "Server Error: GEMINI_API_KEY is not configured."}), 500
-            
-        genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-2.0-flash")
-        response = model.generate_content(prompt)
-        
-        # Clean response (remove markdown code blocks if any)
-        text = response.text.replace("```json", "").replace("```", "").strip()
-        tasks = json.loads(text)
-        
-        created_plans = []
-        for task in tasks:
-            plan = ActionPlan(
-                student_id=student.id,
-                skill_id=target_skill.id,
-                title=task.get('title'),
-                description=task.get('description'),
-                status='pending',
-                due_date=datetime.utcnow().date() # Simplified due date logic
-            )
-            db.session.add(plan)
-            created_plans.append(plan.title)
-            
-        db.session.commit()
-        return jsonify({"success": True, "created": created_plans})
-        
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
+            return jsonify({"success": False, "msg": "GEMINI_API_KEY not configured"}), 500
+        ai_service = GeminiAIService(api_key)
+
+    result = SkillService.generate_action_plan(user_id, ai_service)
+    return jsonify(result)
+
 
 @dashboard_bp.route("/api/action-plans/<int:plan_id>/complete", methods=["POST"])
-@jwt_required()
+@require_role("student")
 def api_complete_action_plan(plan_id):
     user_id = get_jwt_identity()
-    student = StudentProfile.query.filter_by(user_id=int(user_id)).first()
-    
-    plan = ActionPlan.query.get(plan_id)
-    if not plan or plan.student_id != student.id:
-        return jsonify({"msg": "Plan not found"}), 404
-        
-    plan.status = 'completed'
-    plan.completed_at = datetime.utcnow()
-    
-    # Gamification: Boost skill slightly
-    if plan.skill:
-        plan.skill.proficiency_score = min(100, plan.skill.proficiency_score + 2)
-        plan.skill.risk_score = analytics_engine.calculate_risk_score(plan.skill.proficiency_score, student.current_cgpa)
-        
-    db.session.commit()
-    return jsonify({"msg": "Plan completed", "new_score": plan.skill.proficiency_score if plan.skill else None})
+    result = SkillService.complete_action_plan(user_id, plan_id)
+    return jsonify({"msg": "Plan completed", "new_score": result["new_score"]})
 
 
-# --- NEW PROFILE & ROUTINE ROUTES ---
+# =============================================================
+# PROFILE & SETTINGS
+# =============================================================
 
 @dashboard_bp.route("/student/profile", methods=["GET", "POST"])
-@jwt_required()
+@require_role("student")
 def student_profile():
     user_id = get_jwt_identity()
-    student = StudentProfile.query.filter_by(user_id=int(user_id)).first()
-    if not student: return jsonify({"msg": "Student not found"}), 404
 
     if request.method == "POST":
-        # Handle "Edit Profile" form from modal
-        student.full_name = request.form.get("full_name", student.full_name)
-        student.university = request.form.get("university", student.university)
-        student.department = request.form.get("department", student.department)
-        student.current_year = request.form.get("current_year", student.current_year)
-        
-        cgpa_str = request.form.get("cgpa")
-        if cgpa_str:
-            try:
-                # This field in the form is labelled "Target CGPA" but maps to 'cgpa' name
-                # However, the model has 'current_cgpa'. Let's assume this form updates current_cgpa unless specified
-                # Actually, the template shows "Target CGPA" but name="cgpa". 
-                # StudentProfile model has `current_cgpa`. Let's update that for now or add a custom field if needed.
-                # For this implementation, I'll map it to current_cgpa.
-                student.current_cgpa = float(cgpa_str)
-            except ValueError:
-                pass
+        from schemas.student import ProfileUpdate
+        try:
+            data = ProfileUpdate(
+                full_name=request.form.get("full_name", ""),
+                university=request.form.get("university"),
+                department=request.form.get("department"),
+                current_year=request.form.get("current_year"),
+                cgpa=request.form.get("cgpa") or None,
+                career_goal=request.form.get("career_goal"),
+                linkedin_profile=request.form.get("linkedin_profile"),
+                github_profile=request.form.get("github_profile"),
+                bio=request.form.get("bio"),
+            )
+        except Exception:
+            return redirect(url_for('dashboard.student_profile'))
 
-        student.career_goal = request.form.get("career_goal", student.career_goal)
-        student.linkedin_profile = request.form.get("linkedin_profile", student.linkedin_profile)
-        student.github_profile = request.form.get("github_profile", student.github_profile)
-        student.bio = request.form.get("bio", student.bio)
-
-        # Handle Profile Picture Upload
-        if 'profile_picture' in request.files:
-            file = request.files['profile_picture']
-            if file and file.filename != '':
-                filename = secure_filename(file.filename)
-                upload_folder = os.path.join(current_app.root_path, 'static', 'uploads', 'profile_pics')
-                os.makedirs(upload_folder, exist_ok=True)
-                file.save(os.path.join(upload_folder, filename))
-                student.profile_picture = filename
-
-        db.session.commit()
+        ProfileService.update_profile(
+            user_id, data,
+            profile_picture_file=request.files.get('profile_picture'),
+            upload_root=current_app.root_path,
+        )
         return redirect(url_for('dashboard.student_profile'))
 
+    student = ProfileService.get_profile(user_id)
     return render_template("student_profile.html", student=student)
 
+
 @dashboard_bp.route("/student/delete-profile", methods=["DELETE"])
-@jwt_required()
+@require_role("student")
 def delete_profile():
     user_id = get_jwt_identity()
-    user = User.query.get(int(user_id))
-    if not user: return jsonify({"success": False, "error": "User not found"}), 404
-    
-    # Cascade delete should handle profile cleanup if configured, 
-    # ensuring manual cleanup just in case
-    db.session.delete(user)
-    db.session.commit()
+    ProfileService.delete_profile(user_id)
     return jsonify({"success": True})
 
+
 @dashboard_bp.route("/student/update-data", methods=["GET"])
-@jwt_required()
+@require_role("student")
 def view_update_data():
     return render_template("update_profile_data.html")
 
-@dashboard_bp.route("/update-progress", methods=["POST"])
-@jwt_required()
-def update_progress():
-    user_id = get_jwt_identity()
-    student = StudentProfile.query.filter_by(user_id=int(user_id)).first()
-    if not student: return jsonify({"msg": "Student not found"}), 404
 
-    # 1. Update Academic Info
+@dashboard_bp.route("/update-progress", methods=["POST"])
+@require_role("student")
+def update_progress():
+    from models import CareerInterest, StudentSkill
+    from core.extensions import db
+
+    user_id = get_jwt_identity()
+    student = ProfileService.get_profile(user_id)
+
     student.university = request.form.get("university")
     student.department = request.form.get("department")
-    # student.current_year = request.form.get("year") # Map 'year' to 'current_year' if needed
-    
     try:
         student.current_cgpa = float(request.form.get("current_cgpa"))
     except (ValueError, TypeError):
         pass
 
-    # 2. Update Career Interests
-    # Simple implementation: Clear old and add new top 2
     CareerInterest.query.filter_by(student_id=student.id).delete()
-    
     role1 = request.form.get("role_1")
     match1 = request.form.get("match_1")
     if role1:
-        db.session.add(CareerInterest(student_id=student.id, field_name=role1, interest_score=float(match1) if match1 else 0))
-        
+        db.session.add(CareerInterest(
+            student_id=student.id, field_name=role1,
+            interest_score=float(match1) if match1 else 0,
+        ))
     role2 = request.form.get("role_2")
     match2 = request.form.get("match_2")
     if role2:
-        db.session.add(CareerInterest(student_id=student.id, field_name=role2, interest_score=float(match2) if match2 else 0))
+        db.session.add(CareerInterest(
+            student_id=student.id, field_name=role2,
+            interest_score=float(match2) if match2 else 0,
+        ))
 
-    # 3. Update Skills (Just parsing the text for now)
     skills_known = request.form.get("skills_known", "")
     for skill_name in skills_known.split(','):
         s_name = skill_name.strip()
         if s_name:
-            # Check if exists
-            existing = StudentSkill.query.filter_by(student_id=student.id, skill_name=s_name).first()
+            existing = StudentSkill.query.filter_by(
+                student_id=student.id, skill_name=s_name
+            ).first()
             if not existing:
-                db.session.add(StudentSkill(student_id=student.id, skill_name=s_name, proficiency_score=50)) # Default score
+                db.session.add(StudentSkill(
+                    student_id=student.id, skill_name=s_name, proficiency_score=50,
+                ))
 
     db.session.commit()
-    
-    return redirect(url_for('dashboard.student_dashboard')) # Redirect back to dashboard
+    return redirect(url_for('dashboard.student_dashboard'))
 
-@dashboard_bp.route("/student/routine", methods=["GET"])
-@jwt_required()
+
+@dashboard_bp.route("/student/settings", methods=["GET"])
+@require_role("student")
+def student_settings():
+    user_id = get_jwt_identity()
+    data = ProfileService.get_settings_data(user_id)
+    return render_template("student_settings.html", **data)
+
+
+@dashboard_bp.route("/api/student/change-password", methods=["POST"])
+@require_role("student")
+def change_password():
+    from models import User
+    from werkzeug.security import check_password_hash, generate_password_hash
+    from core.extensions import db
+    user_id = get_jwt_identity()
+    
+    data = request.get_json(silent=True) or {}
+    current_pass = data.get("current_password")
+    new_pass = data.get("new_password")
+    
+    if not current_pass or not new_pass:
+        return jsonify({"success": False, "msg": "Missing passwords"}), 400
+        
+    user = User.query.get(int(user_id))
+    if not user or not check_password_hash(user.password_hash, current_pass):
+        return jsonify({"success": False, "msg": "Invalid current password"}), 401
+        
+    user.password_hash = generate_password_hash(new_pass)
+    db.session.commit()
+    return jsonify({"success": True, "msg": "Password updated successfully"})
+
+
+@dashboard_bp.route("/api/student/settings/preferences", methods=["POST"])
+@require_role("student")
+def update_preferences():
+    from models import StudentSettings, StudentProfile
+    from core.extensions import db
+    user_id = get_jwt_identity()
+    student = StudentProfile.query.filter_by(user_id=int(user_id)).first()
+    
+    if not student.settings:
+        student.settings = StudentSettings(student_id=student.id)
+        db.session.add(student.settings)
+        
+    data = request.get_json(silent=True) or {}
+    
+    if "email_weekly_report" in data:
+        student.settings.email_weekly_report = bool(data["email_weekly_report"])
+    if "email_new_assignments" in data:
+        student.settings.email_new_assignments = bool(data["email_new_assignments"])
+    if "compact_sidebar" in data:
+        student.settings.compact_sidebar = bool(data["compact_sidebar"])
+        
+    db.session.commit()
+    return jsonify({"success": True})
+
+
+# =============================================================
+# WEEKLY ROUTINE & STUDY SESSIONS
+# =============================================================
+
+@dashboard_bp.route("/student/weekly-routine", methods=["GET"])
+@require_role("student")
 def student_routine():
-    return render_template("student_weekly_routine.html")
+    user_id = get_jwt_identity()
+    data = SessionService.get_routine_data(user_id)
+    return render_template("student_weekly_routine.html", **data)
+
+
+@dashboard_bp.route("/student/add-study-session", methods=["POST"])
+@require_role("student")
+def add_study_session():
+    from schemas.student import StudySessionCreate
+    user_id = get_jwt_identity()
+
+    try:
+        payload = StudySessionCreate.from_form(request.form)
+    except Exception as e:
+        return jsonify({"msg": f"Invalid data: {e}"}), 400
+
+    SessionService.create_session(user_id, payload)
+    return redirect(url_for('dashboard.student_routine'))
+
+
+@dashboard_bp.route("/student/update-study-session/<int:session_id>", methods=["POST"])
+@require_role("student")
+def update_study_session(session_id):
+    user_id = get_jwt_identity()
+    data = request.get_json()
+    if not data:
+        return jsonify({"success": False, "error": "No data provided"}), 400
+
+    result = SessionService.update_session(user_id, session_id, data)
+    return jsonify({"success": True, "session": result})
+
+
+@dashboard_bp.route("/student/delete-study-session/<int:session_id>", methods=["POST"])
+@require_role("student")
+def delete_study_session(session_id):
+    user_id = get_jwt_identity()
+    try:
+        SessionService.delete_session(user_id, session_id)
+        return jsonify({"success": True})
+    except NotFoundError as e:
+        return jsonify({"success": False, "error": str(e)}), 404
+
+
+
+# =============================================================
+# WEEKLY CHECK-IN
+# =============================================================
+
+@dashboard_bp.route("/student/weekly-checkin", methods=["GET"])
+@require_role("student")
+def weekly_checkin():
+    user_id = get_jwt_identity()
+    data = CheckinService.get_checkin_data(user_id)
+    success = request.args.get('success', False)
+    return render_template("student_weekly_checkin.html", success=success, **data)
+
+
+@dashboard_bp.route("/student/weekly-checkin", methods=["POST"])
+@require_role("student")
+def submit_weekly_checkin():
+    from schemas.student import WeeklyCheckinSubmit
+    user_id = get_jwt_identity()
+
+    try:
+        payload = WeeklyCheckinSubmit.from_form(request.form)
+    except Exception:
+        return redirect(url_for('dashboard.weekly_checkin'))
+
+    CheckinService.submit_checkin(user_id, payload)
+    return redirect(url_for('dashboard.weekly_checkin', success=1))
+
+
+# =============================================================
+# GOALS & GRADES
+# =============================================================
+
+@dashboard_bp.route("/student/goals-grades", methods=["GET"])
+@require_role("student")
+def goals_grades():
+    user_id = get_jwt_identity()
+    data = AcademicService.get_goals_grades_data(user_id)
+    data["success"] = request.args.get('success', False)
+    data["success_msg"] = request.args.get('msg', '')
+    data["dept_groups"] = DEPT_GROUPS
+    data["dept_keys"] = list(DEPT_CAREERS_SKILLS.keys())
+    return render_template("student_goals_grades.html", **data)
+
+
+@dashboard_bp.route("/student/goals-grades/target-cgpa", methods=["POST"])
+@require_role("student")
+def save_target_cgpa():
+    user_id = get_jwt_identity()
+    target = request.form.get("target_cgpa")
+    if target:
+        AcademicService.save_target_cgpa(user_id, float(target))
+    return redirect(url_for('dashboard.goals_grades', success=1, msg='Target CGPA saved!'))
+
+
+@dashboard_bp.route("/student/goals-grades/skills", methods=["POST"])
+@require_role("student")
+def save_skills():
+    user_id = get_jwt_identity()
+    selected_ids = [int(x) for x in request.form.getlist("skill_ids")]
+    AcademicService.save_skills(user_id, selected_ids)
+    return redirect(url_for('dashboard.goals_grades'))
+
+
+@dashboard_bp.route("/student/goals-grades/skills/add", methods=["POST"])
+@require_role("student")
+def add_skill_entry():
+    user_id = get_jwt_identity()
+    skill_name = request.form.get("skill_name", "").strip()
+    if skill_name:
+        AcademicService.add_skill(user_id, skill_name)
+    return redirect(url_for('dashboard.goals_grades'))
+
+
+@dashboard_bp.route("/student/goals-grades/skills/<int:skill_id>/delete", methods=["POST"])
+@require_role("student")
+def remove_skill_entry(skill_id):
+    user_id = get_jwt_identity()
+    AcademicService.remove_skill(user_id, skill_id)
+    return redirect(url_for('dashboard.goals_grades'))
+
+
+@dashboard_bp.route("/student/goals-grades/goal", methods=["POST"])
+@require_role("student")
+def add_goal():
+    user_id = get_jwt_identity()
+    career_id = request.form.get("career_id")
+    goal_type = request.form.get("goal_type", "Long Term")
+
+    if not career_id:
+        return redirect(url_for('dashboard.goals_grades'))
+
+    AcademicService.add_goal(user_id, int(career_id), goal_type)
+    return redirect(url_for('dashboard.goals_grades', success=1, msg='Goal added!'))
+
+
+@dashboard_bp.route("/student/goals-grades/goal/<int:goal_id>/delete", methods=["POST"])
+@require_role("student")
+def delete_goal(goal_id):
+    user_id = get_jwt_identity()
+    AcademicService.delete_goal(user_id, goal_id)
+    return redirect(url_for('dashboard.goals_grades'))
+
+
+@dashboard_bp.route("/student/goals-grades/goal/<int:goal_id>/primary", methods=["POST"])
+@require_role("student")
+def set_primary_goal(goal_id):
+    user_id = get_jwt_identity()
+    AcademicService.set_primary_goal(user_id, goal_id)
+    return redirect(url_for('dashboard.goals_grades', success=1, msg='Primary goal updated!'))
+
+
+@dashboard_bp.route("/student/goals-grades/grade", methods=["POST"])
+@require_role("student")
+def add_grade():
+    from schemas.academic import GradeInput
+    user_id = get_jwt_identity()
+
+    try:
+        data = GradeInput.from_form(request.form)
+    except Exception:
+        return redirect(url_for('dashboard.goals_grades', success=0,
+                                msg='Please fill in all fields correctly.'))
+
+    AcademicService.add_grade(user_id, data)
+    return redirect(url_for('dashboard.goals_grades', success=1,
+                            msg='Grade added! CGPA updated.'))
+
+
+
+@dashboard_bp.route("/student/goals-grades/grade/<int:record_id>/delete", methods=["POST"])
+@require_role("student")
+def delete_grade(record_id):
+    user_id = get_jwt_identity()
+    AcademicService.delete_grade(user_id, record_id)
+    return redirect(url_for('dashboard.goals_grades'))
+
+
+# =============================================================
+# JSON AJAX ENDPOINTS — Goals & Grades (no page refresh)
+# =============================================================
+
+@dashboard_bp.route("/api/gg/skill/add", methods=["POST"])
+@require_role("student")
+def api_gg_add_skill():
+    user_id = get_jwt_identity()
+    data = request.get_json(silent=True) or {}
+    name = data.get("skill_name", "").strip()
+    if not name:
+        return jsonify({"ok": False, "msg": "Skill name required"}), 400
+    AcademicService.add_skill(user_id, name)
+    from models import StudentSkill, StudentProfile
+    student = StudentProfile.query.filter_by(user_id=int(user_id)).first()
+    skills = StudentSkill.query.filter_by(student_id=student.id).all()
+    return jsonify({
+        "ok": True,
+        "skills": [{"id": s.id, "name": s.skill_name} for s in skills],
+    })
+
+
+@dashboard_bp.route("/api/gg/skill/<int:skill_id>/delete", methods=["POST"])
+@require_role("student")
+def api_gg_delete_skill(skill_id):
+    user_id = get_jwt_identity()
+    AcademicService.remove_skill(user_id, skill_id)
+    from models import StudentSkill, StudentProfile
+    student = StudentProfile.query.filter_by(user_id=int(user_id)).first()
+    skills = StudentSkill.query.filter_by(student_id=student.id).all()
+    return jsonify({
+        "ok": True,
+        "skills": [{"id": s.id, "name": s.skill_name} for s in skills],
+    })
+
+
+@dashboard_bp.route("/api/gg/goal/add", methods=["POST"])
+@require_role("student")
+def api_gg_add_goal():
+    user_id = get_jwt_identity()
+    data = request.get_json(silent=True) or {}
+    career_id = data.get("career_id")
+    goal_type = data.get("goal_type", "Long Term")
+    if not career_id:
+        return jsonify({"ok": False, "msg": "career_id required"}), 400
+    goal_id = AcademicService.add_goal(user_id, int(career_id), goal_type)
+    return jsonify({"ok": True, "goal_id": goal_id})
+
+
+@dashboard_bp.route("/api/gg/goal/<int:goal_id>/delete", methods=["POST"])
+@require_role("student")
+def api_gg_delete_goal(goal_id):
+    user_id = get_jwt_identity()
+    AcademicService.delete_goal(user_id, goal_id)
+    return jsonify({"ok": True})
+
+
+@dashboard_bp.route("/api/gg/goal/<int:goal_id>/primary", methods=["POST"])
+@require_role("student")
+def api_gg_set_primary(goal_id):
+    user_id = get_jwt_identity()
+    AcademicService.set_primary_goal(user_id, goal_id)
+    return jsonify({"ok": True})
+
+
+@dashboard_bp.route("/api/gg/target-cgpa", methods=["POST"])
+@require_role("student")
+def api_gg_save_target_cgpa():
+    user_id = get_jwt_identity()
+    data = request.get_json(silent=True) or {}
+    target = data.get("target_cgpa")
+    if target is None:
+        return jsonify({"ok": False, "msg": "target_cgpa required"}), 400
+    AcademicService.save_target_cgpa(user_id, float(target))
+    return jsonify({"ok": True})
+
+
+@dashboard_bp.route("/api/gg/grade/add", methods=["POST"])
+@require_role("student")
+def api_gg_add_grade():
+    from schemas.academic import GradeInput
+    user_id = get_jwt_identity()
+    data = request.get_json(silent=True) or {}
+    try:
+        payload = GradeInput(
+            course_name=data.get("course_name", ""),
+            course_type=data.get("course_type", "Core"),
+            credit_value=int(data.get("credit_value", 3)),
+            semester=int(data.get("semester", 1)),
+            grade=data.get("grade", ""),
+        )
+    except Exception as e:
+        return jsonify({"ok": False, "msg": str(e)}), 400
+    AcademicService.add_grade(user_id, payload)
+    from models import StudentProfile
+    student = StudentProfile.query.filter_by(user_id=int(user_id)).first()
+    return jsonify({"ok": True, "new_cgpa": student.current_cgpa})
+
+
+@dashboard_bp.route("/api/gg/grade/<int:record_id>/delete", methods=["POST"])
+@require_role("student")
+def api_gg_delete_grade(record_id):
+    user_id = get_jwt_identity()
+    AcademicService.delete_grade(user_id, record_id)
+    from models import StudentProfile
+    student = StudentProfile.query.filter_by(user_id=int(user_id)).first()
+    return jsonify({"ok": True, "new_cgpa": student.current_cgpa})
+
+
+@dashboard_bp.route("/api/gg/state", methods=["GET"])
+@require_role("student")
+def api_gg_state():
+    """Return full current state for Goals & Grades page (for re-render after actions)."""
+    user_id = get_jwt_identity()
+    data = AcademicService.get_goals_grades_data(user_id)
+    student = data["student"]
+    return jsonify({
+        "ok": True,
+        "current_cgpa": student.current_cgpa,
+        "target_cgpa": student.target_cgpa,
+        "skills": [{"id": s.id, "name": s.skill_name} for s in data["student_skills"]],
+        "goals": data["goals"],
+        "records": data["records"],
+        "matching_careers": [
+            {
+                "id": c["id"],
+                "title": c["title"],
+                "field_category": c["field_category"],
+                "match_count": c["match_count"],
+                "goal_id": c["goal_id"],
+            }
+            for c in data["matching_careers"]
+        ],
+    })
+
+
+# =============================================================
+# STUDENT NOTIFICATIONS (notes from teachers)
+# =============================================================
+
+@dashboard_bp.route("/student/notifications")
+@require_role("student")
+def student_notifications():
+    """Page: show all teacher notes received in the last 1 year."""
+    from datetime import timedelta
+    from models import StudentNote, StudentProfile
+    user_id = get_jwt_identity()
+    student = StudentProfile.query.filter_by(user_id=int(user_id)).first()
+    one_year_ago = __import__('datetime').datetime.utcnow() - timedelta(days=365)
+    notes = (
+        StudentNote.query
+        .filter(
+            StudentNote.student_id == student.id,
+            StudentNote.is_private == False,  # noqa: E712
+            StudentNote.created_at >= one_year_ago,
+        )
+        .order_by(StudentNote.created_at.desc())
+        .all()
+    )
+    return render_template("student_notifications.html", notes=notes)
+
+
+@dashboard_bp.route("/api/student/notifications")
+@require_role("student")
+def api_student_notifications():
+    """JSON: return count and list of recent notes for the bell badge."""
+    from datetime import timedelta
+    from models import StudentNote, StudentProfile
+    user_id = get_jwt_identity()
+    student = StudentProfile.query.filter_by(user_id=int(user_id)).first()
+    one_year_ago = __import__('datetime').datetime.utcnow() - timedelta(days=365)
+    notes = (
+        StudentNote.query
+        .filter(
+            StudentNote.student_id == student.id,
+            StudentNote.is_private == False,  # noqa: E712
+            StudentNote.created_at >= one_year_ago,
+        )
+        .order_by(StudentNote.created_at.desc())
+        .all()
+    )
+    unread = [n for n in notes if not n.is_read]
+    return jsonify({
+        "total": len(notes),
+        "unread_count": len(unread),
+        "recent": [
+            {
+                "id": n.id,
+                "teacher_name": n.teacher.full_name if n.teacher else "Teacher",
+                "content": n.content,
+                "created_at": n.created_at.strftime("%b %d"),
+                "is_read": n.is_read
+            }
+            for n in notes[:4]
+        ]
+    })
+
+
+@dashboard_bp.route("/api/student/notifications/mark-read", methods=["POST"])
+@require_role("student")
+def api_mark_notes_read():
+    """Mark specific notes as read for the current student."""
+    from models import StudentNote, StudentProfile
+    from core.extensions import db
+    user_id = get_jwt_identity()
+    student = StudentProfile.query.filter_by(user_id=int(user_id)).first()
+    body = request.get_json(silent=True) or {}
+    note_ids = body.get("note_ids", [])
+    if not note_ids:
+        return jsonify({"updated": 0})
+    updated = (
+        StudentNote.query
+        .filter(
+            StudentNote.id.in_(note_ids),
+            StudentNote.student_id == student.id,
+        )
+        .update({"is_read": True}, synchronize_session=False)
+    )
+    db.session.commit()
+    return jsonify({"updated": updated})

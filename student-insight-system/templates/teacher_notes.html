@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Notes | Student Insight</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="{{ url_for('static', filename='css/dashboard.css') }}" rel="stylesheet">
+    <script>if(localStorage.getItem('teacher_theme')==='dark')document.documentElement.setAttribute('data-theme','dark');</script>
+    <style>
+        .notes-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .notes-search {
+            width: 100%;
+            max-width: 360px;
+            padding: 9px 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 13px;
+            font-family: inherit;
+            background: #f9fafb;
+            transition: border-color .2s;
+        }
+
+        .notes-search:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: #fff;
+        }
+
+        .note-card {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            padding: 16px 18px;
+            border-bottom: 1px solid var(--border, rgba(255,255,255,0.06));
+            transition: background .15s;
+        }
+
+        .note-card:last-child {
+            border-bottom: none;
+        }
+
+        .note-card:hover {
+            background: rgba(99, 102, 241, 0.03);
+        }
+
+        .note-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .note-body {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .note-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 4px;
+            flex-wrap: wrap;
+        }
+
+        .note-student-name {
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .note-date {
+            font-size: 11px;
+            color: var(--text-secondary, #8a8a9a);
+            flex-shrink: 0;
+        }
+
+        .note-content {
+            font-size: 13px;
+            color: var(--text-secondary, #8a8a9a);
+            line-height: 1.6;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 48px 20px;
+            color: var(--text-secondary, #8a8a9a);
+        }
+
+        .empty-state i { width: 48px; height: 48px; margin-bottom: 14px; opacity: .4; }
+        .empty-state p { font-size: 14px; }
+
+        #notesLoading {
+            text-align: center;
+            padding: 32px;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Sidebar Toggle Button -->
+    <button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle Sidebar" id="sidebarToggle">
+        <i data-lucide="menu"></i>
+    </button>
+    <!-- Mobile Backdrop -->
+    <div id="sidebarBackdrop" onclick="closeSidebar()"
+        style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1999;"></div>
+
+    <nav class="sidebar">
+        <div class="logo">Teacher Dashboard</div>
+        <div class="nav-links">
+            <a href="/teacher/dashboard" class="nav-item">
+                <span class="nav-icon"><i data-lucide="layout-dashboard"></i></span> Dashboard
+            </a>
+            <a href="/teacher/students" class="nav-item">
+                <span class="nav-icon"><i data-lucide="users"></i></span> Students
+            </a>
+            <a href="/teacher/alerts" class="nav-item">
+                <span class="nav-icon"><i data-lucide="bell"></i></span> Alerts
+            </a>
+            <a href="/teacher/notes" class="nav-item active">
+                <span class="nav-icon"><i data-lucide="file-text"></i></span> My Notes
+            </a>
+            <a href="/teacher/profile" class="nav-item">
+                <span class="nav-icon"><i data-lucide="user"></i></span> My Profile
+            </a>
+        </div>
+        <div class="sidebar-footer">
+            <a href="/logout" class="nav-item" style="color: var(--danger);">
+                <span class="nav-icon"><i data-lucide="log-out"></i></span> Logout
+            </a>
+        </div>
+    </nav>
+
+    <div class="main-content">
+        <div class="header">
+            <div>
+                <h1>My Notes</h1>
+                <p style="color:var(--gray-500)">All notes you have sent to students — read-only history.</p>
+            </div>
+            <div style="display:flex; align-items:center; gap:12px; font-size:14px; color:var(--gray-500)">
+                {{ now_date }}
+                <button class="dm-toggle" id="dmToggle" onclick="toggleDarkMode()" title="Toggle dark mode">
+                    <i data-lucide="moon" id="dmIcon"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="notes-toolbar">
+                <input type="text" id="notesSearch" class="notes-search"
+                    placeholder="Search by student name or note content…"
+                    oninput="filterNotes(this.value)" />
+                <span id="notesCount" style="font-size:13px; color:var(--text-secondary);"></span>
+            </div>
+
+            <div id="notesLoading">Loading notes…</div>
+            <div id="notesList" style="display:none;"></div>
+        </div>
+    </div>
+
+    <script>
+        // ── Sidebar ────────────────────────────────────────────────
+        function toggleSidebar() {
+            const isMobile = window.innerWidth <= 768;
+            const sidebar = document.querySelector('nav.sidebar');
+            const backdrop = document.getElementById('sidebarBackdrop');
+            if (isMobile) {
+                const isOpen = sidebar.classList.toggle('open');
+                if (backdrop) backdrop.style.display = isOpen ? 'block' : 'none';
+            } else {
+                const mainContent = document.querySelector('.main-content');
+                const isCollapsed = sidebar.classList.toggle('collapsed');
+                document.body.classList.toggle('sidebar-collapsed', isCollapsed);
+                if (mainContent) mainContent.classList.toggle('expanded', isCollapsed);
+                localStorage.setItem('sidebarCollapsed', isCollapsed);
+            }
+        }
+        function closeSidebar() {
+            const sidebar = document.querySelector('nav.sidebar');
+            const backdrop = document.getElementById('sidebarBackdrop');
+            if (sidebar) sidebar.classList.remove('open');
+            if (backdrop) backdrop.style.display = 'none';
+        }
+        window.addEventListener('DOMContentLoaded', () => {
+            if (window.innerWidth > 768) {
+                const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+                if (isCollapsed) {
+                    const sidebar = document.querySelector('nav.sidebar');
+                    const mainContent = document.querySelector('.main-content');
+                    if (sidebar) sidebar.classList.add('collapsed');
+                    if (mainContent) mainContent.classList.add('expanded');
+                    document.body.classList.add('sidebar-collapsed');
+                }
+            }
+        });
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 768) {
+                const sidebar = document.querySelector('nav.sidebar');
+                if (sidebar) sidebar.classList.remove('open');
+                const backdrop = document.getElementById('sidebarBackdrop');
+                if (backdrop) backdrop.style.display = 'none';
+            }
+        });
+
+        // ── Notes ──────────────────────────────────────────────────
+        let _allNotes = [];
+
+        function getInitials(name) {
+            return name.trim().split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+        }
+
+        function renderNotes(notes) {
+            const listEl = document.getElementById('notesList');
+            const countEl = document.getElementById('notesCount');
+
+            if (!notes.length) {
+                listEl.innerHTML = `
+                    <div class="empty-state">
+                        <i data-lucide="file-text"></i>
+                        <p>No notes found.</p>
+                    </div>`;
+                countEl.textContent = '';
+            } else {
+                countEl.textContent = `${notes.length} note${notes.length !== 1 ? 's' : ''}`;
+                listEl.innerHTML = notes.map(n => `
+                    <div class="note-card" data-student="${n.student_name.toLowerCase()}" data-content="${n.content.toLowerCase()}">
+                        <div class="note-avatar">${getInitials(n.student_name)}</div>
+                        <div class="note-body">
+                            <div class="note-header">
+                                <span class="note-student-name">${n.student_name}</span>
+                                <span class="note-date">${n.created_at_display}</span>
+                            </div>
+                            <div class="note-content">${n.content}</div>
+                        </div>
+                    </div>`).join('');
+            }
+            listEl.style.display = '';
+            lucide.createIcons();
+        }
+
+        function filterNotes(query) {
+            const q = query.toLowerCase().trim();
+            const filtered = q
+                ? _allNotes.filter(n =>
+                    n.student_name.toLowerCase().includes(q) ||
+                    n.content.toLowerCase().includes(q)
+                )
+                : _allNotes;
+            renderNotes(filtered);
+        }
+
+        async function loadNotes() {
+            try {
+                const res = await fetch('/api/teacher/notes');
+                if (!res.ok) throw new Error('Failed');
+                _allNotes = await res.json();
+                document.getElementById('notesLoading').style.display = 'none';
+                renderNotes(_allNotes);
+            } catch (e) {
+                document.getElementById('notesLoading').textContent = 'Could not load notes. Please refresh.';
+                console.error(e);
+            }
+        }
+
+        lucide.createIcons();
+        loadNotes();
+
+        // Dark Mode
+        function toggleDarkMode() {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            const newTheme = isDark ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('teacher_theme', newTheme);
+            updateDmIcon(newTheme);
+        }
+        function updateDmIcon(theme) {
+            const icon = document.getElementById('dmIcon');
+            if (!icon) return;
+            icon.setAttribute('data-lucide', theme === 'dark' ? 'sun' : 'moon');
+            lucide.createIcons();
+        }
+        updateDmIcon(localStorage.getItem('teacher_theme') || 'light');
+    </script>
+</body>
+
+</html>

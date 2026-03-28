@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alerts | Student Insight</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="{{ url_for('static', filename='css/dashboard.css') }}" rel="stylesheet">
+    <script>if(localStorage.getItem('teacher_theme')==='dark')document.documentElement.setAttribute('data-theme','dark');</script>
+    <style>
+        :root {
+            /* Clean modern color palette */
+            --bg-color: #f9fafb;
+            --surface-color: #ffffff;
+            --text-primary: #111827;
+            --text-secondary: #6b7280;
+            --border-color: #e5e7eb;
+            --sidebar-bg: #111827;
+            --sidebar-text: #f3f4f6;
+            
+            /* Severity colors */
+            --sev-critical: #ef4444;    /* Red */
+            --sev-high: #f97316;        /* Orange */
+            --sev-medium: #eab308;      /* Yellow */
+            --sev-warning: #f59e0b;     /* Amber */
+            --sev-low: #3b82f6;         /* Blue */
+            --sev-info: #10b981;        /* Green */
+            
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --success-color: #10b981;
+        }
+
+        /* Dark Mode overrides for alerts page */
+        html[data-theme="dark"] {
+            --bg-color: #0f1117;
+            --surface-color: #1a1d27;
+            --text-primary: #e5e7eb;
+            --text-secondary: #9ca3af;
+            --border-color: #2d3241;
+        }
+        html[data-theme="dark"] body {
+            background: #0f1117;
+            color: #e5e7eb;
+        }
+        html[data-theme="dark"] .main-content {
+            background: #0f1117;
+        }
+        html[data-theme="dark"] .stat-card,
+        html[data-theme="dark"] .alert-card,
+        html[data-theme="dark"] .alert-detail-panel {
+            background: #1a1d27;
+            border-color: #2d3241;
+        }
+        html[data-theme="dark"] .header {
+            border-bottom-color: #2d3241;
+        }
+        html[data-theme="dark"] .controls-bar,
+        html[data-theme="dark"] .alert-list-container {
+            background: #1a1d27;
+            border-color: #2d3241;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            /* Override dashboard.css dark mode defaults for this specific page if needed */
+        }
+
+        /* Override sidebar to be dark */
+        .sidebar {
+            background-color: var(--sidebar-bg);
+            color: var(--sidebar-text);
+            border-right: none;
+        }
+        
+        .sidebar .logo {
+            color: #ffffff;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .sidebar .nav-item {
+            color: #9ca3af;
+        }
+        
+        .sidebar .nav-item:hover, .sidebar .nav-item.active {
+            background-color: rgba(255,255,255,0.1);
+            color: #ffffff;
+        }
+
+        .main-content {
+            background-color: var(--bg-color);
+            min-height: 100vh;
+        }
+
+        .header {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .header h1 {
+            color: var(--text-primary);
+            margin: 0 0 4px 0;
+            font-size: 24px;
+            font-weight: 700;
+        }
+        
+        .header p {
+            color: var(--text-secondary);
+            margin: 0;
+            font-size: 14px;
+        }
+
+        /* Summary Stats Bar */
+        .stats-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+        }
+
+        .stat-card {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 12px 16px;
+            min-width: 120px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .stat-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        /* Filter Bar & Controls */
+        .controls-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 6px 14px;
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            background: var(--surface-color);
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .filter-btn:hover {
+            border-color: var(--text-secondary);
+            color: var(--text-primary);
+        }
+
+        .filter-btn.active {
+            background: var(--text-primary);
+            border-color: var(--text-primary);
+            color: var(--surface-color);
+        }
+
+        .batch-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .custom-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+        
+        .custom-checkbox input {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+            accent-color: var(--primary);
+        }
+
+        /* Alerts List Container */
+        .alerts-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        /* Alert Card Redesign */
+        .alert-card {
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            gap: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            /* Entrance Animation */
+            animation: slideInUp 0.4s ease forwards;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+        }
+        
+        /* Staggered animation delays for initial load */
+        .alert-card:nth-child(1) { animation-delay: 0.05s; }
+        .alert-card:nth-child(2) { animation-delay: 0.10s; }
+        .alert-card:nth-child(3) { animation-delay: 0.15s; }
+        .alert-card:nth-child(4) { animation-delay: 0.20s; }
+        .alert-card:nth-child(5) { animation-delay: 0.25s; }
+        .alert-card:nth-child(n+6) { animation-delay: 0.3s; }
+
+        .alert-card:hover {
+            border-color: #d1d5db;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        
+        .alert-card.resolving {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+        
+        .alert-card.resolved-anim {
+            animation: fadeOutUp 0.4s ease forwards;
+        }
+
+        @keyframes slideInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes fadeOutUp {
+            to {
+                opacity: 0;
+                transform: translateY(-10px) scale(0.98);
+                height: 0;
+                padding: 0;
+                margin: 0;
+                border: 0;
+            }
+        }
+
+        .alert-severity-indicator {
+            width: 4px;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+
+        .sev-critical { background: var(--sev-critical); color: var(--sev-critical); }
+        .sev-high { background: var(--sev-high); color: var(--sev-high); }
+        .sev-medium { background: var(--sev-medium); color: var(--sev-medium); }
+        .sev-warning { background: var(--sev-warning); color: var(--sev-warning); }
+        .sev-low { background: var(--sev-low); color: var(--sev-low); }
+        .sev-info { background: var(--sev-info); color: var(--sev-info); }
+
+        .alert-checkbox-wrapper {
+            display: flex;
+            align-items: flex-start;
+            padding-top: 2px;
+        }
+
+        .alert-content {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .alert-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .alert-meta-top {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .alert-student-name {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .alert-badge {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 12px;
+            text-transform: capitalize;
+            border: 1px solid currentColor;
+            background: transparent;
+        }
+        
+        .alert-type {
+            font-size: 12px;
+            color: var(--text-secondary);
+            background: #f3f4f6;
+            padding: 2px 8px;
+            border-radius: 4px;
+            text-transform: capitalize;
+        }
+
+        .alert-date {
+            font-size: 12px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+        }
+
+        .alert-message {
+            font-size: 14px;
+            line-height: 1.5;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .btn-resolve {
+            padding: 6px 14px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background: var(--surface-color);
+            color: var(--text-primary);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+            white-space: nowrap;
+            height: 32px;
+        }
+
+        .btn-resolve:hover:not(:disabled) {
+            border-color: var(--success-color);
+            color: var(--success-color);
+            background: #f0fdf4;
+        }
+
+        .btn-resolve:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .spinner {
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+            background: var(--surface-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 12px;
+        }
+
+        .empty-state svg {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+            stroke-width: 1.5;
+        }
+        
+        .empty-state h3 {
+            margin: 0 0 8px 0;
+            color: var(--text-primary);
+            font-size: 16px;
+        }
+        
+        .empty-state p {
+            margin: 0;
+            font-size: 14px;
+        }
+
+        /* Loading indicator for infinite scroll */
+        .loading-more {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-secondary);
+            font-size: 14px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .loading-more.active {
+            display: flex;
+        }
+
+        /* Floating Batch Action Bar */
+        .batch-action-bar {
+            position: fixed;
+            bottom: -80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            transition: bottom 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 100;
+        }
+        
+        .batch-action-bar.visible {
+            bottom: 30px;
+        }
+        
+        .batch-selection-count {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+        
+        .btn-resolve-batch {
+            background: var(--success-color);
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.2s;
+        }
+        
+        .btn-resolve-batch:hover:not(:disabled) {
+            background: #059669;
+        }
+        
+        .btn-resolve-batch:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        /* Toast Notification */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .toast {
+            background: var(--surface-color);
+            border-left: 4px solid var(--primary);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            padding: 12px 16px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 250px;
+            animation: toastSlideIn 0.3s ease forwards;
+        }
+        
+        .toast.error { border-left-color: var(--sev-critical); }
+        .toast.success { border-left-color: var(--success-color); }
+        
+        .toast-content {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+        
+        .toast.hiding {
+            animation: toastFadeOut 0.3s ease forwards;
+        }
+        
+        @keyframes toastSlideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes toastFadeOut {
+            to { transform: translateX(100%); opacity: 0; }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Sidebar Toggle Button -->
+    <button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle Sidebar" id="sidebarToggle">
+        <i data-lucide="menu"></i>
+    </button>
+    <!-- Mobile Backdrop -->
+    <div id="sidebarBackdrop" onclick="closeSidebar()"
+        style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1999;"></div>
+
+    <nav class="sidebar">
+        <div class="logo">Teacher Dashboard</div>
+        <div class="nav-links">
+            <a href="/teacher/dashboard" class="nav-item">
+                <span class="nav-icon"><i data-lucide="layout-dashboard"></i></span> Dashboard
+            </a>
+            <a href="/teacher/students" class="nav-item">
+                <span class="nav-icon"><i data-lucide="users"></i></span> Students
+            </a>
+            <a href="/teacher/alerts" class="nav-item active">
+                <span class="nav-icon"><i data-lucide="bell"></i></span> Alerts
+                {% if total_alerts > 0 %}
+                <span id="navAlertBadge" style="margin-left:auto; background:var(--sev-critical); color:white; padding:2px 6px; border-radius:10px; font-size:10px;">{{ total_alerts }}</span>
+                {% endif %}
+            </a>
+            <a href="/teacher/notes" class="nav-item">
+                <span class="nav-icon"><i data-lucide="file-text"></i></span> My Notes
+            </a>
+            <a href="/teacher/profile" class="nav-item">
+                <span class="nav-icon"><i data-lucide="user"></i></span> My Profile
+            </a>
+        </div>
+        <div class="sidebar-footer">
+            <a href="/logout" class="nav-item" style="color: var(--sev-critical);">
+                <span class="nav-icon"><i data-lucide="log-out"></i></span> Logout
+            </a>
+        </div>
+    </nav>
+
+    <div class="main-content">
+        <div class="header">
+            <div>
+                <h1>Alerts</h1>
+                <p>Monitor and resolve issues requiring your attention.</p>
+            </div>
+            <div style="display:flex; align-items:center; gap:12px; font-size:14px; color:var(--text-secondary); font-weight: 500;">
+                {{ now_date }}
+                <button class="dm-toggle" id="dmToggle" onclick="toggleDarkMode()" title="Toggle dark mode">
+                    <i data-lucide="moon" id="dmIcon"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Summary Stats Bar (Populated via JS) -->
+        <div class="stats-bar" id="summaryStatsBar">
+            <!-- Loading state initially -->
+            <div class="stat-card" style="opacity: 0.6;">
+                <span class="stat-label">Total Unresolved</span>
+                <span class="stat-value"><i data-lucide="loader-2" class="spinner" style="width:18px;height:18px;"></i></span>
+            </div>
+        </div>
+
+        <div class="controls-bar">
+            <!-- Severity Filters -->
+            <div class="filter-group">
+                <button class="filter-btn active" data-filter="all" onclick="filterAlerts('all', this)">All</button>
+                <button class="filter-btn" data-filter="critical" onclick="filterAlerts('critical', this)">Critical</button>
+                <button class="filter-btn" data-filter="high" onclick="filterAlerts('high', this)">High</button>
+                <button class="filter-btn" data-filter="medium" onclick="filterAlerts('medium', this)">Medium</button>
+                <button class="filter-btn" data-filter="warning" onclick="filterAlerts('warning', this)">Warning</button>
+                <!-- Include Low and Info if needed ->
+                <button class="filter-btn" data-filter="low" onclick="filterAlerts('low', this)">Low</button>
+                <button class="filter-btn" data-filter="info" onclick="filterAlerts('info', this)">Info</button>
+                -->
+            </div>
+
+            <!-- Batch Controls -->
+            <div class="batch-controls">
+                <label class="custom-checkbox">
+                    <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this)" {% if not alerts %}disabled{% endif %}>
+                    <span>Select All</span>
+                </label>
+            </div>
+        </div>
+
+        <!-- Alerts List -->
+        <div class="alerts-container" id="alertsContainer">
+            {% for alert in alerts %}
+            <div class="alert-card" data-alert-id="{{ alert.id }}" data-severity="{{ alert.severity }}">
+                <div class="alert-severity-indicator sev-{{ alert.severity }}"></div>
+                <div class="alert-checkbox-wrapper">
+                    <input type="checkbox" class="alert-checkbox" value="{{ alert.id }}" onchange="updateBatchSelection()">
+                </div>
+                <div class="alert-content">
+                    <div class="alert-header">
+                        <div class="alert-meta-top">
+                            <span class="alert-student-name">{{ alert.student.full_name }}</span>
+                            <span class="alert-type">{{ alert.type }}</span>
+                            <span class="alert-badge sev-{{ alert.severity }}">{{ alert.severity }}</span>
+                        </div>
+                        <div class="alert-actions">
+                            <button class="btn-resolve" onclick="resolveSingleAlert({{ alert.id }}, this)">
+                                <i data-lucide="check" style="width:14px; height:14px;"></i> Resolve
+                            </button>
+                        </div>
+                    </div>
+                    <div class="alert-message">{{ alert.message }}</div>
+                    <div class="alert-date">
+                        <i data-lucide="clock" style="width:12px; height:12px;"></i> {{ alert.created_at.strftime('%b %d, %Y') }}
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="empty-state" id="mainEmptyState">
+                <i data-lucide="check-circle-2"></i>
+                <h3>All Caught Up!</h3>
+                <p>There are no unresolved alerts requiring your attention.</p>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Infinite Scroll Loading Indicator -->
+        <div class="loading-more" id="loadingMoreIndicator">
+            <i data-lucide="loader-2" class="spinner"></i> Loading more alerts...
+        </div>
+        
+        <!-- Store pagination state -->
+        <input type="hidden" id="hasNextPage" value="{{ 'true' if has_next else 'false' }}">
+        <input type="hidden" id="nextPageNum" value="{{ next_page if next_page else '' }}">
+        <input type="hidden" id="totalAlertsHidden" value="{{ total_alerts }}">
+    </div>
+
+    <!-- Floating Batch Action Bar -->
+    <div class="batch-action-bar" id="batchActionBar">
+        <span class="batch-selection-count"><span id="selectedCount">0</span> alerts selected</span>
+        <button class="btn-resolve-batch" id="btnResolveBatch" onclick="resolveBatchAlerts()">
+            <i data-lucide="check-square" style="width:16px;height:16px;"></i>
+            Resolve Selected
+        </button>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        // Store selected alert IDs
+        let selectedAlertIds = new Set();
+        let isLoadingPaging = false;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            fetchAlertSummary();
+            setupInfiniteScroll();
+            
+            // Initial sidebar setup
+            if (window.innerWidth > 768) {
+                const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+                if (isCollapsed) {
+                    const sidebar = document.querySelector('nav.sidebar');
+                    const mainContent = document.querySelector('.main-content');
+                    if (sidebar) sidebar.classList.add('collapsed');
+                    if (mainContent) mainContent.classList.add('expanded');
+                    document.body.classList.add('sidebar-collapsed');
+                }
+            }
+        });
+
+        // ── Toast Notifications ──────────────────────────────────────
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            
+            const icon = type === 'success' ? 'check-circle' : 'alert-circle';
+            const iconColor = type === 'success' ? 'var(--success-color)' : 'var(--sev-critical)';
+            
+            toast.innerHTML = `
+                <i data-lucide="${icon}" style="color:${iconColor}; width:18px;height:18px;"></i>
+                <span class="toast-content">${message}</span>
+            `;
+            container.appendChild(toast);
+            lucide.createIcons({root: toast});
+            
+            setTimeout(() => {
+                toast.classList.add('hiding');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // ── Fetch Summary Statistics ─────────────────────────────────
+        async function fetchSummaryStatsBar() {
+             await fetchAlertSummary();
+        }
+
+        async function fetchAlertSummary() {
+            try {
+                const res = await fetch('/api/teacher/alerts/summary', {
+                    headers: { 'Accept': 'application/json'}
+                });
+                
+                if (!res.ok) throw new Error('Failed to fetch summary');
+                
+                const data = await res.json();
+                if (data.success) {
+                    renderSummaryStats(data);
+                    // Update navigation badge if exists
+                    const badge = document.getElementById('navAlertBadge');
+                    if (badge) {
+                        badge.textContent = data.total;
+                        badge.style.display = data.total > 0 ? 'inline-block' : 'none';
+                    }
+                    document.getElementById('totalAlertsHidden').value = data.total;
+                }
+            } catch (e) {
+                console.error("Summary fetch error", e);
+            }
+        }
+
+        function renderSummaryStats(data) {
+            const container = document.getElementById('summaryStatsBar');
+            if (data.total === 0) {
+                container.innerHTML = `
+                    <div class="stat-card">
+                        <span class="stat-label">Total Unresolved</span>
+                        <span class="stat-value">
+                            <span class="stat-dot" style="background:var(--success-color)"></span>
+                            0
+                        </span>
+                    </div>`;
+                return;
+            }
+
+            let html = `
+                <div class="stat-card">
+                    <span class="stat-label">Total Unresolved</span>
+                    <span class="stat-value">${data.total}</span>
+                </div>
+            `;
+            
+            const severities = [
+                { key: 'critical', label: 'Critical', color: 'var(--sev-critical)' },
+                { key: 'high', label: 'High', color: 'var(--sev-high)' },
+                { key: 'medium', label: 'Medium', color: 'var(--sev-medium)' }
+            ];
+            
+            severities.forEach(sev => {
+                const count = data.breakdown[sev.key] || 0;
+                if (count > 0 || sev.key === 'critical') {
+                    html += `
+                        <div class="stat-card">
+                            <span class="stat-label">${sev.label}</span>
+                            <span class="stat-value">
+                                <span class="stat-dot" style="background:${sev.color}"></span>
+                                ${count}
+                            </span>
+                        </div>
+                    `;
+                }
+            });
+            
+            container.innerHTML = html;
+        }
+
+        // ── Single Alert Resolution ──────────────────────────────────
+        async function resolveSingleAlert(alertId, btn) {
+            if (btn.disabled || btn.dataset.resolving === 'true') return;
+            
+            const card = document.querySelector(`.alert-card[data-alert-id="${alertId}"]`);
+            
+            // Set Loading State
+            btn.disabled = true;
+            btn.dataset.resolving = 'true';
+            card.classList.add('resolving');
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = `<i data-lucide="loader-2" class="spinner" style="width:14px; height:14px;"></i> Resolving`;
+            lucide.createIcons({root: btn});
+
+            try {
+                const res = await fetch(`/api/teacher/alerts/${alertId}/resolve`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({}) // Empty body but strictly JSON
+                });
+                
+                const data = await res.json();
+                
+                if (res.ok && data.success) {
+                    showToast('Alert resolved successfully', 'success');
+                    removeAlertCardsFromDOM([alertId]);
+                    fetchAlertSummary(); // Refresh stats
+                } else {
+                    throw new Error(data.msg || 'Failed to resolve alert');
+                }
+            } catch (e) {
+                showToast(e.message, 'error');
+                // Restore state
+                btn.disabled = false;
+                delete btn.dataset.resolving;
+                card.classList.remove('resolving');
+                btn.innerHTML = originalHtml;
+                lucide.createIcons({root: btn});
+            }
+        }
+
+        function removeAlertCardsFromDOM(alertIds) {
+            alertIds.forEach(id => {
+                const card = document.querySelector(`.alert-card[data-alert-id="${id}"]`);
+                if (card) {
+                    // Remove from selection if present
+                    selectedAlertIds.delete(parseInt(id));
+                    
+                    // Animate out
+                    card.classList.add('resolved-anim');
+                    setTimeout(() => {
+                        card.remove();
+                        checkEmptyState();
+                        updateBatchSelectionUI();
+                    }, 400); // Matches animation duration
+                }
+            });
+        }
+
+        function checkEmptyState() {
+            const container = document.getElementById('alertsContainer');
+            // Check if there are any alert cards remaining that are NOT animating out
+            const activeCards = container.querySelectorAll('.alert-card:not(.resolved-anim)');
+            
+            if (activeCards.length === 0) {
+                // If we don't have next pages to load, show empty state
+                if (document.getElementById('hasNextPage').value !== 'true') {
+                    if (!document.getElementById('mainEmptyState')) {
+                        container.innerHTML = `
+                            <div class="empty-state" id="mainEmptyState" style="animation: slideInUp 0.4s ease forwards;">
+                                <i data-lucide="check-circle-2"></i>
+                                <h3>All Caught Up!</h3>
+                                <p>There are no unresolved alerts requiring your attention.</p>
+                            </div>
+                        `;
+                        lucide.createIcons();
+                        // Disable select all
+                        document.getElementById('selectAllCheckbox').disabled = true;
+                        document.getElementById('selectAllCheckbox').checked = false;
+                    }
+                }
+            }
+        }
+
+        // ── Batch Resolution Features ────────────────────────────────
+        function toggleSelectAll(checkbox) {
+            const isChecked = checkbox.checked;
+            const cardCheckboxes = document.querySelectorAll('.alert-card:not([style*="display: none"]) .alert-checkbox');
+            
+            cardCheckboxes.forEach(cb => {
+                cb.checked = isChecked;
+                const id = parseInt(cb.value);
+                if (isChecked) {
+                    selectedAlertIds.add(id);
+                } else {
+                    selectedAlertIds.delete(id);
+                }
+            });
+            
+            updateBatchSelectionUI();
+        }
+
+        function updateBatchSelection() {
+            const cardCheckboxes = document.querySelectorAll('.alert-checkbox');
+            let allVisibleChecked = true;
+            let hasVisibleCards = false;
+            
+            cardCheckboxes.forEach(cb => {
+                const card = cb.closest('.alert-card');
+                if (card.style.display !== 'none') {
+                    hasVisibleCards = true;
+                    const id = parseInt(cb.value);
+                    if (cb.checked) {
+                        selectedAlertIds.add(id);
+                    } else {
+                        selectedAlertIds.delete(id);
+                        allVisibleChecked = false;
+                    }
+                }
+            });
+            
+            document.getElementById('selectAllCheckbox').checked = hasVisibleCards && allVisibleChecked;
+            updateBatchSelectionUI();
+        }
+
+        function updateBatchSelectionUI() {
+            const count = selectedAlertIds.size;
+            const actionBar = document.getElementById('batchActionBar');
+            const countLabel = document.getElementById('selectedCount');
+            
+            countLabel.textContent = count;
+            
+            if (count > 0) {
+                actionBar.classList.add('visible');
+            } else {
+                actionBar.classList.remove('visible');
+            }
+        }
+
+        async function resolveBatchAlerts() {
+            if (selectedAlertIds.size === 0) return;
+            
+            const btn = document.getElementById('btnResolveBatch');
+            if (btn.disabled) return;
+            
+            const alertIdsArray = Array.from(selectedAlertIds);
+            
+            // Set loading state
+            btn.disabled = true;
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = `<i data-lucide="loader-2" class="spinner" style="width:16px;height:16px;"></i> Resolving...`;
+            lucide.createIcons({root: btn});
+            
+            // visually mark cards as resolving
+            alertIdsArray.forEach(id => {
+                const card = document.querySelector(`.alert-card[data-alert-id="${id}"]`);
+                if (card) {
+                    card.classList.add('resolving');
+                    // Ensure the individual button looks disabled
+                    const indBtn = card.querySelector('.btn-resolve');
+                    if (indBtn) indBtn.disabled = true;
+                }
+            });
+
+            try {
+                const res = await fetch(`/api/teacher/alerts/resolve-batch`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ alert_ids: alertIdsArray })
+                });
+                
+                const data = await res.json();
+                
+                if (res.ok && data.success) {
+                    showToast(`Successfully resolved ${data.resolved_count} alerts`, 'success');
+                    
+                    // The server handles which ones succeeded. Remove successful ones.
+                    // If some failed, they are in data.failed_ids
+                    const failedSet = new Set(data.failed_ids || []);
+                    const successfulIds = alertIdsArray.filter(id => !failedSet.has(id));
+                    
+                    removeAlertCardsFromDOM(successfulIds);
+                    fetchAlertSummary(); // Refresh stats
+                    
+                    if (failedSet.size > 0) {
+                        showToast(`Failed to resolve ${failedSet.size} alerts`, 'error');
+                        // Unmark failed ones
+                        failedSet.forEach(id => {
+                            const card = document.querySelector(`.alert-card[data-alert-id="${id}"]`);
+                            if (card) {
+                                card.classList.remove('resolving');
+                                const indBtn = card.querySelector('.btn-resolve');
+                                if (indBtn) indBtn.disabled = false;
+                            }
+                        });
+                    }
+                } else {
+                    throw new Error(data.msg || 'Batch resolve failed');
+                }
+            } catch (e) {
+                showToast(e.message, 'error');
+                // Unmark all resolving cards
+                alertIdsArray.forEach(id => {
+                    const card = document.querySelector(`.alert-card[data-alert-id="${id}"]`);
+                    if (card) {
+                        card.classList.remove('resolving');
+                        const indBtn = card.querySelector('.btn-resolve');
+                        if (indBtn) indBtn.disabled = false;
+                    }
+                });
+            } finally {
+                // Restore button state
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+                lucide.createIcons({root: btn});
+                updateBatchSelectionUI(); // Hide bar if empty
+            }
+        }
+
+        // ── Local Severity Filtering ─────────────────────────────────
+        function filterAlerts(severity, btn) {
+            // Update active button classes
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            // Filter cards in UI
+            const cards = document.querySelectorAll('.alert-card');
+            cards.forEach(card => {
+                if (severity === 'all' || card.dataset.severity === severity) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+            
+            // Re-evaluate the "Select All" checkbox state based on visible cards
+            updateBatchSelection();
+        }
+
+        // ── Infinite Scroll Pagination ───────────────────────────────
+        function setupInfiniteScroll() {
+            const options = {
+                root: null,
+                rootMargin: '0px',
+                threshold: 0.1
+            };
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        loadMoreAlerts();
+                    }
+                });
+            }, options);
+            
+            const indicator = document.getElementById('loadingMoreIndicator');
+            if (indicator) {
+                observer.observe(indicator);
+                // initial check
+                checkInfiniteScrollVisibility();
+            }
+        }
+        
+        function checkInfiniteScrollVisibility() {
+            const hasNext = document.getElementById('hasNextPage').value === 'true';
+            const indicator = document.getElementById('loadingMoreIndicator');
+            if (indicator) {
+                if (hasNext) {
+                    indicator.classList.add('active');
+                } else {
+                    indicator.classList.remove('active');
+                }
+            }
+        }
+
+        async function loadMoreAlerts() {
+            if (isLoadingPaging) return;
+            
+            const hasNext = document.getElementById('hasNextPage').value === 'true';
+            if (!hasNext) return;
+            
+            const nextPage = document.getElementById('nextPageNum').value;
+            if (!nextPage) return;
+            
+            isLoadingPaging = true;
+            
+            try {
+                const res = await fetch(`/teacher/alerts?page=${nextPage}&json=true`, {
+                    headers: { 'Accept': 'application/json' }
+                });
+                
+                if (!res.ok) throw new Error('Failed to fetch more alerts');
+                
+                const data = await res.json();
+                
+                appendAlertCards(data.alerts);
+                
+                // Update pagination state
+                document.getElementById('hasNextPage').value = data.has_next ? 'true' : 'false';
+                document.getElementById('nextPageNum').value = data.next_page || '';
+                
+                checkInfiniteScrollVisibility();
+                
+                // Re-apply current filter
+                const activeFilter = document.querySelector('.filter-btn.active');
+                if (activeFilter) {
+                    const sev = activeFilter.dataset.filter;
+                    if (sev !== 'all') {
+                        filterAlerts(sev, activeFilter);
+                    }
+                }
+                
+                // Keep selected state consistent
+                updateBatchSelection();
+
+            } catch(e) {
+                console.error("Infinite scroll error", e);
+                showToast("Failed to load more alerts", "error");
+            } finally {
+                isLoadingPaging = false;
+            }
+        }
+        
+        function appendAlertCards(alerts) {
+            const container = document.getElementById('alertsContainer');
+            
+            alerts.forEach(alert => {
+                const isSelected = selectedAlertIds.has(alert.id);
+                const card = document.createElement('div');
+                card.className = 'alert-card';
+                card.dataset.alertId = alert.id;
+                card.dataset.severity = alert.severity;
+                
+                // Build HTML
+                card.innerHTML = `
+                    <div class="alert-severity-indicator sev-${alert.severity}"></div>
+                    <div class="alert-checkbox-wrapper">
+                        <input type="checkbox" class="alert-checkbox" value="${alert.id}" onchange="updateBatchSelection()" ${isSelected ? 'checked' : ''}>
+                    </div>
+                    <div class="alert-content">
+                        <div class="alert-header">
+                            <div class="alert-meta-top">
+                                <span class="alert-student-name">${alert.student_name}</span>
+                                <span class="alert-type">${alert.type}</span>
+                                <span class="alert-badge sev-${alert.severity}">${alert.severity}</span>
+                            </div>
+                            <div class="alert-actions">
+                                <button class="btn-resolve" onclick="resolveSingleAlert(${alert.id}, this)">
+                                    <i data-lucide="check" style="width:14px; height:14px;"></i> Resolve
+                                </button>
+                            </div>
+                        </div>
+                        <div class="alert-message">${alert.message}</div>
+                        <div class="alert-date">
+                            <i data-lucide="clock" style="width:12px; height:12px;"></i> ${alert.created_at}
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+            
+            // Initialize new icons
+            lucide.createIcons();
+        }
+
+        // ── Navigation Toggle Functions ──────────────────────────────
+        function toggleSidebar() {
+            const isMobile = window.innerWidth <= 768;
+            const sidebar = document.querySelector('nav.sidebar');
+            const backdrop = document.getElementById('sidebarBackdrop');
+
+            if (isMobile) {
+                const isOpen = sidebar.classList.toggle('open');
+                if (backdrop) backdrop.style.display = isOpen ? 'block' : 'none';
+            } else {
+                const mainContent = document.querySelector('.main-content');
+                const isCollapsed = sidebar.classList.toggle('collapsed');
+                document.body.classList.toggle('sidebar-collapsed', isCollapsed);
+                if (mainContent) mainContent.classList.toggle('expanded', isCollapsed);
+                localStorage.setItem('sidebarCollapsed', isCollapsed);
+            }
+        }
+
+        function closeSidebar() {
+            const sidebar = document.querySelector('nav.sidebar');
+            const backdrop = document.getElementById('sidebarBackdrop');
+            if (sidebar) { sidebar.classList.remove('open'); }
+            if (backdrop) { backdrop.style.display = 'none'; }
+        }
+
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 768) {
+                const sidebar = document.querySelector('nav.sidebar');
+                if (sidebar) sidebar.classList.remove('open');
+                const backdrop = document.getElementById('sidebarBackdrop');
+                if (backdrop) backdrop.style.display = 'none';
+            }
+        });
+
+        // Dark Mode
+        function toggleDarkMode() {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            const newTheme = isDark ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('teacher_theme', newTheme);
+            updateDmIcon(newTheme);
+        }
+        function updateDmIcon(theme) {
+            const icon = document.getElementById('dmIcon');
+            if (!icon) return;
+            icon.setAttribute('data-lucide', theme === 'dark' ? 'sun' : 'moon');
+            lucide.createIcons();
+        }
+        lucide.createIcons();
+        updateDmIcon(localStorage.getItem('teacher_theme') || 'light');
+    </script>
+</body>
+
+</html>

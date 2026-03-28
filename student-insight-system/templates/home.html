@@ -382,6 +382,8 @@
            And Overlay has its own background.
         */
     </style>
+    <link href="{{ url_for('static', filename='css/ui_alerts.css') }}" rel="stylesheet">
+    <script src="{{ url_for('static', filename='js/ui_alerts.js') }}"></script>
 </head>
 
 <body>
@@ -408,7 +410,7 @@
 
     <!-- 2. AUTH VIEW (Hidden) -->
     <div id="auth-view">
-        <div class="back-btn" onclick="goBack()">← Back to Home</div>
+        <div class="back-btn" onclick="goBack()"></div>
         <div class="container" id="container">
 
             <!-- REGISTER -->
@@ -433,7 +435,7 @@
                 <form id="form-login">
                     <h1>Sign In</h1>
                     <div class="subtitle">Welcome back to Student Insight</div>
-                    <input type="email" id="l-email" placeholder="Email" required />
+                    <input type="text" id="l-email" placeholder="Email or Student ID" required />
                     <input type="password" id="l-pass" placeholder="Password" required />
                     <select id="l-role">
                         <option value="student">Student</option>
@@ -563,10 +565,10 @@
             try {
                 const res = await fetch('/register', { method: 'POST', body: data });
                 if (res.ok) {
-                    alert('Account created! Please Sign In.');
+                    showToast('Account created! Please Sign In.', 'success');
                     container.classList.remove("right-panel-active");
                     document.getElementById('l-email').value = document.getElementById('r-email').value;
-                } else { err.innerText = 'Registration failed'; err.style.display = 'block'; }
+                } else { const json = await res.json(); err.innerText = json.msg || 'Registration failed'; err.style.display = 'block'; }
             } catch (e) { console.error(e); }
         });
 
