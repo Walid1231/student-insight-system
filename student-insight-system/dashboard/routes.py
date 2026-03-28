@@ -661,7 +661,7 @@ def student_profile():
         return redirect(url_for('dashboard.student_profile'))
 
     student = ProfileService.get_profile(user_id)
-    return render_template("student_profile.html", student=student)
+    return render_template("student_profile.html", student=student, dept_groups=DEPT_GROUPS)
 
 
 @dashboard_bp.route("/student/delete-profile", methods=["DELETE"])
@@ -1010,14 +1010,28 @@ def api_gg_delete_skill(skill_id):
 @dashboard_bp.route("/api/gg/goal/add", methods=["POST"])
 @require_role("student")
 def api_gg_add_goal():
+    from core.extensions import db
+    from models import CareerPath
+
     user_id = get_jwt_identity()
     data = request.get_json(silent=True) or {}
     career_id = data.get("career_id")
+    career_title = data.get("career_title", "").strip()
     goal_type = data.get("goal_type", "Long Term")
+
+    if not career_id and career_title:
+        cp = CareerPath.query.filter(db.func.lower(CareerPath.title) == career_title.lower()).first()
+        if not cp:
+            cp = CareerPath(title=career_title)
+            db.session.add(cp)
+            db.session.commit()
+        career_id = cp.id
+
     if not career_id:
-        return jsonify({"ok": False, "msg": "career_id required"}), 400
+        return jsonify({"ok": False, "msg": "career_id or career_title required"}), 400
+
     goal_id = AcademicService.add_goal(user_id, int(career_id), goal_type)
-    return jsonify({"ok": True, "goal_id": goal_id})
+    return jsonify({"ok": True, "goal_id": goal_id, "new_career_id": career_id})
 
 
 @dashboard_bp.route("/api/gg/goal/<int:goal_id>/delete", methods=["POST"])

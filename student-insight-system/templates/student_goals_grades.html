@@ -254,8 +254,8 @@
                 <div class="gg-card-body">
                     <div class="dept-wrap">
                         <i class="fas fa-graduation-cap"></i>
-                        <select id="dept-select" class="form-input">
-                            <option value="">— Choose your department —</option>
+                        <select id="dept-select" class="form-input" disabled style="background:#f9fafb; cursor:not-allowed;">
+                            <option value="">— Please configure your Department in your Profile —</option>
                             {% for group_name, depts in dept_groups %}
                             <optgroup label="{{ group_name }}">
                                 {% for dept in depts %}
@@ -265,6 +265,18 @@
                             {% endfor %}
                         </select>
                     </div>
+                    {% if not student.department %}
+                    <div style="margin-top: 12px;">
+                        <a href="{{ url_for('dashboard.student_profile') }}" class="btn-add-g" style="text-decoration:none; display:inline-flex; align-items:center; gap:6px; color:#fff; background:var(--navy); padding:6px 12px; border-radius:6px; font-size:13px; font-weight:600;">
+                            <i class="fas fa-user-edit"></i> Edit Profile to unlock
+                        </a>
+                    </div>
+                    {% else %}
+                    <div style="margin-top: 8px; font-size: 11px; text-transform: uppercase; font-weight: 700; color: var(--muted); letter-spacing: 0.5px;">
+                        <i class="fas fa-lock" style="margin-right:4px;"></i> Synced from Profile
+                    </div>
+                    {% endif %}
+
 
                     <div id="dept-careers-wrap" style="display:none;">
                         <div class="suggest-label"><i class="fas fa-briefcase"></i> Suggested Career Paths</div>
@@ -557,15 +569,19 @@ function setLoading(btn, on) {
     else btn.innerHTML = btn.dataset.orig;
 }
 
-// careerId → goalId map, built from matching_careers (which has goal_id)
-// Note: goals[] from server does NOT include career_id, so we use matching_careers
+// careerId → goalId map and lowercase title → goalId map, built from goals
 const careerGoalMap = new Map();
-{% for career in matching_careers %}{% if career.goal_id %}careerGoalMap.set({{ career.id }}, {{ career.goal_id }});{% endif %}
+const careerTitleMap = new Map();
+{% for g in goals %}
+careerGoalMap.set({{ g.career_id }}, {{ g.id }});
+careerTitleMap.set({{ g.career_title | tojson | lower }}, {{ g.id }});
 {% endfor %}
 
-const allCareerOptions = Array.from(document.getElementById('manual-career-select').options);
-const defaultCareerOption = allCareerOptions[0];
-const careerOptionsList = allCareerOptions.slice(1);
+// Snapshot career data as plain objects at init — DOM refs become stale when innerHTML is cleared
+const _careerSelectEl = document.getElementById('manual-career-select');
+const allCareerOptionsData = Array.from(_careerSelectEl.options).map(o => ({ value: o.value, text: o.text }));
+const defaultCareerOptionData = allCareerOptionsData[0];
+const careerOptionsData = allCareerOptionsData.slice(1); // [{value, text}, ...]
 
 // ═══════════════════════════════════════════════════════════
 //  Wizard: card reveal sequence
@@ -613,31 +629,62 @@ async function loadDeptData(dept, silent) {
         applyDeptData(deptCache.get(dept));
         return;
     }
-    const r = await fetch(`/api/department-data?dept=${encodeURIComponent(dept)}`);
-    const d = await r.json();
-    deptCache.set(dept, d);
-    applyDeptData(d);
+
+    // Show loading state
+    const pillsEl = document.getElementById('career-pills');
+    const skillsEl = document.getElementById('skill-pills');
+    const careersWrap = document.getElementById('dept-careers-wrap');
+    const skillsWrap = document.getElementById('dept-skills-wrap');
+    careersWrap.style.display = '';
+    skillsWrap.style.display = '';
+    pillsEl.innerHTML = '<span style="color:var(--muted);font-size:13px;"><i class="fas fa-circle-notch spin"></i> Loading career paths…</span>';
+    skillsEl.innerHTML = '<span style="color:var(--muted);font-size:13px;"><i class="fas fa-circle-notch spin"></i> Loading skills…</span>';
+
+    try {
+        const r = await fetch(`/api/department-data?dept=${encodeURIComponent(dept)}`);
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        const d = await r.json();
+        deptCache.set(dept, d);
+        applyDeptData(d);
+    } catch (err) {
+        pillsEl.innerHTML = '<span style="color:var(--red);font-size:13px;"><i class="fas fa-exclamation-circle"></i> Failed to load career data. Please try again.</span>';
+        skillsEl.innerHTML = '';
+        console.error('loadDeptData error:', err);
+    }
 }
 
 function applyDeptData(d) {
     buildCareerPills(d.careers || []);
     buildSkillChips(d.skills || []);
 
+    // Rebuild select from static data snapshot (NOT from DOM — those refs go stale after innerHTML clear)
     const sel = document.getElementById('manual-career-select');
     sel.innerHTML = '';
-    sel.appendChild(defaultCareerOption.cloneNode(true));
+
+    const defOpt = document.createElement('option');
+    defOpt.value = defaultCareerOptionData.value;
+    defOpt.textContent = defaultCareerOptionData.text;
+    sel.appendChild(defOpt);
 
     const relevantNames = (d.careers || []).map(n => n.toLowerCase().trim());
-    careerOptionsList.forEach(opt => {
-        if (relevantNames.includes(opt.text.toLowerCase().trim())) {
-            sel.appendChild(opt.cloneNode(true));
+    const relatedGrp = document.createElement('optgroup');
+    relatedGrp.label = 'Suggested Paths';
+    const otherGrp = document.createElement('optgroup');
+    otherGrp.label = 'Other Paths';
+
+    careerOptionsData.forEach(data => {
+        const opt = document.createElement('option');
+        opt.value = data.value;
+        opt.textContent = data.text;
+        if (relevantNames.includes(data.text.toLowerCase().trim())) {
+            relatedGrp.appendChild(opt);
+        } else {
+            otherGrp.appendChild(opt);
         }
     });
 
-    // Also add un-matched ones in an "Other Options" list if they want to browse freely? 
-    // The instructions said "add carrers relevant to the department , best to your knowledge ," 
-    // meaning limit the list to relevant options. We'll simply let the user use the filtered options 
-    // to keep the frontend exactly matching their intent.
+    if (relatedGrp.children.length > 0) sel.appendChild(relatedGrp);
+    if (otherGrp.children.length > 0) sel.appendChild(otherGrp);
 }
 
 function buildCareerPills(careers) {
@@ -648,9 +695,10 @@ function buildCareerPills(careers) {
     careers.forEach(c => {
         let careerId = null;
         const cLower = c.toLowerCase().trim();
-        for (let i = 0; i < careerOptionsList.length; i++) {
-            if (careerOptionsList[i].text.toLowerCase().trim() === cLower) {
-                careerId = parseInt(careerOptionsList[i].value);
+        // Look up from data snapshot (not stale DOM refs)
+        for (let i = 0; i < careerOptionsData.length; i++) {
+            if (careerOptionsData[i].text.toLowerCase().trim() === cLower) {
+                careerId = parseInt(careerOptionsData[i].value);
                 break;
             }
         }
@@ -660,19 +708,21 @@ function buildCareerPills(careers) {
         btn.className = 'c-pill';
         btn.innerHTML = `<i class="fas fa-briefcase"></i> ${esc(c)}`;
 
-        if (careerId && careerGoalMap.has(careerId)) {
+        if ((careerId && careerGoalMap.has(careerId)) || careerTitleMap.has(cLower)) {
             btn.classList.add('s-added');
             btn.style.borderColor = '#d1d5db';
             btn.style.background = '#f3f4f6';
             btn.style.color = '#9ca3af';
             btn.style.cursor = 'default';
-        } else if (careerId) {
+        } else {
             btn.onclick = async () => {
                 setLoading(btn, true);
-                const apiRes = await api('/api/gg/goal/add', { career_id: careerId, goal_type: 'Long Term' });
+                const apiRes = await api('/api/gg/goal/add', { career_id: careerId, career_title: c, goal_type: 'Long Term' });
                 setLoading(btn, false);
                 if (!apiRes.ok) { toast(apiRes.msg || 'Error', true); return; }
                 toast('Goal added!');
+
+                if (apiRes.new_career_id) careerId = apiRes.new_career_id;
 
                 btn.classList.add('s-added');
                 btn.style.borderColor = '#d1d5db';
@@ -682,7 +732,7 @@ function buildCareerPills(careers) {
                 btn.onclick = null;
 
                 await refreshGoalsTable();
-                swapCareerRowToRemove(careerId, apiRes.goal_id); 
+                if (careerId) swapCareerRowToRemove(careerId, apiRes.goal_id);
             };
         }
         grid.appendChild(btn);
@@ -695,7 +745,7 @@ function buildSkillChips(skills) {
     const wrap = document.getElementById('dept-skills-wrap');
     grid.innerHTML = '';
     skills.forEach(s => {
-        const added = existingSkillNames.has(s);
+        const added = existingSkillNames.has(s.toLowerCase());
         const ch = document.createElement('button');
         ch.type = 'button';
         ch.className = 's-chip' + (added ? ' s-added' : '');
@@ -710,7 +760,7 @@ function buildSkillChips(skills) {
 // ═══════════════════════════════════════════════════════════
 //  Skills
 // ═══════════════════════════════════════════════════════════
-let existingSkillNames = new Set([{{ student_skills | map(attribute='skill_name') | map('tojson') | join(', ') }}]);
+let existingSkillNames = new Set([{{ student_skills | map(attribute='skill_name') | map('tojson') | join(', ') }}].map(s => s.toLowerCase()));
 
 document.getElementById('skill-input').addEventListener('keydown', e => {
     if (e.key === 'Enter') { e.preventDefault(); addSkill(); }
@@ -728,6 +778,7 @@ async function addSkill() {
     inp.value = '';
     refreshSkillTags(d.skills);
     markChipAdded(name);
+    await refreshGoalsTable(); // Re-fetch matches
     toast(`✓ "${name}" added`);
 }
 
@@ -738,6 +789,7 @@ async function quickAddSkill(name, chipEl) {
     const d = await api('/api/gg/skill/add', { skill_name: name });
     if (!d.ok) { toast(d.msg || 'Error', true); return; }
     refreshSkillTags(d.skills);
+    await refreshGoalsTable(); // Re-fetch matches
     toast(`✓ "${name}" added`);
 }
 
@@ -746,6 +798,7 @@ async function deleteSkill(skillId, btn) {
     const d = await api(`/api/gg/skill/${skillId}/delete`, {});
     if (!d.ok) { toast('Error removing skill', true); setLoading(btn, false); return; }
     refreshSkillTags(d.skills);
+    await refreshGoalsTable(); // Re-fetch matches
     toast('Skill removed');
 }
 
@@ -761,7 +814,7 @@ function markChipAdded(name) {
 }
 
 function refreshSkillTags(skills) {
-    existingSkillNames = new Set(skills.map(s => s.name));
+    existingSkillNames = new Set(skills.map(s => s.name.toLowerCase()));
     const area = document.getElementById('skill-tags-area');
     if (!skills.length) {
         area.innerHTML = '<div class="gg-empty" style="padding:10px 0;"><p>No skills yet.</p></div>';
@@ -777,7 +830,7 @@ function refreshSkillTags(skills) {
     // Sync chip states
     document.querySelectorAll('#skill-pills .s-chip').forEach(ch => {
         const label = ch.textContent.trim().replace(/^[\u2713+]\s*/, '');
-        const added = existingSkillNames.has(label);
+        const added = existingSkillNames.has(label.toLowerCase());
         ch.className = 's-chip' + (added ? ' s-added' : '');
         ch.innerHTML = added ? `<i class="fas fa-check"></i> ${esc(label)}` : `<i class="fas fa-plus"></i> ${esc(label)}`;
         ch.onclick = added ? null : () => quickAddSkill(label, ch);
@@ -901,9 +954,13 @@ async function refreshGoalsTable() {
     if (!d.ok) return;
     const goals = d.goals || [];
 
-    // Update careerGoalMap
+    // Update careerGoalMap and careerTitleMap
     careerGoalMap.clear();
-    goals.forEach(g => careerGoalMap.set(g.career_id, g.id));
+    careerTitleMap.clear();
+    goals.forEach(g => {
+        careerGoalMap.set(g.career_id, g.id);
+        careerTitleMap.set(g.career_title.toLowerCase(), g.id);
+    });
 
     // Ensure table exists
     let table = document.getElementById('goals-table');
@@ -935,6 +992,39 @@ async function refreshGoalsTable() {
             <td><button class="btn-del" onclick="deleteGoal(${g.id})" title="Delete"><i class="fas fa-trash"></i></button></td>
         </tr>`
     ).join('');
+
+    // ─ Rebuild Matches Block ─
+    const matchingArea = document.getElementById('matching-careers-area');
+    if (matchingArea) {
+        if (d.matching_careers && d.matching_careers.length > 0) {
+            matchingArea.innerHTML = '<div class="career-list">' + d.matching_careers.map(c => {
+                const isAdded = careerGoalMap.has(c.id);
+                const badge = isAdded ? '<span class="badge-added">ADDED</span>' : '';
+                const actions = isAdded 
+                    ? `<button class="btn-rm-g" onclick="deleteGoalByCareer(${c.id})"><i class="fas fa-times"></i> Remove</button>`
+                    : `<select class="goal-type-sel" id="gt-${c.id}">
+                            <option value="Long Term">Long Term</option>
+                            <option value="Short Term">Short Term</option>
+                       </select>
+                       <button class="btn-add-g" onclick="addGoal(${c.id})"><i class="fas fa-plus"></i> Add</button>`;
+
+                return `<div class="career-row" id="cr-${c.id}">
+                            <div>
+                                <h4>${esc(c.title)}${badge}</h4>
+                                <span><strong>${c.match_count}</strong> skills matched &middot; ${esc(c.field_category || '')}</span>
+                            </div>
+                            <div class="career-actions">
+                                ${actions}
+                            </div>
+                        </div>`;
+            }).join('') + '</div>';
+        } else {
+            matchingArea.innerHTML = `<div class="gg-empty">
+                <i class="fas fa-search"></i>
+                <p>Add skills above to see matching career paths here.</p>
+            </div>`;
+        }
+    }
 
     // Sync career rows
     goals.forEach(g => swapCareerRowToRemove(g.career_id, g.id));
