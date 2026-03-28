@@ -287,6 +287,17 @@
                 background: linear-gradient(90deg, #3b82f6, #60a5fa);
                 transition: width 1s;
             }
+            .badge-primary-goal {
+                font-size: 10px;
+                font-weight: 800;
+                padding: 2px 6px;
+                background: var(--primary-navy);
+                color: #fff;
+                border-radius: 4px;
+                margin-left: 6px;
+                vertical-align: middle;
+                text-transform: uppercase;
+            }
 
             /* ── Responsive ── */
             @media(max-width:1100px) {
@@ -568,7 +579,12 @@
                     {% for career in data.careers %}
                     <div class="career-compat-item">
                         <div class="career-compat-label">
-                            {{ career.role }}:
+                            <div style="display:flex; align-items:center;">
+                                {{ career.role }}
+                                {% if career.is_primary %}
+                                <span class="badge-primary-goal">PRIMARY</span>
+                                {% endif %}
+                            </div>
                             {% if career.no_data %}
                             <span style="color:var(--text-muted);font-style:italic;">No data available</span>
                             {% else %}
