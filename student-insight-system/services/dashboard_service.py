@@ -138,7 +138,9 @@ class DashboardService:
         effort_week_b = [round(s[1][1], 1) for s in top_skills]
 
         # ── 6. CAREER COMPATIBILITY ──
-        goals_list = StudentGoal.query.filter_by(student_id=student.id).all()
+        goals_list = StudentGoal.query.filter_by(student_id=student.id).order_by(
+            StudentGoal.is_primary.desc()
+        ).all()
         student_skill_names = {s.skill_name for s in skills}
         careers = []
 
@@ -165,9 +167,15 @@ class DashboardService:
             else:
                 match_pct = 0
                 no_data = True
-            careers.append({"role": career.title, "match": match_pct, "no_data": no_data})
+            careers.append({
+                "role": career.title,
+                "match": match_pct,
+                "no_data": no_data,
+                "is_primary": g.is_primary
+            })
 
-        careers = sorted(careers, key=lambda x: x['match'], reverse=True)
+        # Sort so primary is always first, then by match %
+        careers = sorted(careers, key=lambda x: (x['is_primary'], x['match']), reverse=True)
 
         # ── 7. BURNOUT RISK ──
         latest_update = (

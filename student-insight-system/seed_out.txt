@@ -1,0 +1,16 @@
+2026-03-28 13:00:29 | INFO     | - | app | Logging initialised at DEBUG
+
+==========================================================
+  SECTION: Demo Students (8 profiles)
+==========================================================
+[1/4] Seeding CourseCatalog...
+Traceback (most recent call last):
+  File "P:\student_insight\student-insight-system\student-insight-system\seed.py", line 598, in <module>
+    main()
+  File "P:\student_insight\student-insight-system\student-insight-system\seed.py", line 588, in main
+    seed_students()
+  File "P:\student_insight\student-insight-system\student-insight-system\seed.py", line 256, in seed_students
+    print(f"   \u2713 {len(course_objects)} courses ready")
+  File "C:\Users\akib1\AppData\Local\Programs\Python\Python310\lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 3: character maps to <undefined>
