@@ -1200,6 +1200,7 @@
             btn.innerHTML = 'Saving...';
             btn.disabled = true;
 
+            let success = false;
             try {
                 const response = await fetch('/api/teacher/notes', {
                     method: 'POST',
@@ -1211,46 +1212,54 @@
                 });
 
                 if (response.ok) {
-                    showToast('Note added successfully!', 'success');
-                    
-                    // Create formatted date (e.g., Mar 28, 2026 05:45 PM)
-                    const now = new Date();
-                    const formattedDate = now.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
-                    
-                    // Build the new note HTML
-                    const newHtml = `
-                    <div class="note-item-premium">
-                        <div class="note-body-premium">${content}</div>
-                        <div class="note-meta-premium">
-                            <i data-lucide="clock" style="width: 12px; height: 12px;"></i>
-                            ${formattedDate}
-                        </div>
-                    </div>`;
-                    
-                    const notesList = document.getElementById('notesList');
-                    const emptyState = notesList.querySelector('.empty-notes-premium');
-                    if (emptyState) {
-                        emptyState.remove();
-                    }
-                    
-                    // Prepend to the top of the list
-                    notesList.insertAdjacentHTML('afterbegin', newHtml);
-                    
-                    // Refresh lucide icons for the newly injected HTML
-                    lucide.createIcons();
-                    
-                    // Clear the textarea
-                    contentEl.value = '';
+                    success = true;
                 } else {
-                    showToast("Failed to add note.", 'error');
+                    const errData = await response.json().catch(() => ({}));
+                    console.error('Note POST failed:', response.status, errData);
+                    if (typeof showToast === 'function') showToast("Failed to add note.", 'error');
                 }
             } catch (e) {
-                console.error(e);
-                showToast("An error occurred while adding the note.", 'error');
-            } finally {
-                btn.innerHTML = originalBtnHtml;
-                btn.disabled = false;
+                console.error('Note POST error:', e);
+                if (typeof showToast === 'function') showToast("An error occurred while adding the note.", 'error');
             }
+
+            // Restore button first
+            btn.innerHTML = originalBtnHtml;
+            btn.disabled = false;
+
+            // Then update DOM if successful (after btn is restored)
+            if (success) {
+                const now = new Date();
+                const formattedDate = now.toLocaleString('en-US', {
+                    month: 'short', day: 'numeric', year: 'numeric',
+                    hour: 'numeric', minute: '2-digit', hour12: true
+                });
+
+                const notesList = document.getElementById('notesList');
+
+                // Remove empty-state placeholder if present
+                const emptyState = notesList.querySelector('.empty-notes-premium');
+                if (emptyState) emptyState.remove();
+
+                // Prepend the new note
+                const noteEl = document.createElement('div');
+                noteEl.className = 'note-item-premium';
+                noteEl.innerHTML = `
+                    <div class="note-body-premium">${content}</div>
+                    <div class="note-meta-premium">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                        ${formattedDate}
+                    </div>`;
+                notesList.prepend(noteEl);
+
+                // Clear the textarea
+                contentEl.value = '';
+
+                if (typeof showToast === 'function') showToast('Note added successfully!', 'success');
+            }
+
+            // Re-render all Lucide icons (button send icon + any new note icons)
+            try { lucide.createIcons(); } catch(_) {}
         }
     </script>
 
