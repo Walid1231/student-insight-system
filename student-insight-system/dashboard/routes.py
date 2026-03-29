@@ -637,6 +637,7 @@ def student_profile():
     user_id = get_jwt_identity()
 
     if request.method == "POST":
+        is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest" or request.form.get("_ajax") == "1"
         from schemas.student import ProfileUpdate
         try:
             data = ProfileUpdate(
@@ -650,7 +651,9 @@ def student_profile():
                 github_profile=request.form.get("github_profile"),
                 bio=request.form.get("bio"),
             )
-        except Exception:
+        except Exception as e:
+            if is_ajax:
+                return jsonify({"success": False, "error": "Validation failed: " + str(e)}), 400
             return redirect(url_for('dashboard.student_profile'))
 
         ProfileService.update_profile(
@@ -658,6 +661,22 @@ def student_profile():
             profile_picture_file=request.files.get('profile_picture'),
             upload_root=current_app.root_path,
         )
+        
+        if is_ajax:
+            updated_student = ProfileService.get_profile(user_id)
+            return jsonify({
+                "success": True,
+                "name": data.full_name,
+                "university": data.university,
+                "department": data.department,
+                "current_year": data.current_year,
+                "cgpa": data.cgpa,
+                "career_goal": data.career_goal,
+                "github": data.github_profile,
+                "bio": data.bio,
+                "linkedin": data.linkedin_profile,
+                "profile_picture": updated_student.profile_picture,
+            })
         return redirect(url_for('dashboard.student_profile'))
 
     student = ProfileService.get_profile(user_id)
@@ -1107,13 +1126,26 @@ def api_gg_state():
         "target_cgpa": student.target_cgpa,
         "skills": [{"id": s.id, "name": s.skill_name} for s in data["student_skills"]],
         "goals": data["goals"],
-        "records": data["records"],
+        "records": [
+            {
+                "id": r.id,
+                "course_name": r.course_name,
+                "course_type": r.course_type,
+                "semester_taken": r.semester_taken,
+                "grade": r.grade,
+                "grade_point": r.grade_point,
+                "credit_value": r.credit_value,
+            }
+            for r in data["records"]
+        ],
         "matching_careers": [
             {
                 "id": c["id"],
                 "title": c["title"],
                 "field_category": c["field_category"],
                 "match_count": c["match_count"],
+                "total_req": c["total_req"],
+                "skills": c.get("skills", []),
                 "goal_id": c["goal_id"],
             }
             for c in data["matching_careers"]

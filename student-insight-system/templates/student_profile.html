@@ -30,7 +30,7 @@
                 </label>
             </div>
             <div class="profile-info">
-                <h1>{{ student.full_name }}</h1>
+                <h1 id="header-name">{{ student.full_name }}</h1>
                 <!-- Only show fields that exist in this quick header view -->
                 {% if student.university %}
                 <p><i class="fas fa-university" style="margin-right: 5px; color: var(--accent-gold);"></i>{{
@@ -56,7 +56,7 @@
                 {% if student.full_name %}
                 <div class="info-group">
                     <div class="info-label">Full Name</div>
-                    <div class="info-value">{{ student.full_name }}</div>
+                    <div class="info-value" id="display-name">{{ student.full_name }}</div>
                 </div>
                 {% endif %}
 
@@ -70,49 +70,49 @@
                 {% if student.university %}
                 <div class="info-group">
                     <div class="info-label">University</div>
-                    <div class="info-value">{{ student.university }}</div>
+                    <div class="info-value" id="display-university">{{ student.university }}</div>
                 </div>
                 {% endif %}
 
                 {% if student.department %}
                 <div class="info-group">
                     <div class="info-label">Department</div>
-                    <div class="info-value">{{ student.department }}</div>
+                    <div class="info-value" id="display-department">{{ student.department }}</div>
                 </div>
                 {% endif %}
 
                 {% if student.current_year %}
                 <div class="info-group">
                     <div class="info-label">Year</div>
-                    <div class="info-value">{{ student.current_year }}</div>
+                    <div class="info-value" id="display-year">{{ student.current_year }}</div>
                 </div>
                 {% endif %}
 
                 {% if student.cgpa %}
                 <div class="info-group">
                     <div class="info-label">Target CGPA</div>
-                    <div class="info-value">{{ student.cgpa }}</div>
+                    <div class="info-value" id="display-cgpa">{{ student.cgpa }}</div>
                 </div>
                 {% endif %}
 
                 {% if student.career_goal %}
                 <div class="info-group full-width">
                     <div class="info-label">Career Goal</div>
-                    <div class="info-value">{{ student.career_goal }}</div>
+                    <div class="info-value" id="display-career-goal">{{ student.career_goal }}</div>
                 </div>
                 {% endif %}
 
                 {% if student.bio %}
                 <div class="info-group full-width">
                     <div class="info-label">Bio</div>
-                    <div class="info-value bio">{{ student.bio }}</div>
+                    <div class="info-value bio" id="display-bio">{{ student.bio }}</div>
                 </div>
                 {% endif %}
 
                 {% if student.linkedin_profile %}
                 <div class="info-group">
                     <div class="info-label">LinkedIn</div>
-                    <div class="info-value"><a href="{{ student.linkedin_profile }}" target="_blank">View Profile</a>
+                    <div class="info-value"><a href="{{ student.linkedin_profile }}" id="display-linkedin" target="_blank">View Profile</a>
                     </div>
                 </div>
                 {% endif %}
@@ -120,7 +120,7 @@
                 {% if student.github_profile %}
                 <div class="info-group">
                     <div class="info-label">GitHub</div>
-                    <div class="info-value"><a href="{{ student.github_profile }}" target="_blank">View Profile</a>
+                    <div class="info-value"><a href="{{ student.github_profile }}" id="display-github" target="_blank">View Profile</a>
                     </div>
                 </div>
                 {% endif %}
@@ -140,7 +140,7 @@
                 <div class="card-title"><i class="fas fa-user-edit"></i> Edit Profile</div>
             </div>
 
-            <form action="{{ url_for('dashboard.student_profile') }}" method="POST" enctype="multipart/form-data">
+            <form action="{{ url_for('dashboard.student_profile') }}" method="POST" enctype="multipart/form-data" id="profile-form" onsubmit="handleProfileSubmit(event)">
                 <input type="file" id="profile_upload" name="profile_picture" accept="image/*" style="display: none;"
                     onchange="previewImage(this)">
 
@@ -228,7 +228,6 @@
                 </div>
             </form>
         </div>
-    </div>
 
     <!-- DELETE MODAL -->
     <div class="modal-overlay" id="deleteModal">
@@ -248,57 +247,193 @@
     </div>
 
     <script>
-        function toggleEditMode() {
-            const readOnlyView = document.getElementById('read-only-view');
-            const editView = document.getElementById('edit-view');
-
-            if (readOnlyView.classList.contains('hidden')) {
-                // Swithing to READ ONLY
-                editView.classList.add('hidden');
-                readOnlyView.classList.remove('hidden');
-                READ_ONLY_MODE = true;
-
-                // Add fade in animation
-                readOnlyView.style.opacity = '0';
-                setTimeout(() => readOnlyView.style.opacity = '1', 10);
-            } else {
-                // Switching to EDIT MODE
-                readOnlyView.classList.add('hidden');
-                editView.classList.remove('hidden');
-                READ_ONLY_MODE = false;
-
-                // Add fade in animation
-                editView.style.opacity = '0';
-                setTimeout(() => editView.style.opacity = '1', 10);
+        // ═══════════════════════════════════════════════════════
+        //  PROFILE PAGE — SPA-safe, self-contained script
+        //  Works on both full page load AND sidebar SPA navigation
+        // ═══════════════════════════════════════════════════════
+        (function profilePageInit() {
+            // ── Polyfill showToast if ui_alerts.js wasn't loaded via SPA ──
+            if (typeof showToast !== 'function') {
+                window.showToast = function(msg, type) {
+                    var t = document.createElement('div');
+                    t.textContent = msg;
+                    t.style.cssText = 'position:fixed;top:24px;right:24px;padding:14px 20px;border-radius:8px;color:#fff;font-size:14px;font-weight:500;z-index:10001;opacity:0;transform:translateY(-10px);transition:all .3s ease;';
+                    t.style.background = (type === 'error') ? '#ef4444' : '#059669';
+                    document.body.appendChild(t);
+                    requestAnimationFrame(function() { t.style.opacity = '1'; t.style.transform = 'translateY(0)'; });
+                    setTimeout(function() { t.style.opacity = '0'; setTimeout(function() { t.remove(); }, 300); }, 3000);
+                };
             }
-        }
 
-        function previewImage(input) {
-            if (input.files && input.files[0]) {
-                var reader = new FileReader();
-                reader.onload = function (e) {
-                    document.getElementById('profileDisplay').src = e.target.result;
+            var _originalImgSrc = '';
+
+            function getEls() {
+                return {
+                    readOnly: document.getElementById('read-only-view'),
+                    edit: document.getElementById('edit-view'),
+                    form: document.getElementById('profile-form'),
+                    img: document.getElementById('profileDisplay'),
+                    headerName: document.getElementById('header-name'),
+                    deleteModal: document.getElementById('deleteModal')
+                };
+            }
+
+            window.toggleEditMode = function() {
+                var els = getEls();
+                if (!els.readOnly || !els.edit) return;
+
+                if (els.readOnly.classList.contains('hidden')) {
+                    if (els.form) els.form.reset();
+                    if (_originalImgSrc && els.img) els.img.src = _originalImgSrc;
+                    els.edit.classList.add('hidden');
+                    els.readOnly.classList.remove('hidden');
+                    els.readOnly.style.animation = 'none';
+                    void els.readOnly.offsetHeight;
+                    els.readOnly.style.animation = 'profileFadeIn 0.3s ease both';
+                } else {
+                    if (els.img) _originalImgSrc = els.img.src;
+                    els.readOnly.classList.add('hidden');
+                    els.edit.classList.remove('hidden');
+                    els.edit.style.animation = 'none';
+                    void els.edit.offsetHeight;
+                    els.edit.style.animation = 'profileFadeIn 0.3s ease both';
                 }
-                reader.readAsDataURL(input.files[0]);
+            };
+
+            window.previewImage = function(input) {
+                if (input.files && input.files[0]) {
+                    var reader = new FileReader();
+                    reader.onload = function(e) {
+                        var img = document.getElementById('profileDisplay');
+                        if (img) img.src = e.target.result;
+                    };
+                    reader.readAsDataURL(input.files[0]);
+                }
+            };
+
+            function updateOrInject(id, labelText, valueHTML, isFullWidth, isLink) {
+                var el = document.getElementById(id);
+                if (!valueHTML) {
+                    if (el) el.closest('.info-group').style.display = 'none';
+                    return;
+                }
+                if (el) {
+                    el.closest('.info-group').style.display = 'block';
+                    if (isLink) { el.href = valueHTML; }
+                    else { el.textContent = valueHTML; }
+                } else {
+                    var grid = document.querySelector('.info-grid');
+                    if (!grid) return;
+                    var group = document.createElement('div');
+                    group.className = 'info-group' + (isFullWidth ? ' full-width' : '');
+                    var label = document.createElement('div');
+                    label.className = 'info-label';
+                    label.textContent = labelText;
+                    var val = document.createElement('div');
+                    val.className = 'info-value' + (id === 'display-bio' ? ' bio' : '');
+                    if (isLink) { val.innerHTML = '<a id="' + id + '" href="' + valueHTML + '" target="_blank">View Profile</a>'; }
+                    else { val.id = id; val.textContent = valueHTML; }
+                    group.appendChild(label);
+                    group.appendChild(val);
+                    grid.appendChild(group);
+                }
             }
-        }
 
-        // PROFILE DELETION
-        function confirmDeleteProfile(event) {
-            event.preventDefault();
-            document.getElementById('deleteModal').classList.add('active');
-        }
-        function closeDeleteModal() { document.getElementById('deleteModal').classList.remove('active'); }
-        function executeDeleteProfile() {
-            closeDeleteModal();
-            fetch('/student/delete-profile', { method: 'DELETE', headers: { 'Content-Type': 'application/json' } })
-                .then(r => r.json()).then(d => {
-                    if (d.success) { showToast('Profile deleted.', 'success'); window.location.href = "{{ url_for('home') }}"; }
-                    else showToast('Error: ' + d.error, 'error');
-                }).catch(e => showToast('Error deleting profile.', 'error'));
-        }
-        document.getElementById('deleteModal')?.addEventListener('click', function (e) { if (e.target === this) closeDeleteModal(); });
+            window.handleProfileSubmit = function(event) {
+                event.preventDefault();
+                var form = event.target;
+                var formData = new FormData(form);
+                formData.append('_ajax', '1');
+
+                var btn = form.querySelector('.btn-save');
+                if (!btn) return;
+                var oldText = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+                btn.disabled = true;
+
+                fetch(form.action || '/student/profile', {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (data.success) {
+                        showToast('Profile updated successfully', 'success');
+                        var els = getEls();
+                        if (els.headerName) els.headerName.textContent = data.name;
+                        updateOrInject('display-name', 'Full Name', data.name);
+                        updateOrInject('display-university', 'University', data.university);
+                        updateOrInject('display-department', 'Department', data.department);
+                        updateOrInject('display-year', 'Year', data.current_year);
+                        updateOrInject('display-cgpa', 'Target CGPA', data.cgpa);
+                        updateOrInject('display-career-goal', 'Career Goal', data.career_goal, true);
+                        updateOrInject('display-bio', 'Bio', data.bio, true);
+                        updateOrInject('display-linkedin', 'LinkedIn', data.linkedin, false, true);
+                        updateOrInject('display-github', 'GitHub', data.github, false, true);
+                        if (data.profile_picture && els.img) {
+                            els.img.src = '/static/uploads/profile_pics/' + data.profile_picture;
+                        } else if (els.img && els.img.src.includes('ui-avatars.com') && data.name) {
+                            var url = new URL(els.img.src);
+                            url.searchParams.set('name', data.name);
+                            els.img.src = url.toString();
+                        }
+                        Array.from(form.elements).forEach(function(el) {
+                            if (el.name && el.name !== 'profile_picture') {
+                                if (el.type === 'select-one') {
+                                    Array.from(el.options).forEach(function(opt) { opt.defaultSelected = opt.selected; });
+                                } else if (el.type !== 'file') {
+                                    el.defaultValue = el.value;
+                                }
+                            }
+                        });
+                        if (els.img) _originalImgSrc = els.img.src;
+                        setTimeout(function() { toggleEditMode(); }, 200);
+                    } else {
+                        showToast(data.error || 'Validation failed.', 'error');
+                    }
+                })
+                .catch(function(err) {
+                    console.error('Profile save error:', err);
+                    showToast('Network error saving profile.', 'error');
+                })
+                .finally(function() {
+                    btn.innerHTML = oldText;
+                    btn.disabled = false;
+                });
+            };
+
+            window.confirmDeleteProfile = function(event) {
+                event.preventDefault();
+                var m = document.getElementById('deleteModal');
+                if (m) m.classList.add('active');
+            };
+            window.closeDeleteModal = function() {
+                var m = document.getElementById('deleteModal');
+                if (m) m.classList.remove('active');
+            };
+            window.executeDeleteProfile = function() {
+                closeDeleteModal();
+                fetch('/student/delete-profile', { method: 'DELETE', headers: { 'Content-Type': 'application/json' } })
+                    .then(function(r) { return r.json(); })
+                    .then(function(d) {
+                        if (d.success) { showToast('Profile deleted.', 'success'); window.location.href = '/'; }
+                        else showToast('Error: ' + d.error, 'error');
+                    })
+                    .catch(function() { showToast('Error deleting profile.', 'error'); });
+            };
+
+            var dm = document.getElementById('deleteModal');
+            if (dm) dm.addEventListener('click', function(e) { if (e.target === this) closeDeleteModal(); });
+
+            if (!document.getElementById('profile-anim-style')) {
+                var s = document.createElement('style');
+                s.id = 'profile-anim-style';
+                s.textContent = '@keyframes profileFadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }';
+                document.head.appendChild(s);
+            }
+        })();
     </script>
+    </div> <!-- /main-content -->
 </body>
-
 </html>

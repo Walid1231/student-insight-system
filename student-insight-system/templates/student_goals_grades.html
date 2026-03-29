@@ -8,9 +8,7 @@
     <meta name="description" content="Set career goals, track skills, and manage academic grades.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&display=swap"
-        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/unified_styles.css') }}?v=3">
     <style>
@@ -29,13 +27,14 @@
 
         body {
             background: var(--bg);
-            font-family: 'DM Sans', sans-serif;
+            font-family: 'Inter', sans-serif;
         }
 
         h1,
         h2,
         h3 {
-            font-family: 'DM Serif Display', serif;
+            font-family: 'Inter', sans-serif;
+            font-weight: 700;
         }
 
         .gg-layout {
@@ -164,7 +163,7 @@
             font-weight: 500;
             color: var(--muted);
             cursor: pointer;
-            font-family: 'DM Sans', sans-serif;
+            font-family: 'Inter', sans-serif;
             transition: all .15s;
         }
 
@@ -199,7 +198,7 @@
             font-weight: 500;
             color: var(--text);
             cursor: pointer;
-            font-family: 'DM Sans', sans-serif;
+            font-family: 'Inter', sans-serif;
             transition: border-color .15s, background .15s;
         }
 
@@ -751,7 +750,7 @@
             color: #fff;
             font-size: 12px;
             font-weight: 700;
-            font-family: 'DM Sans', sans-serif;
+            font-family: 'Inter', sans-serif;
             flex-shrink: 0;
         }
 
@@ -831,11 +830,11 @@
     {% include 'components/sidebar.html' %}
 
     <main class="main-content">
-        <div class="dashboard-container" style="padding: 32px 28px 72px;">
+        <div class="dashboard-container">
 
             <div class="welcome-header" style="margin-bottom:28px;">
                 <h1
-                    style="font-family:'DM Serif Display',serif;color:var(--navy);font-size:30px;margin:0 0 6px;display:flex;align-items:center;gap:12px;">
+                    style="font-family:'Inter',sans-serif;font-weight:800;color:var(--navy);font-size:30px;margin:0 0 6px;display:flex;align-items:center;gap:12px;">
                     <i class="fas fa-bullseye" style="font-size:24px;color:var(--gold);"></i> Goals &amp; Grades
                 </h1>
                 <p style="font-size:14px;color:var(--muted);margin:0;">Your department drives your career and skill
@@ -1050,9 +1049,9 @@
                             </div>
                         </div>
 
-                        {% if goals %}
-                        <hr class="gg-sep">
-                        <div class="sub-label"><i class="fas fa-save"></i> Your Saved Goals</div>
+                        <!-- Always-present separator and label for JS to show/hide -->
+                        <hr class="gg-sep" id="goals-sep" style="display: {% if goals %}''{% else %}none{% endif %};">
+                        <div class="sub-label" id="goals-saved-label" style="display: {% if goals %}''{% else %}none{% endif %};"><i class="fas fa-save"></i> Your Saved Goals</div>
                         <div class="goal-grid" id="goals-container">
                             {% for g in goals %}
                             <div class="goal-card compact {% if g.is_primary %}is-primary{% endif %}" id="goal-card-{{ g.id }}">
@@ -1097,11 +1096,6 @@
                             </div>
                             {% endfor %}
                         </div>
-                        {% else %}
-                        <hr class="gg-sep" id="goals-sep" style="display:none;">
-                        <div class="sub-label" id="goals-saved-label" style="display:none;">Your Saved Goals</div>
-                        <div class="goal-grid" id="goals-container"></div>
-                        {% endif %}
                     </div>
                 </div>
 
@@ -1232,7 +1226,6 @@
 
             </div><!-- gg-layout -->
         </div><!-- dashboard-container -->
-    </main>
 
     <div id="gg-toast"><i class="fas fa-check-circle" id="gg-toast-icon"></i><span id="gg-toast-msg"></span></div>
 
@@ -1255,11 +1248,23 @@
         }
 
         async function api(url, body = null) {
-            const opts = body !== null
-                ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }
-                : { method: 'GET' };
-            const r = await fetch(url, opts);
-            return r.json();
+            try {
+                const opts = body !== null
+                    ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }
+                    : { method: 'GET' };
+                const r = await fetch(url, opts);
+                if (!r.ok) {
+                    let msg = `Server error (${r.status})`;
+                    try { const e = await r.json(); msg = e.msg || e.error || msg; } catch (_) {}
+                    toast(msg, true);
+                    return { ok: false, msg };
+                }
+                return r.json();
+            } catch (err) {
+                toast('Network error — please check your connection', true);
+                console.error('api() error:', err);
+                return { ok: false, msg: 'Network error' };
+            }
         }
 
         function setLoading(btn, on) {
@@ -1270,8 +1275,8 @@
         }
 
         // careerId → goalId map and lowercase title → goalId map, built from goals
-        const careerGoalMap = new Map();
-        const careerTitleMap = new Map();
+        var careerGoalMap = new Map();
+        var careerTitleMap = new Map();
         {% for g in goals %}
         careerGoalMap.set({{ g.career_id | tojson }}, {{ g.id | tojson }});
         careerTitleMap.set({{ (g.career_title or "") | lower | tojson }}, {{ g.id | tojson }});
@@ -1279,16 +1284,16 @@
 
 
         // Snapshot career data as plain objects at init — DOM refs become stale when innerHTML is cleared
-        const _careerSelectEl = document.getElementById('manual-career-select');
-        const allCareerOptionsData = Array.from(_careerSelectEl.options).map(o => ({ value: o.value, text: o.text }));
-        const defaultCareerOptionData = allCareerOptionsData[0];
-        const careerOptionsData = allCareerOptionsData.slice(1); // [{value, text}, ...]
+        var _careerSelectEl = document.getElementById('manual-career-select');
+        var allCareerOptionsData = Array.from(_careerSelectEl.options).map(o => ({ value: o.value, text: o.text }));
+        var defaultCareerOptionData = allCareerOptionsData[0];
+        var careerOptionsData = allCareerOptionsData.slice(1); // [{value, text}, ...]
 
         // ═══════════════════════════════════════════════════════════
         //  Wizard: card reveal sequence
         // ═══════════════════════════════════════════════════════════
-        const CARDS = ['card-skills', 'card-goals', 'card-grade', 'card-records'];
-        let revealedUpTo = -1;
+        var CARDS = ['card-skills', 'card-goals', 'card-grade', 'card-records'];
+        var revealedUpTo = -1;
 
         function revealCardsUpTo(index) {
             CARDS.forEach((id, i) => {
@@ -1308,7 +1313,7 @@
         // ═══════════════════════════════════════════════════════════
         //  Department selector
         // ═══════════════════════════════════════════════════════════
-        const deptCache = new Map();
+        var deptCache = new Map();
         // Department is now auto-loaded from the student's profile — no manual change listener needed.
 
         async function loadDeptData(dept, silent) {
@@ -1447,7 +1452,7 @@
         // ═══════════════════════════════════════════════════════════
         //  Skills
         // ═══════════════════════════════════════════════════════════
-        let existingSkillNames = new Set([{{ student_skills | map(attribute = 'skill_name') | map('tojson') | join(', ') }}].map(s => s.toLowerCase()));
+        var existingSkillNames = new Set([{{ student_skills | map(attribute = 'skill_name') | map('tojson') | join(', ') }}].map(s => s.toLowerCase()));
 
         document.getElementById('skill-input').addEventListener('keydown', e => {
             if (e.key === 'Enter') { e.preventDefault(); addSkill(); }
@@ -1590,7 +1595,7 @@
         async function deleteGoal(goalId) {
             const d = await api(`/api/gg/goal/${goalId}/delete`, {});
             if (!d.ok) { toast('Error', true); return; }
-            document.getElementById(`goal-row-${goalId}`)?.remove();
+            document.getElementById(`goal-card-${goalId}`)?.remove();
             // Find careerId from map and restore Add button
             for (const [cid, gid] of careerGoalMap) {
                 if (gid === goalId) {
@@ -1608,7 +1613,7 @@
             const d = await api(`/api/gg/goal/${goalId}/delete`, {});
             if (!d.ok) { toast('Error', true); return; }
             careerGoalMap.delete(careerId);
-            document.getElementById(`goal-row-${goalId}`)?.remove();
+            document.getElementById(`goal-card-${goalId}`)?.remove();
             restoreCareerRowAdd(careerId);
             toast('Goal removed');
         }
@@ -1668,7 +1673,7 @@
         }
 
         async function refreshGoalsTable() {
-            const d = await api('/api/gg/state', {});
+            const d = await api('/api/gg/state');
             if (!d.ok) return;
             const goals = d.goals || [];
 
@@ -1849,7 +1854,7 @@
             document.getElementById('cgpa-chip-val').textContent = val;
         }
 
-        const TYPE_STYLE = { Core: 'type-core', GED: 'type-ged', Elective: 'type-elective' };
+        var TYPE_STYLE = { Core: 'type-core', GED: 'type-ged', Elective: 'type-elective' };
 
         function renderRecords(recs) {
             const wrap = document.getElementById('records-wrap');
@@ -1906,26 +1911,48 @@
         }
 
         // ═══════════════════════════════════════════════════════════
-        //  Final initialization
+        //  Final initialization — deferred one paint so DOM is settled
+        //  after both hard-load and SPA navigation script injection.
         // ═══════════════════════════════════════════════════════════
         (function initReveal() {
-            try {
-                const dept = document.getElementById('dept-select').value;
-                if (dept) {
-                    revealCardsUpTo(3);
-                    loadDeptData(dept, true);
-                } else {
-                    revealCardsUpTo(0);
+            var _retries = 0;
+            function run() {
+                var deptEl = document.getElementById('dept-select');
+                if (!deptEl && _retries < 10) {
+                    _retries++;
+                    setTimeout(run, 100);
+                    return;
                 }
-            } catch (e) {
-                console.warn('initReveal error:', e);
-                CARDS.forEach(id => {
-                    const el = document.getElementById(id);
-                    if (el) { el.classList.add('card-visible'); }
-                });
+                try {
+                    var dept = deptEl ? deptEl.value : '';
+                    if (dept) {
+                        revealCardsUpTo(3);
+                        loadDeptData(dept, true);
+                    } else {
+                        revealCardsUpTo(0);
+                    }
+                } catch (e) {
+                    console.warn('initReveal error:', e);
+                    // Fallback: reveal all cards and still try to load dept data
+                    CARDS.forEach(function(id) {
+                        var el = document.getElementById(id);
+                        if (el) el.classList.add('card-visible');
+                    });
+                    // Try loading dept data even in fallback
+                    try {
+                        var fallbackDept = deptEl ? deptEl.value : '';
+                        if (fallbackDept) loadDeptData(fallbackDept, true);
+                    } catch (_) {}
+                }
+            }
+            if (typeof requestAnimationFrame === 'function') {
+                requestAnimationFrame(function() { requestAnimationFrame(run); });
+            } else {
+                run();
             }
         })();
     </script>
+    </main> <!-- /main-content -->
 </body>
 
 </html>
