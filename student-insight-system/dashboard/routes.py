@@ -1126,18 +1126,7 @@ def api_gg_state():
         "target_cgpa": student.target_cgpa,
         "skills": [{"id": s.id, "name": s.skill_name} for s in data["student_skills"]],
         "goals": data["goals"],
-        "records": [
-            {
-                "id": r.id,
-                "course_name": r.course_name,
-                "course_type": r.course_type,
-                "semester_taken": r.semester_taken,
-                "grade": r.grade,
-                "grade_point": r.grade_point,
-                "credit_value": r.credit_value,
-            }
-            for r in data["records"]
-        ],
+        "records": data["records"],
         "matching_careers": [
             {
                 "id": c["id"],

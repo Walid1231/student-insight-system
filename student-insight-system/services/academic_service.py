@@ -165,6 +165,9 @@ class AcademicService:
         # All careers for manual selection
         all_career_paths = CareerPath.query.order_by(CareerPath.title).all()
 
+        # Full course catalog for the grade dropdown
+        all_courses = CourseCatalog.query.order_by(CourseCatalog.course_name).all()
+
         return {
             "student": student,
             "all_skills": all_skills,
@@ -176,6 +179,7 @@ class AcademicService:
             "goals": goals,
             "records": records,
             "all_careers": all_career_paths,
+            "all_courses": all_courses,
         }
 
     # ── Grade Management ──────────────────────────────────────
@@ -364,11 +368,11 @@ class AcademicService:
             return
 
         # Auto-create in master Skill table if it doesn't exist
-        master = SkillModel.query.filter(
-            db.func.lower(SkillModel.skill_name) == name.lower()
+        master = Skill.query.filter(
+            db.func.lower(Skill.skill_name) == name.lower()
         ).first()
         if not master:
-            master = SkillModel(skill_name=name, department=None)
+            master = Skill(skill_name=name, department=None)
             db.session.add(master)
             db.session.flush()
 
@@ -403,7 +407,7 @@ class AcademicService:
         student = AcademicService._get_student(user_id)
 
         selected_skills = (
-            SkillModel.query.filter(SkillModel.id.in_(selected_skill_ids)).all()
+            Skill.query.filter(Skill.id.in_(selected_skill_ids)).all()
             if selected_skill_ids else []
         )
         selected_names = {s.skill_name for s in selected_skills}

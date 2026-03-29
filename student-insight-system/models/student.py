@@ -15,6 +15,15 @@ class StudentProfile(db.Model):
     current_cgpa = db.Column(db.Float)
     last_activity = db.Column(db.DateTime)
 
+    # Standard Profile Data
+    university = db.Column(db.String(200))
+    current_year = db.Column(db.String(20))
+    career_goal = db.Column(db.String(300))
+    linkedin_profile = db.Column(db.String(300))
+    github_profile = db.Column(db.String(300))
+    bio = db.Column(db.Text)
+    profile_picture = db.Column(db.String(200))
+
     # Enhanced tracking
     grading_scale = db.Column(db.Float, default=4.0)
     current_semester = db.Column(db.Integer)
