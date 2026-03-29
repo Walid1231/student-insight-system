@@ -694,6 +694,80 @@
             margin: 0;
         }
 
+        /* ── Academic Record Table ── */
+        .mini-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 13px;
+        }
+
+        .mini-table thead th {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            color: var(--muted);
+            padding: 14px 14px 10px;
+            border-bottom: 2px solid var(--border);
+            text-align: left;
+            white-space: nowrap;
+            background: var(--bg);
+        }
+
+        .mini-table thead th:first-child {
+            border-radius: 10px 0 0 0;
+        }
+
+        .mini-table thead th:last-child {
+            border-radius: 0 10px 0 0;
+        }
+
+        .mini-table tbody td {
+            padding: 12px 14px;
+            color: var(--text);
+            border-bottom: 1px solid #f1f5f9;
+            vertical-align: middle;
+            transition: background .15s;
+        }
+
+        .mini-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .mini-table tbody tr:nth-child(even) td {
+            background: rgba(248, 250, 252, .5);
+        }
+
+        .mini-table tbody tr:hover td {
+            background: rgba(15, 23, 42, .03);
+        }
+
+        .mini-table tbody td:first-child {
+            font-weight: 600;
+            color: var(--navy);
+        }
+
+        .mini-table tbody td strong {
+            font-weight: 700;
+            color: var(--navy);
+        }
+
+        .records-scroll-wrap {
+            overflow-x: auto;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+        }
+
+        .records-scroll-wrap::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .records-scroll-wrap::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
         /* ── Toast ── */
         #gg-toast {
             position: fixed;
@@ -803,14 +877,27 @@
             color: #6b9fde;
         }
 
-        html[data-theme="dark"] .mini-table th,
-        html[data-theme="dark"] .mini-table td {
+        html[data-theme="dark"] .mini-table thead th {
+            background: #141720;
+            border-color: #2d3241;
+            color: #9ca3af;
+        }
+
+        html[data-theme="dark"] .mini-table tbody td {
             border-color: #2d3241;
             color: #d1d5db;
         }
 
-        html[data-theme="dark"] .mini-table tr:hover td {
+        html[data-theme="dark"] .mini-table tbody tr:nth-child(even) td {
+            background: rgba(20, 23, 32, .5);
+        }
+
+        html[data-theme="dark"] .mini-table tbody tr:hover td {
             background: #1e2231;
+        }
+
+        html[data-theme="dark"] .records-scroll-wrap {
+            border-color: #2d3241;
         }
 
         html[data-theme="dark"] .c-pill {
@@ -1112,13 +1199,9 @@
                                 <input type="text" id="g-course" class="form-input" list="course-list"
                                     placeholder="e.g. Data Structures" autocomplete="off">
                                 <datalist id="course-list">
-                                    {% set seen_courses = [] %}
-                                    {% for r in records %}
-                                    {% if r.course_name not in seen_courses %}
-                                    <option value="{{ r.course_name | e }}">
-                                        {% if seen_courses.append(r.course_name) %}{% endif %}
-                                        {% endif %}
-                                        {% endfor %}
+                                    {% for c in all_courses %}
+                                    <option value="{{ c.course_name | e }}" data-type="{{ c.course_type }}" data-credits="{{ c.credit_value }}">
+                                    {% endfor %}
                                 </datalist>
                             </div>
                             <div class="fg">
@@ -1171,56 +1254,56 @@
 
                 <!-- ══ STEP 4 · Academic Record ══ -->
                 <div class="gg-card gg-collapsible" id="card-records">
-                    <div class="gg-card-header"
-                        style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
-                        <div>
-                            <h2><span class="step-number">5</span><i class="fas fa-graduation-cap"></i> Academic Record
-                            </h2>
-                            <p style="margin:0;">All grades — CGPA updates automatically</p>
-                        </div>
-                        <div class="cgpa-chip" id="cgpa-chip-header">
-                            <i class="fas fa-chart-line" style="font-size:12px;"></i>
-                            CGPA <span id="cgpa-chip-val">{{ student.current_cgpa or 'N/A' }}</span>
+                    <div class="gg-card-header">
+                        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+                            <div>
+                                <h2><span class="step-number">5</span><i class="fas fa-graduation-cap"></i> Academic Record</h2>
+                                <p>All grades — CGPA updates automatically</p>
+                            </div>
+                            <div class="cgpa-chip" id="cgpa-chip-header">
+                                <i class="fas fa-chart-line" style="font-size:12px;"></i>
+                                CGPA <span id="cgpa-chip-val">{{ student.current_cgpa or 'N/A' }}</span>
+                            </div>
                         </div>
                     </div>
-                    <div style="overflow-x:auto;" id="records-wrap">
-                        {% if records %}
-                        <table class="mini-table" style="margin:0;" id="records-table">
-                            <thead>
-                                <tr>
-                                    <th style="padding-left:24px;">Course</th>
-                                    <th>Type</th>
-                                    <th>Semester</th>
-                                    <th>Grade</th>
-                                    <th>GPA pts</th>
-                                    <th>Credits</th>
-                                    <th style="padding-right:24px;"></th>
-                                </tr>
-                            </thead>
-                            <tbody id="records-tbody">
-                                {% for r in records %}
-                                <tr id="rec-{{ r.id }}">
-                                    <td style="padding-left:24px;font-weight:500;">{{ r.course_name | e }}</td>
-                                    <td><span class="type-badge type-{{ r.course_type | lower }}">{{ r.course_type
-                                            }}</span></td>
-                                    <td>Sem {{ r.semester_taken }}</td>
-                                    <td><strong>{{ r.grade }}</strong></td>
-                                    <td>{{ r.grade_point }}</td>
-                                    <td>{{ r.credit_value }}cr</td>
-                                    <td style="padding-right:24px;">
-                                        <button class="btn-del" onclick="deleteGrade({{ r.id }})" title="Delete"><i
-                                                class="fas fa-trash"></i></button>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                        {% else %}
-                        <div class="gg-empty" id="records-empty">
-                            <i class="fas fa-book-open"></i>
-                            <p>No grades yet. Add your first course grade above.</p>
+                    <div class="gg-card-body" style="padding-bottom:20px;">
+                        <div class="records-scroll-wrap" id="records-wrap">
+                            {% if records %}
+                            <table class="mini-table" id="records-table">
+                                <thead>
+                                    <tr>
+                                        <th>Course</th>
+                                        <th>Type</th>
+                                        <th>Semester</th>
+                                        <th>Grade</th>
+                                        <th>GPA pts</th>
+                                        <th>Credits</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="records-tbody">
+                                    {% for r in records %}
+                                    <tr id="rec-{{ r.id }}">
+                                        <td>{{ r.course_name | e }}</td>
+                                        <td><span class="type-badge type-{{ r.course_type | lower }}">{{ r.course_type }}</span></td>
+                                        <td>Sem {{ r.semester_taken }}</td>
+                                        <td><strong>{{ r.grade }}</strong></td>
+                                        <td>{{ r.grade_point }}</td>
+                                        <td>{{ r.credit_value }}cr</td>
+                                        <td>
+                                            <button class="btn-del" onclick="deleteGrade({{ r.id }})" title="Delete"><i class="fas fa-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                            {% else %}
+                            <div class="gg-empty" id="records-empty">
+                                <i class="fas fa-book-open"></i>
+                                <p>No grades yet. Add your first course grade above.</p>
+                            </div>
+                            {% endif %}
                         </div>
-                        {% endif %}
                     </div>
                 </div>
 
@@ -1807,6 +1890,20 @@
         // ═══════════════════════════════════════════════════════════
         //  Grades
         // ═══════════════════════════════════════════════════════════
+        document.getElementById('g-course').addEventListener('change', function(e) {
+            const val = e.target.value.trim().toLowerCase();
+            const options = document.getElementById('course-list').options;
+            for (let i = 0; i < options.length; i++) {
+                if (options[i].value.toLowerCase() === val) {
+                    const type = options[i].getAttribute('data-type');
+                    const credits = options[i].getAttribute('data-credits');
+                    if (type) document.getElementById('g-type').value = type;
+                    if (credits) document.getElementById('g-credits').value = credits;
+                    break;
+                }
+            }
+        });
+
         async function addGrade() {
             const course = document.getElementById('g-course').value.trim();
             const type = document.getElementById('g-type').value;
@@ -1868,16 +1965,16 @@
 
             // Restore table if it was hidden
             if (!document.getElementById('records-table')) {
-                wrap.innerHTML = `<table class="mini-table" style="margin:0;" id="records-table">
+                wrap.innerHTML = `<table class="mini-table" id="records-table">
                     <thead>
                         <tr>
-                            <th style="padding-left:24px;">Course</th>
+                            <th>Course</th>
                             <th>Type</th>
                             <th>Semester</th>
                             <th>Grade</th>
                             <th>GPA pts</th>
                             <th>Credits</th>
-                            <th style="padding-right:24px;"></th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody id="records-tbody"></tbody>
@@ -1887,13 +1984,13 @@
             const tbody = document.getElementById('records-tbody');
             tbody.innerHTML = recs.map(r => `
                 <tr id="rec-${r.id}">
-                    <td style="padding-left:24px;font-weight:500;">${esc(r.course_name)}</td>
+                    <td>${esc(r.course_name)}</td>
                     <td><span class="type-badge ${TYPE_STYLE[r.course_type] || ''}">${esc(r.course_type)}</span></td>
                     <td>Sem ${r.semester_taken}</td>
                     <td><strong>${esc(r.grade)}</strong></td>
                     <td>${r.grade_point}</td>
                     <td>${r.credit_value}cr</td>
-                    <td style="padding-right:24px;">
+                    <td>
                         <button class="btn-del" onclick="deleteGrade(${r.id})" title="Delete"><i class="fas fa-trash"></i></button>
                     </td>
                 </tr>
