@@ -17,3 +17,4 @@ scikit-learn
 google-generativeai
 flask_jwt_extended
 flask_cors
+pydantic>=2.0
