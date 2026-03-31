@@ -207,6 +207,13 @@
             background: rgba(0, 45, 98, .04);
         }
 
+        .c-pill.s-added {
+            border-color: #d1d5db;
+            background: #f3f4f6;
+            color: #9ca3af;
+            cursor: default;
+        }
+
         .c-pill i {
             font-size: 10px;
             opacity: .6;
@@ -612,6 +619,30 @@
             background: rgba(220, 38, 38, .07);
         }
 
+        .btn-add-g {
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: #fff;
+            background: var(--navy);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .btn-add-g:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+        
+        html[data-theme="dark"] .btn-add-g {
+            background: #60a5fa;
+            color: #0f1117;
+        }
+
         /* ── Grade form ── */
         .grade-grid {
             display: grid;
@@ -659,8 +690,18 @@
         }
 
         .type-core {
-            background: rgba(0, 45, 98, .1);
+            background: rgba(15, 23, 42, 0.1);
             color: var(--navy);
+        }
+
+        .type-core.is-saved {
+            background: var(--navy);
+            color: #fff;
+        }
+        
+        html[data-theme="dark"] .type-core.is-saved {
+            background: #60a5fa;
+            color: #0f1117;
         }
 
         .type-ged {
@@ -843,10 +884,33 @@
             animation: highlightCard .9s ease forwards;
         }
 
-        /* dark mode */
+        /* ============================================
+           DARK MODE — comprehensive overrides
+           ============================================ */
+
+        /* ── Override page-local CSS variables ── */
+        html[data-theme="dark"] {
+            --navy: #93c5fd;
+            --gold: #fbbf24;
+            --brand: #93c5fd;
+            --bg: #0f1117;
+            --card-bg: #1a1d27;
+            --border: #2d3241;
+            --text: #d1d5db;
+            --muted: #9ca3af;
+            --green: #34d399;
+            --red: #f87171;
+        }
+
+        /* ── Cards (gg-card) ── */
         html[data-theme="dark"] .gg-card {
             background: #1a1d27;
             border-color: #2d3241;
+            box-shadow: 0 2px 16px rgba(0, 0, 0, .25);
+        }
+
+        html[data-theme="dark"] .gg-card::before {
+            background: linear-gradient(90deg, #60a5fa, #fbbf24);
         }
 
         html[data-theme="dark"] .gg-card-header {
@@ -857,24 +921,272 @@
             color: #93c5fd;
         }
 
+        html[data-theme="dark"] .gg-card-header p {
+            color: #9ca3af;
+        }
+
+        /* ── Step number badges ── */
+        html[data-theme="dark"] .step-number {
+            background: #60a5fa;
+            color: #0f1117;
+        }
+
+        /* ── Card 1: Department ── */
+        html[data-theme="dark"] .dept-wrap {
+            background: #141720;
+            border-color: #2d3241;
+        }
+
+        html[data-theme="dark"] .dept-wrap > i {
+            color: #93c5fd;
+        }
+
+        html[data-theme="dark"] select#dept-select {
+            background: #141720 !important;
+            color: #e5e7eb;
+            border-color: #2d3241;
+        }
+
+        html[data-theme="dark"] .suggest-label {
+            color: #9ca3af;
+        }
+
+        html[data-theme="dark"] .suggest-label i {
+            color: #60a5fa;
+        }
+
+        html[data-theme="dark"] .sub-label {
+            color: #9ca3af;
+        }
+
+        html[data-theme="dark"] .sub-label i {
+            color: #60a5fa;
+        }
+
+        /* ── Career pills (department suggestions) ── */
+        html[data-theme="dark"] .c-pill {
+            background: #141720;
+            border-color: #2d3241;
+            color: #d1d5db;
+        }
+
+        html[data-theme="dark"] .c-pill:hover {
+            border-color: #60a5fa;
+            background: rgba(96, 165, 250, .08);
+        }
+
+        html[data-theme="dark"] .c-pill.s-added {
+            border-color: #2d3241;
+            background: #1e2231;
+            color: #6b7280;
+            cursor: default;
+        }
+
+        /* ── Card 2: Skills ── */
+        html[data-theme="dark"] .s-chip {
+            border-color: #3d4255;
+            color: #9ca3af;
+        }
+
+        html[data-theme="dark"] .s-chip:hover:not(.s-added) {
+            border-color: #34d399;
+            background: rgba(52, 211, 153, .1);
+            color: #34d399;
+        }
+
+        html[data-theme="dark"] .s-chip.s-added {
+            border-color: #2d3241;
+            background: #1e2231;
+            color: #6b7280;
+        }
+
+        html[data-theme="dark"] .sk-tag {
+            border-color: rgba(96, 165, 250, .3);
+            background: rgba(96, 165, 250, .08);
+            color: #93c5fd;
+        }
+
+        html[data-theme="dark"] .sk-tag button {
+            color: #93c5fd;
+        }
+
+        html[data-theme="dark"] .skill-add-row input {
+            background: #141720;
+            border-color: #2d3241;
+            color: #e5e7eb;
+        }
+
+        /* ── Card 3: Career Goals ── */
         html[data-theme="dark"] .target-strip {
             background: #141720;
             border-color: #2d3241;
         }
 
-        html[data-theme="dark"] .career-row {
+        html[data-theme="dark"] .target-strip label {
+            color: #d1d5db;
+        }
+
+        html[data-theme="dark"] .target-strip .cur {
+            color: #9ca3af;
+        }
+
+        html[data-theme="dark"] .target-strip .cur strong {
+            color: #93c5fd;
+        }
+
+        html[data-theme="dark"] .target-strip input {
+            background: #141720;
+            border-color: #2d3241;
+            color: #e5e7eb;
+        }
+
+        /* Matches dropdown */
+        html[data-theme="dark"] .matches-dropdown {
             background: #141720;
             border-color: #2d3241;
         }
 
-        html[data-theme="dark"] .career-row h4 {
+        html[data-theme="dark"] .matches-dropdown-header {
+            background: #1a1d27;
+        }
+
+        html[data-theme="dark"] .matches-dropdown-header:hover {
+            background: #1e2231;
+        }
+
+        html[data-theme="dark"] .matches-dropdown-header .label-content {
+            color: #9ca3af;
+        }
+
+        html[data-theme="dark"] .matches-dropdown-header .label-content i {
+            color: #60a5fa;
+        }
+
+        /* Goal cards (in matches & saved goals) */
+        html[data-theme="dark"] .goal-card {
+            background: #141720;
+            border-color: #2d3241;
+        }
+
+        html[data-theme="dark"] .goal-card:hover {
+            border-color: #60a5fa;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, .35);
+        }
+
+        html[data-theme="dark"] .goal-card.is-primary {
+            background: rgba(96, 165, 250, .05);
+            border-color: #60a5fa;
+        }
+
+        html[data-theme="dark"] .goal-card.is-primary::after {
+            background: #60a5fa;
+            color: #0f1117;
+        }
+
+        html[data-theme="dark"] .goal-card-header h4 {
             color: #e5e7eb;
         }
 
-        html[data-theme="dark"] .sk-tag {
-            border-color: rgba(107, 158, 222, .35);
-            background: rgba(107, 158, 222, .1);
-            color: #6b9fde;
+        html[data-theme="dark"] .goal-card-type {
+            background: #1e2231;
+            color: #9ca3af;
+        }
+
+        html[data-theme="dark"] .goal-card-body {
+            color: #d1d5db;
+        }
+
+        html[data-theme="dark"] .goal-card:hover .goal-card-body {
+            border-bottom-color: #2d3241;
+        }
+
+        html[data-theme="dark"] .goal-card-footer {
+            border-top-color: #2d3241;
+        }
+
+        /* Match score & bar */
+        html[data-theme="dark"] .match-score {
+            color: #93c5fd;
+        }
+
+        html[data-theme="dark"] .match-bar-bg {
+            background: #2d3241;
+        }
+
+        html[data-theme="dark"] .match-bar-fill {
+            background: #60a5fa;
+        }
+
+        /* Skill pills inside goal cards */
+        html[data-theme="dark"] .sk-pill {
+            background: #1e2231;
+            border-color: #2d3241;
+            color: #9ca3af;
+        }
+
+        html[data-theme="dark"] .sk-pill.matched {
+            background: rgba(52, 211, 153, .12);
+            border-color: rgba(52, 211, 153, .25);
+            color: #34d399;
+        }
+
+        html[data-theme="dark"] .sk-pill.matched i {
+            color: #34d399;
+        }
+
+        /* Buttons inside goal cards */
+        html[data-theme="dark"] .btn-set-primary {
+            border-color: #60a5fa;
+            color: #93c5fd;
+        }
+
+        html[data-theme="dark"] .btn-set-primary:hover {
+            background: #60a5fa;
+            color: #0f1117;
+        }
+
+        html[data-theme="dark"] .btn-delete-goal {
+            color: #6b7280;
+        }
+
+        html[data-theme="dark"] .btn-delete-goal:hover {
+            color: #f87171;
+            background: rgba(248, 113, 113, .08);
+        }
+
+        /* Type badges */
+        html[data-theme="dark"] .type-core {
+            background: rgba(96, 165, 250, .1);
+            color: #93c5fd;
+        }
+
+        html[data-theme="dark"] .type-ged {
+            background: rgba(52, 211, 153, .1);
+            color: #34d399;
+        }
+
+        html[data-theme="dark"] .type-elective {
+            background: rgba(167, 139, 250, .1);
+            color: #a78bfa;
+        }
+
+        /* CGPA chip */
+        html[data-theme="dark"] .cgpa-chip {
+            background: rgba(52, 211, 153, .1);
+            color: #34d399;
+        }
+
+        /* Manual career select dropdown */
+        html[data-theme="dark"] #manual-career-select,
+        html[data-theme="dark"] #manual-goal-type {
+            background: #141720;
+            border-color: #2d3241;
+            color: #e5e7eb;
+        }
+
+        /* ── Cards 4 & 5: Grades & Records ── */
+        html[data-theme="dark"] .fg label {
+            color: #9ca3af;
         }
 
         html[data-theme="dark"] .mini-table thead th {
@@ -888,6 +1200,14 @@
             color: #d1d5db;
         }
 
+        html[data-theme="dark"] .mini-table tbody td:first-child {
+            color: #93c5fd;
+        }
+
+        html[data-theme="dark"] .mini-table tbody td strong {
+            color: #93c5fd;
+        }
+
         html[data-theme="dark"] .mini-table tbody tr:nth-child(even) td {
             background: rgba(20, 23, 32, .5);
         }
@@ -896,18 +1216,58 @@
             background: #1e2231;
         }
 
+        html[data-theme="dark"] .mini-table tbody td .btn-del {
+            color: #6b7280;
+        }
+
+        html[data-theme="dark"] .mini-table tbody td .btn-del:hover {
+            color: #f87171;
+        }
+
         html[data-theme="dark"] .records-scroll-wrap {
             border-color: #2d3241;
         }
 
-        html[data-theme="dark"] .c-pill {
-            background: #141720;
-            border-color: #2d3241;
-            color: #d1d5db;
+        /* Scrollbars */
+        html[data-theme="dark"] #card-goals .gg-card-body::-webkit-scrollbar-thumb {
+            background-color: #3d4255;
         }
 
+        html[data-theme="dark"] .goal-card-body::-webkit-scrollbar-thumb {
+            background: #3d4255;
+        }
+
+        html[data-theme="dark"] .records-scroll-wrap::-webkit-scrollbar-thumb {
+            background: #3d4255;
+        }
+
+        /* Separator */
         html[data-theme="dark"] .gg-sep {
             border-color: #2d3241;
+        }
+
+        /* Empty states */
+        html[data-theme="dark"] .gg-empty {
+            color: #6b7280;
+        }
+
+        /* Toast in dark */
+        html[data-theme="dark"] #gg-toast {
+            background: #1e3a5f;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, .4);
+        }
+
+        html[data-theme="dark"] #gg-toast.err {
+            background: #7f1d1d;
+        }
+
+        /* Page title */
+        html[data-theme="dark"] .welcome-header h1 {
+            color: #93c5fd !important;
+        }
+
+        html[data-theme="dark"] .welcome-header h1 i {
+            color: #fbbf24 !important;
         }
     </style>
 </head>
@@ -939,8 +1299,7 @@
                     <div class="gg-card-body">
                         <div class="dept-wrap">
                             <i class="fas fa-graduation-cap"></i>
-                            <select id="dept-select" class="form-input" disabled
-                                style="background:#f9fafb; cursor:not-allowed;">
+                            <select id="dept-select" class="form-input" disabled>
                                 <option value="">— Please configure your Department in your Profile —</option>
                                 {% for group_name, depts in dept_groups %}
                                 <optgroup label="{{ group_name }}">
@@ -954,8 +1313,7 @@
                         </div>
                         {% if not student.department %}
                         <div style="margin-top: 12px;">
-                            <a href="{{ url_for('dashboard.student_profile') }}" class="btn-add-g"
-                                style="text-decoration:none; display:inline-flex; align-items:center; gap:6px; color:#fff; background:var(--navy); padding:6px 12px; border-radius:6px; font-size:13px; font-weight:600;">
+                            <a href="{{ url_for('dashboard.student_profile') }}" class="btn-add-g">
                                 <i class="fas fa-user-edit"></i> Edit Profile to unlock
                             </a>
                         </div>
@@ -1172,7 +1530,7 @@
                                         <i class="fas fa-star"></i> Set Primary
                                     </button>
                                     {% else %}
-                                    <span class="type-badge type-core" style="background: var(--navy); color: #fff;">
+                                    <span class="type-badge type-core is-saved">
                                         <i class="fas fa-check-circle"></i> Main Focus
                                     </span>
                                     {% endif %}
@@ -1485,9 +1843,6 @@
 
                 if ((careerId && careerGoalMap.has(careerId)) || careerTitleMap.has(cLower)) {
                     btn.classList.add('s-added');
-                    btn.style.borderColor = '#d1d5db';
-                    btn.style.background = '#f3f4f6';
-                    btn.style.color = '#9ca3af';
                     btn.style.cursor = 'default';
                 } else {
                     btn.onclick = async () => {
@@ -1500,9 +1855,6 @@
                         if (apiRes.new_career_id) careerId = apiRes.new_career_id;
 
                         btn.classList.add('s-added');
-                        btn.style.borderColor = '#d1d5db';
-                        btn.style.background = '#f3f4f6';
-                        btn.style.color = '#9ca3af';
                         btn.style.cursor = 'default';
                         btn.onclick = null;
 
