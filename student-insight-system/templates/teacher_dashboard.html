@@ -5,8 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Teacher Dashboard | Student Insight</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- defer: downloads in parallel, executes after HTML parse, before DOMContentLoaded -->
+    <meta name="description" content="Teacher Dashboard — holistic class overview with academic performance, well-being metrics, skill tracking, and career readiness.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Chart.js: defer = download in parallel, execute after HTML parsed -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link href="{{ url_for('static', filename='css/dashboard.css') }}" rel="stylesheet">
@@ -62,9 +63,9 @@
         <div class="header">
             <div>
                 <h1>Hello, {{ teacher.full_name }}</h1>
-                <p style="color:var(--gray-500)">Here's what's happening in your classes today.</p>
+                <p style="color:var(--text-secondary)">Here's what's happening in your classes today.</p>
             </div>
-            <div style="display:flex; align-items:center; gap:12px; font-size:14px; color:var(--gray-500)">
+            <div style="display:flex; align-items:center; gap:12px; font-size:14px; color:var(--text-secondary)">
                 {{ now_date }}
                 <button class="dm-toggle" id="dmToggle" onclick="toggleDarkMode()" title="Toggle dark mode">
                     <i data-lucide="moon" id="dmIcon"></i>
@@ -72,100 +73,280 @@
             </div>
         </div>
 
-        <!-- KPI Cards -->
-        <div class="grid">
-            <div class="card stat-card">
-                <div class="stat-info">
-                    <div class="value">{{ overview.total_students }}</div>
-                    <div class="label">Total Students</div>
+        <!-- ══════════════════════════════════════════════════════
+             QUICK STATS BAR
+             ══════════════════════════════════════════════════════ -->
+        <div class="qs-bar" id="qsBar">
+            <div class="qs-card">
+                <div class="qs-icon blue"><i data-lucide="users"></i></div>
+                <div>
+                    <div class="qs-value">{{ overview.total_students }}</div>
+                    <div class="qs-label">Total Students</div>
                 </div>
-                <div class="stat-icon orange"><i data-lucide="users"></i></div>
             </div>
-
-            <div class="card stat-card">
-                <div class="stat-info">
-                    <div class="value">{{ overview.at_risk_count }}</div>
-                    <div class="label">At Risk</div>
+            <div class="qs-card">
+                <div class="qs-icon red"><i data-lucide="alert-triangle"></i></div>
+                <div>
+                    <div class="qs-value">{{ overview.at_risk_count }}</div>
+                    <div class="qs-label">At Risk</div>
                 </div>
-                <div class="stat-icon" style="background:#fee2e2;"><i data-lucide="alert-triangle"
-                        style="color:var(--danger);"></i></div>
             </div>
-
-            <div class="card stat-card">
-                <div class="stat-info">
-                    <div class="value">{{ overview.average_percent }}%</div>
-                    <div class="label">Avg Performance</div>
+            <div class="qs-card">
+                <div class="qs-icon green"><i data-lucide="trending-up"></i></div>
+                <div>
+                    <div class="qs-value">{{ overview.avg_cgpa }}</div>
+                    <div class="qs-label">Avg Class CGPA</div>
                 </div>
-                <div class="stat-icon" style="background:#d1fae5;"><i data-lucide="trending-up"
-                        style="color:var(--success);"></i></div>
             </div>
-
-            <div class="card stat-card">
-                <div class="stat-info">
-                    <div class="value">{{ overview.alerts_count }}</div>
-                    <div class="label">Active Alerts</div>
+            <div class="qs-card">
+                <div class="qs-icon amber"><i data-lucide="bell"></i></div>
+                <div>
+                    <div class="qs-value">{{ overview.alerts_count }}</div>
+                    <div class="qs-label">Active Alerts</div>
                 </div>
-                <div class="stat-icon" style="background:#fef3c7;"><i data-lucide="bell"
-                        style="color:var(--warning);"></i></div>
             </div>
         </div>
 
-        <!-- Charts + Alerts: Performance spans full width; Heatmap & Alerts share the row below -->
-        <div class="dash-section-grid">
+        <!-- ══════════════════════════════════════════════════════
+             BENTO GRID
+             ══════════════════════════════════════════════════════ -->
+        <div class="dash-grid" id="bentoGrid">
 
-            <!-- Row 1: Performance Distribution (full width) -->
-            <div class="card dash-area-chart">
-                <h3>Performance Distribution</h3>
-                <div class="chart-container">
+            <!-- ── ROW 1: GPA Trend + Performance Distribution ── -->
+
+            <!-- CLASS GPA TREND (Line Chart) -->
+            <div class="dash-card span-half" id="widgetGpaTrend">
+                <div class="dash-card-title">
+                    <i data-lucide="trending-up" style="color:#3b82f6;"></i>
+                    Class GPA Trend
+                </div>
+                {% if gpa_trend_values %}
+                <div class="chart-wrap">
+                    <canvas id="gpaTrendChart"></canvas>
+                </div>
+                {% else %}
+                <div class="bento-empty">
+                    <i data-lucide="trending-up"></i>
+                    <p>No weekly data available yet.</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- PERFORMANCE DISTRIBUTION (Doughnut) -->
+            <div class="dash-card span-half" id="widgetPerfDist">
+                <div class="dash-card-title">
+                    <i data-lucide="pie-chart" style="color:#10b981;"></i>
+                    Performance Distribution
+                </div>
+                <div class="chart-wrap">
                     <canvas id="performanceChart"></canvas>
                 </div>
             </div>
 
-            <!-- Row 2, Left: Risk Heatmap -->
-            <div class="card dash-area-heatmap">
-                <h3>Class Skill Risk Heatmap</h3>
-                <div id="heatmapContainer" style="overflow-x:auto; margin-top:12px; max-height:260px;">
-                    <div style="text-align:center; color:var(--text-secondary);">Loading Risk Data...</div>
+            <!-- ── ROW 2: Skill Radar + Burnout + Career ── -->
+
+            <!-- CLASS SKILL BREAKDOWN (Radar) -->
+            <div class="dash-card span-third" id="widgetSkillRadar">
+                <div class="dash-card-title">
+                    <i data-lucide="crosshair" style="color:#8b5cf6;"></i>
+                    Class Skill Breakdown
                 </div>
+                {% if skill_radar_labels %}
+                <div class="chart-wrap">
+                    <canvas id="skillRadarChart"></canvas>
+                </div>
+                {% else %}
+                <div class="bento-empty">
+                    <i data-lucide="crosshair"></i>
+                    <p>No skill data available for your class.</p>
+                </div>
+                {% endif %}
             </div>
 
-            <!-- Row 2, Right: Alerts Panel -->
-            <div class="card dash-area-alerts">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
-                    <h3 style="margin:0;">Recent Alerts</h3>
-                    <a href="/teacher/alerts" style="font-size:12px; color:var(--primary);">View All</a>
+            <!-- BURNOUT RISK OVERVIEW (3× Gauges + Student Lists) -->
+            <div class="dash-card span-third" id="widgetBurnout">
+                <div class="dash-card-title">
+                    <i data-lucide="heart-pulse" style="color:#ef4444;"></i>
+                    Burnout Risk Overview
+                </div>
+                <div class="burnout-gauge-row">
+                    <!-- AT RISK -->
+                    <div class="burnout-gauge-item">
+                        <canvas id="burnoutGaugeRisk" width="120" height="75"></canvas>
+                        <div class="burnout-gauge-value red">{{ burnout.at_risk_pct }}%</div>
+                        <div class="burnout-gauge-label">At Risk</div>
+                        <button class="burnout-toggle" onclick="toggleBurnoutList('risk')" title="Show students">
+                            {{ burnout.at_risk }} student{{ 's' if burnout.at_risk != 1 }} ▾
+                        </button>
+                    </div>
+                    <!-- STABLE -->
+                    <div class="burnout-gauge-item">
+                        <canvas id="burnoutGaugeStable" width="120" height="75"></canvas>
+                        <div class="burnout-gauge-value amber">{{ burnout.stable_pct }}%</div>
+                        <div class="burnout-gauge-label">Stable</div>
+                        <button class="burnout-toggle" onclick="toggleBurnoutList('stable')" title="Show students">
+                            {{ burnout.stable }} student{{ 's' if burnout.stable != 1 }} ▾
+                        </button>
+                    </div>
+                    <!-- THRIVING -->
+                    <div class="burnout-gauge-item">
+                        <canvas id="burnoutGaugeHigh" width="120" height="75"></canvas>
+                        <div class="burnout-gauge-value green">{{ burnout.high_achieving_pct }}%</div>
+                        <div class="burnout-gauge-label">Thriving</div>
+                        <button class="burnout-toggle" onclick="toggleBurnoutList('thriving')" title="Show students">
+                            {{ burnout.high_achieving }} student{{ 's' if burnout.high_achieving != 1 }} ▾
+                        </button>
+                    </div>
                 </div>
 
-                <div class="alerts-list">
-                    {% for alert in alerts[:5] %}
-                    <div class="alert-item" id="alert-{{ alert.id }}">
-                        <div style="min-width:0; flex:1;">
-                            <div style="font-size:13px; font-weight:600; white-space:normal;">{{ alert.message }}</div>
-                            <div style="font-size:11px; color:var(--text-secondary); margin-top:2px;">
-                                {{ alert.student.full_name }} • {{ alert.created_at.strftime('%Y-%m-%d') }}
-                            </div>
-                        </div>
-                        <div style="display:flex; gap:6px; align-items:center; flex-shrink:0;">
-                            <span class="alert-badge {{ alert.severity }}">{{ alert.severity }}</span>
-                            <button class="btn-sm" onclick="resolveAlert({{ alert.id }})">
-                                <i data-lucide="check" style="width:13px; height:13px;"></i>
-                            </button>
-                        </div>
-                    </div>
+                <!-- Expandable student lists (hidden by default) -->
+                <div id="burnoutListRisk" class="burnout-student-list" style="display:none;">
+                    <div class="burnout-list-header red">At Risk Students</div>
+                    {% for s in burnout.students_risk %}
+                    <a href="/teacher/student/{{ s.id }}" class="burnout-student-row">
+                        <span class="burnout-student-name">{{ s.name }}</span>
+                        <span class="burnout-score-badge red">{{ s.score }}%</span>
+                    </a>
                     {% else %}
-                    <div style="color:var(--text-secondary); text-align:center; padding:20px;">No active alerts</div>
+                    <div class="burnout-list-empty">No students at risk</div>
+                    {% endfor %}
+                </div>
+
+                <div id="burnoutListStable" class="burnout-student-list" style="display:none;">
+                    <div class="burnout-list-header amber">Stable Students</div>
+                    {% for s in burnout.students_stable %}
+                    <a href="/teacher/student/{{ s.id }}" class="burnout-student-row">
+                        <span class="burnout-student-name">{{ s.name }}</span>
+                        <span class="burnout-score-badge amber">{{ s.score }}%</span>
+                    </a>
+                    {% else %}
+                    <div class="burnout-list-empty">No students in this category</div>
+                    {% endfor %}
+                </div>
+
+                <div id="burnoutListThriving" class="burnout-student-list" style="display:none;">
+                    <div class="burnout-list-header green">Thriving Students</div>
+                    {% for s in burnout.students_thriving %}
+                    <a href="/teacher/student/{{ s.id }}" class="burnout-student-row">
+                        <span class="burnout-student-name">{{ s.name }}</span>
+                        <span class="burnout-score-badge green">{{ s.score }}%</span>
+                    </a>
+                    {% else %}
+                    <div class="burnout-list-empty">No students in this category</div>
                     {% endfor %}
                 </div>
             </div>
 
-        </div>
+            <!-- CAREER PATH INTERVENTIONS (List) -->
+            <div class="dash-card span-third" id="widgetCareer">
+                <div class="dash-card-title">
+                    <i data-lucide="route" style="color:#f59e0b;"></i>
+                    Career Path Interventions
+                </div>
+                {% if career_interventions %}
+                <div class="intervention-list">
+                    {% for ci in career_interventions %}
+                    <div class="intervention-item">
+                        <div style="min-width:0;">
+                            <div class="intervention-name">{{ ci.student_name }}</div>
+                            <div class="intervention-reason">{{ ci.gap_reason }}</div>
+                        </div>
+                        <a href="/teacher/student/{{ ci.student_id }}" class="intervention-badge">View</a>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="bento-empty">
+                    <i data-lucide="check-circle"></i>
+                    <p>All students are on track with their career goals.</p>
+                </div>
+                {% endif %}
+            </div>
 
-    </div>
+            <!-- ── ROW 3: Heatmap + Goal Distribution ── -->
+
+            <!-- SKILL GAP HEATMAP -->
+            <div class="dash-card span-half" id="widgetHeatmap">
+                <div class="dash-card-title">
+                    <i data-lucide="grid-3x3" style="color:#6366f1;"></i>
+                    Skill Gap Heatmap
+                </div>
+                <div class="heatmap-wrap" id="heatmapContainer">
+                    <div style="text-align:center; color:var(--text-secondary); padding:40px;">Loading Risk Data…</div>
+                </div>
+            </div>
+
+            <!-- CLASS PROGRESS TO GOALS (Bell Curve) -->
+            <div class="dash-card span-half" id="widgetGoalDist">
+                <div class="dash-card-title">
+                    <i data-lucide="target" style="color:#10b981;"></i>
+                    Class Progress to Goals
+                    {% if class_avg_prob %}
+                    <span style="margin-left:auto; font-size:12px; font-weight:800; color:var(--text-secondary);">
+                        Avg: {{ class_avg_prob }}%
+                    </span>
+                    {% endif %}
+                </div>
+                {% if goal_buckets %}
+                <div class="chart-wrap">
+                    <canvas id="goalDistChart"></canvas>
+                </div>
+                {% else %}
+                <div class="bento-empty">
+                    <i data-lucide="target"></i>
+                    <p>No goal data available yet.</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- ── ROW 4: Alerts & Recommended Actions (Full Width) ── -->
+            <div class="dash-card span-full" id="widgetAlerts">
+                <div class="dash-card-title" style="justify-content:space-between;">
+                    <span style="display:flex; align-items:center; gap:8px;">
+                        <i data-lucide="bell-ring" style="color:#f59e0b;"></i>
+                        Alerts & Recommended Actions
+                    </span>
+                    <a href="/teacher/alerts" style="font-size:12px; color:var(--primary-blue-light); text-decoration:none; font-weight:600; text-transform:none; letter-spacing:0;">View All →</a>
+                </div>
+                <div class="alerts-enhanced">
+                    {% for alert in alerts[:8] %}
+                    <div class="alert-enhanced-item" id="alert-{{ alert.id }}">
+                        <div style="min-width:0; flex:1;">
+                            <div style="font-size:13px; font-weight:600; color:var(--dark); white-space:normal;">{{ alert.message }}</div>
+                            <div style="font-size:11px; color:var(--text-secondary); margin-top:2px;">
+                                {{ alert.student.full_name }} • {{ alert.created_at.strftime('%b %d, %Y') }}
+                            </div>
+                        </div>
+                        <div class="alert-actions">
+                            <span class="alert-badge {{ alert.severity }}">{{ alert.severity }}</span>
+                            <button class="action-btn quiz" onclick="showToast('Quiz sent to {{ alert.student.full_name }}', 'success')" title="Send Quiz">
+                                <i data-lucide="file-question" style="width:12px;height:12px;"></i> Quiz
+                            </button>
+                            <button class="action-btn material" onclick="showToast('Study material shared with {{ alert.student.full_name }}', 'success')" title="Share Material">
+                                <i data-lucide="book-open" style="width:12px;height:12px;"></i> Material
+                            </button>
+                            <button class="action-btn resolve" onclick="resolveAlert({{ alert.id }})" title="Resolve">
+                                <i data-lucide="check" style="width:12px;height:12px;"></i> Resolve
+                            </button>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="bento-empty" style="height:100px;">
+                        <i data-lucide="check-circle"></i>
+                        <p>No active alerts — everything looks good!</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+        </div><!-- /.dash-grid -->
+
+    </div><!-- /.main-content -->
 
     <script>
-        // Sidebar Toggle — viewport-aware
-        // Desktop (>768px): collapses to icon-only rail (.collapsed + .expanded)
-        // Mobile  (≤768px): slides in as full overlay (.open + backdrop)
+        // ════════════════════════════════════════════════════════
+        //  Sidebar Toggle — viewport-aware
+        // ════════════════════════════════════════════════════════
         function toggleSidebar() {
             const isMobile = window.innerWidth <= 768;
             const sidebar = document.querySelector('nav.sidebar');
@@ -177,8 +358,6 @@
             } else {
                 const mainContent = document.querySelector('.main-content');
                 const isCollapsed = sidebar.classList.toggle('collapsed');
-                // Sync body class so `body.sidebar-collapsed button.sidebar-toggle`
-                // CSS rule fires and the hamburger slides in sync with the sidebar
                 document.body.classList.toggle('sidebar-collapsed', isCollapsed);
                 if (mainContent) mainContent.classList.toggle('expanded', isCollapsed);
                 localStorage.setItem('sidebarCollapsed', isCollapsed);
@@ -192,7 +371,7 @@
             if (backdrop) { backdrop.style.display = 'none'; }
         }
 
-        // Restore desktop collapsed state on page load (mobile ignores this)
+        // Restore desktop collapsed state on page load
         window.addEventListener('DOMContentLoaded', () => {
             if (window.innerWidth > 768) {
                 const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
@@ -201,64 +380,288 @@
                     const mainContent = document.querySelector('.main-content');
                     if (sidebar) sidebar.classList.add('collapsed');
                     if (mainContent) mainContent.classList.add('expanded');
-                    // Restore hamburger position too
                     document.body.classList.add('sidebar-collapsed');
                 }
             }
         });
 
-        // ── DOMContentLoaded guard: Chart.js (deferred) is guaranteed ready here ──
+        // ════════════════════════════════════════════════════════
+        //  Theme helpers
+        // ════════════════════════════════════════════════════════
+        function isDark() { return document.documentElement.getAttribute('data-theme') === 'dark'; }
+        function gc() { return isDark() ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)'; }
+        function tc() { return isDark() ? '#9ca3af' : '#6b7280'; }
+
+        // ════════════════════════════════════════════════════════
+        //  Chart.js Initialization
+        // ════════════════════════════════════════════════════════
         document.addEventListener('DOMContentLoaded', function () {
             if (typeof Chart === 'undefined') {
                 console.warn('[Dashboard] Chart.js failed to load — skipping chart init');
                 return;
             }
-            // Safe Jinja → JS bridge: | default(0) | int prevents None/null in array literal
-            var ctxEl = document.getElementById('performanceChart');
-            if (!ctxEl) return;
-            new Chart(ctxEl.getContext('2d'), {
-                type: 'doughnut',
-                data: {
-                    labels: ['Good', 'Average', 'At Risk'],
-                    datasets: [{
-                        data: [
-                            {{ overview.good_count | default(0) | int }},
-                            {{ overview.average_count | default(0) | int }},
-            {{ overview.at_risk_count | default(0) | int }}
-                        ],
-            backgroundColor: [
-            'rgba(16, 185, 129, 0.8)',
-            'rgba(245, 158, 11, 0.8)',
-            'rgba(239, 68, 68, 0.8)'
-        ],
-            borderColor: [
-            'rgba(16, 185, 129, 1)',
-            'rgba(245, 158, 11, 1)',
-            'rgba(239, 68, 68, 1)'
-        ],
-            borderWidth: 2
-                    }]
-                },
-            options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            cutout: '70%',
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: {
-                        color: 'rgba(255, 255, 255, 0.9)',
-                        font: { size: 13, weight: '600' },
-                        padding: 15
+
+            // ── 1. PERFORMANCE DISTRIBUTION (Doughnut) ──
+            (function () {
+                var el = document.getElementById('performanceChart');
+                if (!el) return;
+                new Chart(el.getContext('2d'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Good (≥3.5)', 'Average (2.5-3.5)', 'At Risk (<2.5)'],
+                        datasets: [{
+                            data: [
+                                {{ overview.good_count | default(0) | int }},
+                                {{ overview.average_count | default(0) | int }},
+                                {{ overview.at_risk_count | default(0) | int }}
+                            ],
+                            backgroundColor: [
+                                'rgba(16, 185, 129, 0.8)',
+                                'rgba(245, 158, 11, 0.8)',
+                                'rgba(239, 68, 68, 0.8)'
+                            ],
+                            borderColor: isDark() ? '#1a1d27' : '#ffffff',
+                            borderWidth: 3
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '68%',
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    color: tc(),
+                                    font: { size: 12, weight: '600' },
+                                    padding: 16,
+                                    usePointStyle: true,
+                                    pointStyle: 'circle'
+                                }
+                            }
+                        }
                     }
-                }
+                });
+            })();
+
+            // ── 2. CLASS GPA TREND (Line Chart) ──
+            (function () {
+                var el = document.getElementById('gpaTrendChart');
+                if (!el) return;
+                var labels = {{ gpa_trend_labels | tojson }};
+                var values = {{ gpa_trend_values | tojson }};
+                if (!labels.length) return;
+
+                new Chart(el.getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Class Avg GPA',
+                            data: values,
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.08)',
+                            borderWidth: 2.5,
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 5,
+                            pointBackgroundColor: '#3b82f6',
+                            pointBorderColor: isDark() ? '#1a1d27' : '#fff',
+                            pointBorderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: {
+                                beginAtZero: false,
+                                min: 0,
+                                max: 4.0,
+                                grid: { color: gc() },
+                                ticks: { color: tc(), font: { size: 11 }, stepSize: 0.5 }
+                            },
+                            x: {
+                                grid: { display: false },
+                                ticks: { color: tc(), font: { size: 11 } }
+                            }
+                        }
+                    }
+                });
+            })();
+
+            // ── 3. CLASS SKILL RADAR ──
+            (function () {
+                var el = document.getElementById('skillRadarChart');
+                if (!el) return;
+                var labels = {{ skill_radar_labels | tojson }};
+                var scores = {{ skill_radar_scores | tojson }};
+                if (!labels.length) return;
+
+                // Build a "target" baseline at 70 for comparison
+                var target = labels.map(function () { return 70; });
+
+                new Chart(el.getContext('2d'), {
+                    type: 'radar',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'Class Average',
+                                data: scores,
+                                backgroundColor: 'rgba(139, 92, 246, 0.12)',
+                                borderColor: '#8b5cf6',
+                                borderWidth: 2,
+                                pointBackgroundColor: '#8b5cf6',
+                                pointRadius: 4
+                            },
+                            {
+                                label: 'Target (70%)',
+                                data: target,
+                                backgroundColor: 'rgba(16, 185, 129, 0.06)',
+                                borderColor: 'rgba(16, 185, 129, 0.4)',
+                                borderWidth: 1.5,
+                                borderDash: [4, 4],
+                                pointRadius: 0
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    color: tc(),
+                                    font: { size: 11 },
+                                    usePointStyle: true,
+                                    pointStyle: 'circle',
+                                    padding: 12
+                                }
+                            }
+                        },
+                        scales: {
+                            r: {
+                                beginAtZero: true,
+                                max: 100,
+                                ticks: { stepSize: 20, display: false },
+                                grid: { color: gc() },
+                                angleLines: { color: gc() },
+                                pointLabels: { color: tc(), font: { size: 10, weight: '600' } }
+                            }
+                        }
+                    }
+                });
+            })();
+
+            // ── 4. BURNOUT GAUGES (3× Canvas 2D half-arcs) ──
+            function drawHalfGauge(canvasId, pct, color) {
+                var canvas = document.getElementById(canvasId);
+                if (!canvas) return;
+                var dpr = window.devicePixelRatio || 1;
+                var parent = canvas.parentElement;
+                var W = parent ? Math.min(parent.clientWidth, 140) : 120;
+                var H = 75;
+                canvas.style.width = W + 'px';
+                canvas.style.height = H + 'px';
+                canvas.width = W * dpr;
+                canvas.height = H * dpr;
+                var c = canvas.getContext('2d');
+                c.scale(dpr, dpr);
+
+                var cx = W / 2, cy = H * 0.9;
+                var r = Math.min(cx, cy) * 0.82;
+                var SA = Math.PI, EA = 2 * Math.PI;
+
+                // Background arc
+                c.beginPath();
+                c.arc(cx, cy, r, SA, EA, false);
+                c.lineWidth = 14;
+                c.strokeStyle = isDark() ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)';
+                c.lineCap = 'round';
+                c.stroke();
+
+                // Filled arc
+                var fillEnd = SA + (EA - SA) * (pct / 100);
+                c.beginPath();
+                c.arc(cx, cy, r, SA, fillEnd, false);
+                c.lineWidth = 12;
+                c.strokeStyle = color;
+                c.lineCap = 'round';
+                c.stroke();
             }
-        }
-            });
+
+            drawHalfGauge('burnoutGaugeRisk', {{ burnout.at_risk_pct | default(0) }}, '#ef4444');
+            drawHalfGauge('burnoutGaugeStable', {{ burnout.stable_pct | default(0) }}, '#f59e0b');
+            drawHalfGauge('burnoutGaugeHigh', {{ burnout.high_achieving_pct | default(0) }}, '#10b981');
+
+            // ── 5. GOAL DISTRIBUTION (Filled Line/Area Chart) ──
+            (function () {
+                var el = document.getElementById('goalDistChart');
+                if (!el) return;
+                var labels = {{ goal_bucket_labels | tojson }};
+                var buckets = {{ goal_buckets | tojson }};
+                if (!labels.length) return;
+
+                new Chart(el.getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Students',
+                            data: buckets,
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.12)',
+                            borderWidth: 2.5,
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 4,
+                            pointBackgroundColor: '#10b981',
+                            pointBorderColor: isDark() ? '#1a1d27' : '#fff',
+                            pointBorderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function (ctx) {
+                                        return ctx.parsed.y + ' student' + (ctx.parsed.y !== 1 ? 's' : '');
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: { color: gc() },
+                                ticks: {
+                                    color: tc(),
+                                    font: { size: 11 },
+                                    stepSize: 1,
+                                    precision: 0
+                                }
+                            },
+                            x: {
+                                grid: { display: false },
+                                ticks: { color: tc(), font: { size: 10 }, maxRotation: 45 }
+                            }
+                        }
+                    }
+                });
+            })();
+
         }); // end DOMContentLoaded
 
 
-        // Resolve Alert Function
+        // ════════════════════════════════════════════════════════
+        //  Alert Actions
+        // ════════════════════════════════════════════════════════
         async function resolveAlert(alertId) {
             showConfirm("Resolve Warning?", "Mark this academic alert as resolved?", async () => {
                 try {
@@ -269,7 +672,12 @@
 
                     if (response.ok) {
                         const el = document.getElementById(`alert-${alertId}`);
-                        if (el) el.remove();
+                        if (el) {
+                            el.style.transition = 'opacity 0.3s, transform 0.3s';
+                            el.style.opacity = '0';
+                            el.style.transform = 'translateX(20px)';
+                            setTimeout(() => el.remove(), 300);
+                        }
                         showToast("Alert resolved successfully.", "success");
                     } else {
                         showToast("Failed to resolve alert.", "error");
@@ -281,49 +689,73 @@
             }, "Resolve");
         }
 
-        // LOAD HEATMAP
+        // ════════════════════════════════════════════════════════
+        //  Burnout List Toggle
+        // ════════════════════════════════════════════════════════
+        function toggleBurnoutList(category) {
+            const ids = { risk: 'burnoutListRisk', stable: 'burnoutListStable', thriving: 'burnoutListThriving' };
+            const target = document.getElementById(ids[category]);
+            if (!target) return;
+
+            // If target is already visible, just hide it
+            if (target.style.display !== 'none') {
+                target.style.display = 'none';
+                return;
+            }
+
+            // Hide all lists first
+            Object.values(ids).forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.style.display = 'none';
+            });
+
+            // Show the selected one with animation
+            target.style.display = 'block';
+            target.style.animation = 'burnoutSlideIn 0.25s ease';
+        }
+
+        // ════════════════════════════════════════════════════════
+        //  Heatmap (AJAX)
+        // ════════════════════════════════════════════════════════
         async function loadHeatmap() {
             try {
                 const res = await fetch('/api/teacher/class-skills');
                 const data = await res.json();
 
                 if (data.length === 0) {
-                    document.getElementById('heatmapContainer').innerHTML = "No skill data available.";
+                    document.getElementById('heatmapContainer').innerHTML =
+                        '<div class="bento-empty"><i data-lucide="grid-3x3"></i><p>No skill data available.</p></div>';
+                    lucide.createIcons();
                     return;
                 }
 
-                // 1. Collect all unique skills
+                // Collect all unique skills
                 const allSkills = new Set();
                 data.forEach(s => s.skills.forEach(sk => allSkills.add(sk.name)));
                 const skillList = Array.from(allSkills);
 
-                // 2. Build Table
-                let html = `<table style="width:100%; border-collapse:collapse; font-size:12px;">`;
+                // Build Table
+                let html = `<table>`;
 
                 // Header
-                html += `<thead><tr><th style="text-align:left; padding:8px;">Student</th>`;
-                skillList.forEach(sk => html += `<th style="padding:8px; text-align:center;">${sk}</th>`);
+                html += `<thead><tr><th>Student</th>`;
+                skillList.forEach(sk => html += `<th>${sk}</th>`);
                 html += `</tr></thead><tbody>`;
 
                 // Rows
                 data.forEach(s => {
-                    html += `<tr><td style="padding:8px; border-bottom:1px solid #eee; font-weight:600;">${s.name}</td>`;
+                    html += `<tr><td>${s.name}</td>`;
 
                     skillList.forEach(headerskill => {
                         const studentSkill = s.skills.find(sk => sk.name === headerskill);
                         if (studentSkill) {
-                            // Color based on risk (0.0 - 1.0)
-                            // Low Risk (Green) -> High Risk (Red)
-                            // Risk > 0.7 = Red, > 0.4 = Yellow, Else Green
-                            let color = '#d1fae5'; // Green
-                            if (studentSkill.risk > 0.7) color = '#fee2e2'; // Red
-                            else if (studentSkill.risk > 0.4) color = '#fef3c7'; // Yellow
+                            let cls = 'hm-green';
+                            if (studentSkill.risk > 0.7) cls = 'hm-red';
+                            else if (studentSkill.risk > 0.4) cls = 'hm-yellow';
 
-                            html += `<td style="padding:8px; border-bottom:1px solid #eee; text-align:center; background:${color}; color:#333;">
-                                ${studentSkill.score}%
-                                </td>`;
+                            html += `<td class="${cls}">${studentSkill.score}%</td>`;
                         } else {
-                            html += `<td style="padding:8px; border-bottom:1px solid #eee; text-align:center; color:#ccc;">--</td>`;
+                            html += `<td class="hm-empty">—</td>`;
                         }
                     });
 
@@ -335,19 +767,25 @@
 
             } catch (e) {
                 console.error("Heatmap Error:", e);
-                document.getElementById('heatmapContainer').innerHTML = "Error loading data.";
+                document.getElementById('heatmapContainer').innerHTML =
+                    '<div class="bento-empty"><i data-lucide="alert-circle"></i><p>Error loading data.</p></div>';
+                lucide.createIcons();
             }
         }
 
         loadHeatmap();
 
-        // Initialize Lucide icons
+        // ════════════════════════════════════════════════════════
+        //  Lucide Icons
+        // ════════════════════════════════════════════════════════
         lucide.createIcons();
 
-        // Dark Mode
+        // ════════════════════════════════════════════════════════
+        //  Dark Mode Toggle
+        // ════════════════════════════════════════════════════════
         function toggleDarkMode() {
-            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-            const newTheme = isDark ? 'light' : 'dark';
+            const isDarkNow = document.documentElement.getAttribute('data-theme') === 'dark';
+            const newTheme = isDarkNow ? 'light' : 'dark';
             document.documentElement.setAttribute('data-theme', newTheme);
             localStorage.setItem('teacher_theme', newTheme);
             updateDmIcon(newTheme);
@@ -361,19 +799,17 @@
         // Apply icon on load
         updateDmIcon(localStorage.getItem('teacher_theme') || 'light');
 
-        // ─────────────────────────────────────────────────────────
-
-        // Close sidebar on resize to desktop viewport
+        // ════════════════════════════════════════════════════════
+        //  Resize handler — close mobile sidebar on desktop resize
+        // ════════════════════════════════════════════════════════
         window.addEventListener('resize', () => {
             if (window.innerWidth > 768) {
-                // On desktop resize: close mobile overlay-style open, keep collapsed state
                 const sidebar = document.querySelector('nav.sidebar');
                 if (sidebar) sidebar.classList.remove('open');
                 const backdrop = document.getElementById('sidebarBackdrop');
                 if (backdrop) backdrop.style.display = 'none';
             }
         });
-        // ─────────────────────────────────────────────────────────
 
     </script>
 </body>
