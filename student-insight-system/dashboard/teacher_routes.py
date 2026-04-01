@@ -110,18 +110,220 @@ def teacher_dashboard():
     else:
         good_count = average_count = at_risk_count = total = 0
 
+    # ── Avg performance percent (class average CGPA as %) ──
+    avg_cgpa = 0.0
+    if student_ids:
+        avg_row = db.session.query(func.avg(StudentProfile.current_cgpa)).filter(
+            StudentProfile.id.in_(student_ids),
+            StudentProfile.current_cgpa != None
+        ).scalar()
+        avg_cgpa = round(float(avg_row), 2) if avg_row else 0.0
+    avg_performance_pct = round(avg_cgpa / 4.0 * 100, 1) if avg_cgpa else 0
+
     overview_data = {
         "total_students":  total,
         "good_count":      good_count,
         "average_count":   average_count,
         "at_risk_count":   at_risk_count,
         "alerts_count":    len(alerts),
-        "average_percent": round(average_count / total * 100, 1) if total else 0,
+        "average_percent": avg_performance_pct,
+        "avg_cgpa":        avg_cgpa,
         "good_percent":    round(good_count    / total * 100, 1) if total else 0,
         "at_risk_percent": round(at_risk_count / total * 100, 1) if total else 0,
-        "class_distribution":   {},
-        "section_distribution": {},
     }
+
+    # ══════════════════════════════════════════════════════════════
+    #  NEW: Aggregated data for Bento Box dashboard
+    # ══════════════════════════════════════════════════════════════
+
+    # ── 1. Class GPA Trend (weekly averages from WeeklyUpdate) ──
+    gpa_trend_labels = []
+    gpa_trend_values = []
+    if student_ids:
+        weekly_rows = (
+            db.session.query(
+                WeeklyUpdate.week_start_date,
+                func.avg(StudentProfile.current_cgpa).label("avg_gpa"),
+            )
+            .join(StudentProfile, WeeklyUpdate.student_id == StudentProfile.id)
+            .filter(WeeklyUpdate.student_id.in_(student_ids))
+            .group_by(WeeklyUpdate.week_start_date)
+            .order_by(WeeklyUpdate.week_start_date)
+            .all()
+        )
+        for row in weekly_rows[-8:]:  # last 8 weeks
+            gpa_trend_labels.append(row.week_start_date.strftime("Wk %m/%d") if row.week_start_date else "?")
+            gpa_trend_values.append(round(float(row.avg_gpa), 2) if row.avg_gpa else 0)
+
+    # ── 2. Class Skill Breakdown (avg proficiency per skill) ──
+    skill_radar_labels = []
+    skill_radar_scores = []
+    if student_ids:
+        skill_rows = (
+            db.session.query(
+                StudentSkill.skill_name,
+                func.avg(StudentSkill.proficiency_score).label("avg_score"),
+            )
+            .filter(StudentSkill.student_id.in_(student_ids))
+            .group_by(StudentSkill.skill_name)
+            .order_by(func.avg(StudentSkill.proficiency_score).desc())
+            .limit(8)
+            .all()
+        )
+        for row in skill_rows:
+            skill_radar_labels.append(row.skill_name)
+            skill_radar_scores.append(round(float(row.avg_score), 1) if row.avg_score else 0)
+
+    # ── 3. Burnout Risk Overview (with student lists) ──
+    burnout_at_risk = 0
+    burnout_stable = 0
+    burnout_high_achieving = 0
+    burnout_students_risk = []
+    burnout_students_stable = []
+    burnout_students_thriving = []
+
+    # Build a quick id→name map from the already-loaded students list
+    student_name_map = {s.id: s.full_name for s in students}
+
+    if student_ids:
+        # Get latest WeeklyUpdate per student via subquery
+        latest_sub = (
+            db.session.query(
+                WeeklyUpdate.student_id,
+                func.max(WeeklyUpdate.created_at).label("latest")
+            )
+            .filter(WeeklyUpdate.student_id.in_(student_ids))
+            .group_by(WeeklyUpdate.student_id)
+            .subquery()
+        )
+        latest_updates = (
+            db.session.query(WeeklyUpdate)
+            .join(latest_sub, db.and_(
+                WeeklyUpdate.student_id == latest_sub.c.student_id,
+                WeeklyUpdate.created_at == latest_sub.c.latest
+            ))
+            .all()
+        )
+        for wu in latest_updates:
+            score = wu.burnout_risk_score or 0
+            entry = {
+                "id": wu.student_id,
+                "name": student_name_map.get(wu.student_id, "Unknown"),
+                "score": round(score * 100),
+            }
+            if score >= 0.7:
+                burnout_at_risk += 1
+                burnout_students_risk.append(entry)
+            elif score >= 0.3:
+                burnout_stable += 1
+                burnout_students_stable.append(entry)
+            else:
+                burnout_high_achieving += 1
+                burnout_students_thriving.append(entry)
+
+    # Sort each list by score (highest first for risk, lowest first for thriving)
+    burnout_students_risk.sort(key=lambda x: x["score"], reverse=True)
+    burnout_students_stable.sort(key=lambda x: x["score"], reverse=True)
+    burnout_students_thriving.sort(key=lambda x: x["score"])
+
+    burnout_data = {
+        "at_risk": burnout_at_risk,
+        "stable": burnout_stable,
+        "high_achieving": burnout_high_achieving,
+        "at_risk_pct": round(burnout_at_risk / total * 100) if total else 0,
+        "stable_pct": round(burnout_stable / total * 100) if total else 0,
+        "high_achieving_pct": round(burnout_high_achieving / total * 100) if total else 0,
+        "students_risk": burnout_students_risk,
+        "students_stable": burnout_students_stable,
+        "students_thriving": burnout_students_thriving,
+    }
+
+    # ── 4. Career Path Interventions ──
+    career_interventions = []
+    if student_ids:
+        goals_with_career = (
+            db.session.query(StudentGoal, CareerPath, StudentProfile, WeeklyUpdate)
+            .join(CareerPath, StudentGoal.career_id == CareerPath.id)
+            .join(StudentProfile, StudentGoal.student_id == StudentProfile.id)
+            .outerjoin(
+                WeeklyUpdate,
+                db.and_(
+                    WeeklyUpdate.student_id == StudentGoal.student_id,
+                )
+            )
+            .filter(
+                StudentGoal.student_id.in_(student_ids),
+                StudentGoal.is_primary == True,
+            )
+            .all()
+        )
+        # Deduplicate: pick latest WeeklyUpdate per student
+        student_goal_map = {}
+        for goal, career, student, wu in goals_with_career:
+            sid = student.id
+            if sid not in student_goal_map:
+                student_goal_map[sid] = {
+                    "student": student,
+                    "career": career,
+                    "goal": goal,
+                    "latest_wu": wu
+                }
+            else:
+                existing_wu = student_goal_map[sid]["latest_wu"]
+                if wu and (not existing_wu or wu.created_at > existing_wu.created_at):
+                    student_goal_map[sid]["latest_wu"] = wu
+
+        for sid, info in student_goal_map.items():
+            wu = info["latest_wu"]
+            prob = wu.goal_achievability_prob if wu else None
+            # Flag students with low achievability or no data
+            if prob is None or prob < 0.5:
+                # Find the skill gap reason
+                gap_reason = ""
+                if info["student"].current_cgpa and info["student"].current_cgpa < 2.5:
+                    gap_reason = f"Gap in {info['career'].title} (Low GPA)"
+                else:
+                    gap_reason = f"{info['career'].title} (Low Achievability)"
+                career_interventions.append({
+                    "student_name": info["student"].full_name,
+                    "career_title": info["career"].title,
+                    "gap_reason": gap_reason,
+                    "student_id": sid,
+                })
+
+    # ── 5. Class Progress to Goals (distribution) ──
+    goal_probs = []
+    if student_ids:
+        # Collect latest goal_achievability_prob per student
+        prob_sub = (
+            db.session.query(
+                WeeklyUpdate.student_id,
+                func.max(WeeklyUpdate.created_at).label("latest")
+            )
+            .filter(WeeklyUpdate.student_id.in_(student_ids))
+            .group_by(WeeklyUpdate.student_id)
+            .subquery()
+        )
+        prob_rows = (
+            db.session.query(WeeklyUpdate.goal_achievability_prob)
+            .join(prob_sub, db.and_(
+                WeeklyUpdate.student_id == prob_sub.c.student_id,
+                WeeklyUpdate.created_at == prob_sub.c.latest
+            ))
+            .filter(WeeklyUpdate.goal_achievability_prob != None)
+            .all()
+        )
+        goal_probs = [round(float(r[0]) * 100) for r in prob_rows]
+
+    # Build histogram buckets for bell curve: 0-10, 10-20, ..., 90-100
+    goal_buckets = [0] * 10
+    for p in goal_probs:
+        idx = min(int(p // 10), 9)
+        goal_buckets[idx] += 1
+    goal_bucket_labels = [f"{i*10}%–{i*10+10}%" for i in range(10)]
+
+    # Class average achievability
+    class_avg_prob = round(sum(goal_probs) / len(goal_probs)) if goal_probs else 0
 
     return render_template(
         "teacher_dashboard.html",
@@ -129,6 +331,16 @@ def teacher_dashboard():
         overview=overview_data,
         alerts=alerts,
         now_date=datetime.now().strftime("%d %B, %Y"),
+        # New bento data
+        gpa_trend_labels=gpa_trend_labels,
+        gpa_trend_values=gpa_trend_values,
+        skill_radar_labels=skill_radar_labels,
+        skill_radar_scores=skill_radar_scores,
+        burnout=burnout_data,
+        career_interventions=career_interventions,
+        goal_buckets=goal_buckets,
+        goal_bucket_labels=goal_bucket_labels,
+        class_avg_prob=class_avg_prob,
     )
 
 
