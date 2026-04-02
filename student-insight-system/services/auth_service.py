@@ -22,20 +22,29 @@ class AuthService:
     @staticmethod
     def register_user(name: str, email: str, password: str, role: str) -> dict:
         """Register a new user with profile. Returns success dict."""
+        email = (email or "").strip().lower()
         if User.query.filter_by(email=email).first():
-            raise ConflictError("User already exists")
+            raise ConflictError("An account with this email address already exists. Please login instead.")
+
 
         try:
             hashed_password = generate_password_hash(password)
             new_user = User(email=email, password_hash=hashed_password, role=role)
             db.session.add(new_user)
-            db.session.commit()
+            db.session.flush()
 
             if role == 'teacher':
-                new_teacher = TeacherProfile(user_id=new_user.id, full_name=name)
+                new_teacher = TeacherProfile(user_id=new_user.id, full_name=name, email=email)
                 db.session.add(new_teacher)
             elif role == 'student':
-                new_student = StudentProfile(user_id=new_user.id, full_name=name)
+                import uuid
+                # Generate a guaranteed unique 16-char student_code
+                s_code = "STU-" + uuid.uuid4().hex[:12].upper()
+                new_student = StudentProfile(
+                    user_id=new_user.id, 
+                    full_name=name,
+                    student_code=s_code
+                )
                 db.session.add(new_student)
 
             db.session.commit()
