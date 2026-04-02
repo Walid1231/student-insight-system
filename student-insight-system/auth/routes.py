@@ -42,8 +42,8 @@ def register():
         try:
             result = AuthService.register_user(name, email, password, role)
             return jsonify(result)
-        except ConflictError:
-            return jsonify({"msg": "User already exists"}), 400
+        except ConflictError as e:
+            return jsonify({"msg": e.message}), 400
         except ValidationError as e:
             return jsonify({"msg": e.message}), 500
 

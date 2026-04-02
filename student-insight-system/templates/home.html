@@ -6,6 +6,8 @@
     <title>Student Insight | Access</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/ui_alerts.css') }}">
+    <script src="{{ url_for('static', filename='js/ui_alerts.js') }}" defer></script>
 
     <style>
         :root {
@@ -557,6 +559,12 @@
         document.getElementById('form-register').addEventListener('submit', async (e) => {
             e.preventDefault();
             const err = document.getElementById('reg-error');
+            const btn = e.target.querySelector('button[type="submit"]');
+            
+            err.style.display = 'none';
+            btn.disabled = true;
+            btn.style.opacity = '0.7';
+            
             const data = new FormData();
             data.append('name', document.getElementById('r-name').value);
             data.append('email', document.getElementById('r-email').value);
@@ -568,8 +576,18 @@
                     showToast('Account created! Please Sign In.', 'success');
                     container.classList.remove("right-panel-active");
                     document.getElementById('l-email').value = document.getElementById('r-email').value;
-                } else { const json = await res.json(); err.innerText = json.msg || 'Registration failed'; err.style.display = 'block'; }
-            } catch (e) { console.error(e); }
+                    e.target.reset(); // clear the register form
+                } else { 
+                    const json = await res.json(); 
+                    err.innerText = json.msg || 'Registration failed'; 
+                    err.style.display = 'block'; 
+                }
+            } catch (e) { 
+                console.error(e); 
+            } finally {
+                btn.disabled = false;
+                btn.style.opacity = '1';
+            }
         });
 
         // PARTICLES (Global)
