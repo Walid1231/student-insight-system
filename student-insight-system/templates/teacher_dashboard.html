@@ -39,6 +39,7 @@
             </a>
             <a href="/teacher/alerts" class="nav-item">
                 <span class="nav-icon"><i data-lucide="bell"></i></span> Alerts
+                
                 {% if overview.alerts_count > 0 %}
                 <span
                     style="margin-left:auto; background:var(--danger); color:white; padding:2px 6px; border-radius:10px; font-size:10px;">{{
@@ -67,6 +68,51 @@
             </div>
             <div style="display:flex; align-items:center; gap:12px; font-size:14px; color:var(--text-secondary)">
                 {{ now_date }}
+                
+            <div class="header-actions" style="position:relative; margin-left:16px;">
+                <button id="transferReqBellBtn" style="background:transparent; border:none; color:var(--text-secondary); cursor:pointer; position:relative; padding:8px; border-radius:50%; display:flex; align-items:center; justify-content:center; transition:background 0.2s;">
+                    <i data-lucide="bell" style="width:20px; height:20px;"></i>
+                    {% if global_transfer_requests and global_transfer_requests|length > 0 %}
+                    <span style="position:absolute; top:2px; right:2px; width:10px; height:10px; background:var(--sev-critical, #ef4444); border-radius:50%; border:2px solid var(--card-bg, #fff);"></span>
+                    {% endif %}
+                </button>
+
+                <div id="transferReqDropdown" style="display:none; position:absolute; top:45px; right:0; width:340px; background:var(--card-bg, #fff); border:1px solid var(--border, #e5e7eb); border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,0.1); z-index:100; overflow:hidden;">
+                    <div style="padding:12px 16px; border-bottom:1px solid var(--border, #e5e7eb); display:flex; justify-content:space-between; align-items:center; background:var(--bg-secondary, #fafafa);">
+                        <h4 style="margin:0; font-size:14px; color:var(--dark, #111827); font-weight:600;">Transfer Requests</h4>
+                        <span style="font-size:12px; color:var(--text-secondary, #6b7280);">{% if global_transfer_requests %}{{ global_transfer_requests|length }}{% else %}0{% endif %} pending</span>
+                    </div>
+                    <div style="max-height:320px; overflow-y:auto; padding:8px;">
+                        {% if global_transfer_requests %}
+                            {% for req in global_transfer_requests %}
+                            <div id="top-req-card-{{ req.id }}" style="padding:12px; border:1px solid var(--border, #e5e7eb); border-radius:8px; margin-bottom:8px; background:var(--card-bg, #fff);">
+                                <div style="font-size:13px; font-weight:600; color:var(--dark, #111827); margin-bottom:2px;">{{ req.student.full_name }}</div>
+                                <div style="font-size:11px; color:var(--text-secondary, #6b7280); margin-bottom:6px; display: flex; align-items: center; gap: 4px;">
+                                    <i data-lucide="hash" style="width:10px;height:10px;"></i>
+                                    {{ req.student.student_code or 'Unknown ID' }} &emsp; <i data-lucide="graduation-cap" style="width:10px;height:10px;margin-left:4px;"></i> {{ req.student.department or 'General' }}
+                                </div>
+                                <div style="font-size:12px; color:var(--text-secondary, #4b5563); margin-bottom:10px; line-height: 1.4;">
+                                    <strong>{{ req.requester.full_name }}</strong> has requested to formally transfer this student into their classroom.
+                                </div>
+                                <div style="display:flex; gap:8px;">
+                                    <button onclick="resolveTransferRequestGlobal('{{ req.id }}', 'accept', this)" style="flex:1; padding:6px; background:var(--success-color, #10b981); color:white; border:none; border-radius:6px; font-size:12px; font-weight:500; cursor:pointer; display:flex; justify-content:center; align-items:center; gap:4px;">
+                                        <i data-lucide="check" style="width:12px;height:12px;"></i> Accept
+                                    </button>
+                                    <button onclick="resolveTransferRequestGlobal('{{ req.id }}', 'reject', this)" style="flex:1; padding:6px; background:transparent; border:1px solid var(--sev-critical, #ef4444); color:var(--sev-critical, #ef4444); border-radius:6px; font-size:12px; font-weight:500; cursor:pointer; display:flex; justify-content:center; align-items:center; gap:4px;">
+                                        <i data-lucide="x" style="width:12px;height:12px;"></i> Decline
+                                    </button>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div style="padding:24px 0; text-align:center; color:var(--text-secondary, #6b7280); font-size:13px; display:flex; flex-direction:column; align-items:center; gap:8px;">
+                                <i data-lucide="check-circle" style="width:24px; height:24px; opacity:0.5;"></i>
+                                No pending requests
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
                 <button class="dm-toggle" id="dmToggle" onclick="toggleDarkMode()" title="Toggle dark mode">
                     <i data-lucide="moon" id="dmIcon"></i>
                 </button>
@@ -812,6 +858,81 @@
         });
 
     </script>
+
+<!-- Transfer Accept logic -->
+<script>
+async function resolveTransferRequestGlobal(reqId, action, btn) {
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i data-lucide="loader-2" class="spinner" style="width:14px;height:14px;"></i> Processing';
+        if(typeof lucide !== 'undefined') lucide.createIcons();
+    }
+    try {
+        const res = await fetch('/api/teacher/resolve-request', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ request_id: reqId, action: action })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+            // Remove from Bell
+            const card = document.getElementById('top-req-card-' + reqId);
+            if (card) card.remove();
+            
+            // Remove from inline page Tables if any
+            const row = document.getElementById('req-row-' + reqId);
+            if (row) row.remove();
+
+            if (typeof showToast === 'function') {
+                showToast('Transfer request ' + action + 'ed!', 'success');
+            } else {
+                alert('Transfer request ' + action + 'ed successfully!');
+            }
+            
+            setTimeout(() => window.location.reload(), 800);
+        } else {
+            if (typeof showToast === 'function') {
+                showToast(data.msg || 'Action failed.', 'error');
+            } else {
+                alert(data.msg || 'Action failed.');
+            }
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = action === 'accept' ? 'Accept' : 'Decline';
+            }
+        }
+    } catch (e) {
+        console.error(e);
+        if (typeof showToast === 'function') showToast('Network error.', 'error');
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = action === 'accept' ? 'Accept' : 'Decline';
+        }
+    }
+}
+</script>
+
+
+<!-- Notification Bell Toggle -->
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const bellBtn = document.getElementById('transferReqBellBtn');
+    const bellDropdown = document.getElementById('transferReqDropdown');
+    if(bellBtn && bellDropdown) {
+        bellBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            bellDropdown.style.display = bellDropdown.style.display === 'none' ? 'block' : 'none';
+        });
+        document.addEventListener('click', (e) => {
+            if(!bellDropdown.contains(e.target) && !bellBtn.contains(e.target)) {
+                bellDropdown.style.display = 'none';
+            }
+        });
+    }
+});
+</script>
+
 </body>
 
 </html>

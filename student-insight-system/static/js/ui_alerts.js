@@ -4,25 +4,29 @@
  */
 
 (function() {
-    // Inject Toast Container
-    const toastContainer = document.createElement('div');
-    toastContainer.id = 'ui-toast-container';
-    document.body.appendChild(toastContainer);
+    let toastContainer, modalBackdrop;
 
-    // Inject Modal Backdrop
-    const modalBackdrop = document.createElement('div');
-    modalBackdrop.id = 'ui-modal-backdrop';
-    modalBackdrop.innerHTML = `
-        <div class="ui-modal" id="ui-modal-box">
-            <div class="ui-modal-title" id="ui-modal-title">Confirm</div>
-            <div class="ui-modal-text" id="ui-modal-text">Are you sure?</div>
-            <div class="ui-modal-actions">
-                <button class="ui-btn ui-btn-cancel" id="ui-modal-cancel">Cancel</button>
-                <button class="ui-btn ui-btn-confirm" id="ui-modal-confirm">Confirm</button>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Inject Toast Container
+        toastContainer = document.createElement('div');
+        toastContainer.id = 'ui-toast-container';
+        document.body.appendChild(toastContainer);
+
+        // Inject Modal Backdrop
+        modalBackdrop = document.createElement('div');
+        modalBackdrop.id = 'ui-modal-backdrop';
+        modalBackdrop.innerHTML = `
+            <div class="ui-modal" id="ui-modal-box">
+                <div class="ui-modal-title" id="ui-modal-title">Confirm</div>
+                <div class="ui-modal-text" id="ui-modal-text">Are you sure?</div>
+                <div class="ui-modal-actions">
+                    <button class="ui-btn ui-btn-cancel" id="ui-modal-cancel">Cancel</button>
+                    <button class="ui-btn ui-btn-confirm" id="ui-modal-confirm">Confirm</button>
+                </div>
             </div>
-        </div>
-    `;
-    document.body.appendChild(modalBackdrop);
+        `;
+        document.body.appendChild(modalBackdrop);
+    });
 
     // Icon SVG definitions
     const icons = {

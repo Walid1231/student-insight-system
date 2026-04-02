@@ -1,0 +1,29 @@
+﻿=== Test 1: Register brand new user: brand_new_test_user_2026@test.com ===
+  Status: 200
+  Body: {
+  "email": "brand_new_test_user_2026@test.com",
+  "msg": "Registration successful"
+}
+
+
+=== Test 2: Register SAME email again: brand_new_test_user_2026@test.com ===
+  Status: 400
+  Body: {
+  "msg": "An account with this email address already exists. Please login instead."
+}
+
+
+=== Test 3: Register mehedi@gmail.com (known existing) ===
+  Status: 400
+  Body: {
+  "msg": "An account with this email address already exists. Please login instead."
+}
+
+
+=== Test 4: Login with the new user: brand_new_test_user_2026@test.com ===
+  Status: 200
+  Body: {
+  "msg": "Login successful",
+  "role": "teacher"
+}
+
