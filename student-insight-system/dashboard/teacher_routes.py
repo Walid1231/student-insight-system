@@ -49,6 +49,14 @@ def _get_teacher_or_403():
         return None, (jsonify({"msg": "Teacher profile not found"}), 404)
     return teacher, None
 
+def get_global_transfer_requests(teacher):
+    from models.teacher import AssignmentTransferRequest
+    from sqlalchemy.orm import joinedload
+    return AssignmentTransferRequest.query.options(
+        joinedload(AssignmentTransferRequest.requester), 
+        joinedload(AssignmentTransferRequest.student)
+    ).filter_by(current_owner_id=teacher.id, status="pending").all()
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 #  Page routes
@@ -341,6 +349,7 @@ def teacher_dashboard():
         goal_buckets=goal_buckets,
         goal_bucket_labels=goal_bucket_labels,
         class_avg_prob=class_avg_prob,
+        global_transfer_requests=get_global_transfer_requests(teacher),
     )
 
 
@@ -376,12 +385,32 @@ def teacher_students_page():
         "alerts_count":   alerts_count,
     }
 
+    from models.teacher import AssignmentTransferRequest
+    from sqlalchemy.orm import joinedload
+    
+    incoming_requests = (
+        AssignmentTransferRequest.query
+        .options(joinedload(AssignmentTransferRequest.requester), joinedload(AssignmentTransferRequest.student))
+        .filter_by(current_owner_id=teacher.id, status="pending")
+        .all()
+    )
+
+    outgoing_requests = (
+        AssignmentTransferRequest.query
+        .options(joinedload(AssignmentTransferRequest.current_owner), joinedload(AssignmentTransferRequest.student))
+        .filter_by(requester_id=teacher.id, status="pending")
+        .all()
+    )
+
     return render_template(
         "teacher_students.html",
         teacher=teacher,
         overview=overview_data,
         students=students,
+        incoming_requests=incoming_requests,
+        outgoing_requests=outgoing_requests,
         now_date=datetime.now().strftime("%d %B, %Y"),
+        global_transfer_requests=get_global_transfer_requests(teacher),
     )
 
 
@@ -438,14 +467,26 @@ def teacher_alerts_page():
             "total_alerts": total_alerts_count
         })
 
+    from models.teacher import AssignmentTransferRequest
+    from sqlalchemy.orm import joinedload
+    
+    incoming_requests = (
+        AssignmentTransferRequest.query
+        .options(joinedload(AssignmentTransferRequest.requester), joinedload(AssignmentTransferRequest.student))
+        .filter_by(current_owner_id=teacher.id, status="pending")
+        .all()
+    )
+
     return render_template(
         "teacher_alerts.html",
         teacher=teacher,
         alerts=alerts,
+        incoming_requests=incoming_requests,
         total_alerts=total_alerts_count,
         has_next=has_next,
         next_page=page + 1 if has_next else None,
         now_date=datetime.now().strftime("%d %B, %Y"),
+        global_transfer_requests=get_global_transfer_requests(teacher),
     )
 
 
@@ -617,6 +658,7 @@ def teacher_student_detail(student_id):
         weekly_snapshot=weekly_snapshot,
         career_snapshot=career_snapshot,
         insight_preview=insight_preview,
+        global_transfer_requests=get_global_transfer_requests(teacher),
     )
 
 
@@ -835,14 +877,18 @@ def api_unassigned_students():
     if err:
         return err
 
-    already_assigned = (
+    # Subquery to exclude students assigned to the current teacher
+    assigned_to_me = (
         db.session.query(TeacherAssignment.student_id)
         .filter_by(teacher_id=teacher.id)
         .subquery()
     )
-    students = (
-        StudentProfile.query
-        .filter(StudentProfile.id.notin_(already_assigned))
+
+    rows = (
+        db.session.query(StudentProfile, TeacherProfile.full_name)
+        .outerjoin(TeacherAssignment, TeacherAssignment.student_id == StudentProfile.id)
+        .outerjoin(TeacherProfile, TeacherAssignment.teacher_id == TeacherProfile.id)
+        .filter(StudentProfile.id.notin_(assigned_to_me))
         .order_by(StudentProfile.full_name)
         .all()
     )
@@ -857,8 +903,9 @@ def api_unassigned_students():
             "section":            s.section or "—",
             "current_cgpa":       round(float(s.current_cgpa), 2) if s.current_cgpa else None,
             "performance_status": s.performance_status,
+            "assigned_teacher":   t_name,
         }
-        for s in students
+        for s, t_name in rows
     ])
 
 
@@ -879,11 +926,14 @@ def api_assign_student():
     if not student:
         return jsonify({"msg": "Student not found"}), 404
 
-    existing = TeacherAssignment.query.filter_by(
-        teacher_id=teacher.id, student_id=student.id
+    existing_assignment = TeacherAssignment.query.filter_by(
+        student_id=student.id
     ).first()
-    if existing:
-        return jsonify({"msg": "Student is already assigned to you"}), 409
+    if existing_assignment:
+        if existing_assignment.teacher_id == teacher.id:
+            return jsonify({"msg": "Student is already assigned to you"}), 409
+        else:
+            return jsonify({"msg": "Student is already assigned to another teacher and needs to be unassigned inorder to be assigned."}), 409
 
     db.session.add(TeacherAssignment(
         teacher_id=teacher.id, student_id=student.id,
@@ -929,6 +979,96 @@ def api_unassign_student():
     db.session.commit()
     return jsonify({"success": True})
 
+from models.teacher import AssignmentTransferRequest
+
+@teacher_bp.route("/api/teacher/request-assignment", methods=["POST"])
+@jwt_required()
+def api_request_assignment():
+    teacher, err = _get_teacher_or_403()
+    if err:
+        return err
+
+    data = request.get_json(silent=True) or {}
+    student_id = data.get("student_id")
+    if not student_id:
+        return jsonify({"msg": "student_id is required"}), 400
+
+    student = StudentProfile.query.get(int(student_id))
+    if not student:
+        return jsonify({"msg": "Student not found"}), 404
+
+    existing_assignment = TeacherAssignment.query.filter_by(student_id=student.id).first()
+    if not existing_assignment:
+        return jsonify({"msg": "Student is currently unassigned; please assign directly."}), 400
+    
+    if existing_assignment.teacher_id == teacher.id:
+        return jsonify({"msg": "Student is already assigned to you!"}), 400
+
+    existing_request = AssignmentTransferRequest.query.filter_by(
+        requester_id=teacher.id,
+        student_id=student.id,
+        status="pending"
+    ).first()
+
+    if existing_request:
+        return jsonify({"msg": "You already have a pending request for this student."}), 409
+
+    transfer_req = AssignmentTransferRequest(
+        requester_id=teacher.id,
+        current_owner_id=existing_assignment.teacher_id,
+        student_id=student.id
+    )
+    db.session.add(transfer_req)
+    db.session.commit()
+
+    return jsonify({"success": True})
+
+@teacher_bp.route("/api/teacher/resolve-request", methods=["POST"])
+@jwt_required()
+def api_resolve_transfer_request():
+    teacher, err = _get_teacher_or_403()
+    if err:
+        return err
+
+    data = request.get_json(silent=True) or {}
+    request_id = data.get("request_id")
+    action = data.get("action")
+
+    if not request_id or action not in ["accept", "reject", "cancel"]:
+        return jsonify({"msg": "Invalid payload."}), 400
+
+    transfer_req = AssignmentTransferRequest.query.get(int(request_id))
+    if not transfer_req:
+        return jsonify({"msg": "Request not found"}), 404
+
+    if action in ["accept", "reject"] and transfer_req.current_owner_id != teacher.id:
+        return jsonify({"msg": "Unauthorized"}), 403
+
+    if action == "cancel" and transfer_req.requester_id != teacher.id:
+        return jsonify({"msg": "Unauthorized"}), 403
+
+    if transfer_req.status != "pending":
+        return jsonify({"msg": "Request is already resolved"}), 400
+
+    if action == "accept":
+        existing_assignment = TeacherAssignment.query.filter_by(student_id=transfer_req.student_id, teacher_id=teacher.id).first()
+        if existing_assignment:
+            db.session.delete(existing_assignment)
+        
+        new_assignment = TeacherAssignment(
+            teacher_id=transfer_req.requester_id,
+            student_id=transfer_req.student_id,
+            assignment_type="homeroom"
+        )
+        db.session.add(new_assignment)
+        transfer_req.status = "accepted"
+    elif action == "reject":
+        transfer_req.status = "rejected"
+    elif action == "cancel":
+        db.session.delete(transfer_req)
+
+    db.session.commit()
+    return jsonify({"success": True})
 
 # ─────────────────────────────────────────────────────────────────────────────
 # TEACHER NOTES — Page + APIs
@@ -945,6 +1085,7 @@ def teacher_notes_page():
         "teacher_notes.html",
         teacher=teacher,
         now_date=datetime.now().strftime("%d %B, %Y"),
+        global_transfer_requests=get_global_transfer_requests(teacher),
     )
 
 
@@ -1027,6 +1168,7 @@ def teacher_profile_page():
         "teacher_profile.html",
         teacher=teacher,
         now_date=datetime.now().strftime("%d %B, %Y"),
+        nav_alerts_count=get_teacher_notification_count(teacher),
     )
 
 

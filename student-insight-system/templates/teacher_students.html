@@ -33,11 +33,7 @@
             </a>
             <a href="/teacher/alerts" class="nav-item">
                 <span class="nav-icon"><i data-lucide="bell"></i></span> Alerts
-                {% if overview.alerts_count > 0 %}
-                <span
-                    style="margin-left:auto; background:var(--danger); color:white; padding:2px 6px; border-radius:10px; font-size:10px;">{{
-                    overview.alerts_count }}</span>
-                {% endif %}
+                {% if total_alerts and total_alerts > 0 %}<span style="margin-left:auto; background:var(--sev-critical, #ef4444); color:white; padding:2px 6px; border-radius:10px; font-size:10px;">{{ total_alerts }}</span>{% endif %}
             </a>
             <a href="/teacher/notes" class="nav-item">
                 <span class="nav-icon"><i data-lucide="file-text"></i></span> My Notes
@@ -61,11 +57,95 @@
             </div>
             <div style="display:flex; align-items:center; gap:12px; font-size:14px; color:var(--gray-500)">
                 {{ now_date }}
+                
+            <div class="header-actions" style="position:relative; margin-left:16px;">
+                <button id="transferReqBellBtn" style="background:transparent; border:none; color:var(--text-secondary); cursor:pointer; position:relative; padding:8px; border-radius:50%; display:flex; align-items:center; justify-content:center; transition:background 0.2s;">
+                    <i data-lucide="bell" style="width:20px; height:20px;"></i>
+                    {% if global_transfer_requests and global_transfer_requests|length > 0 %}
+                    <span style="position:absolute; top:2px; right:2px; width:10px; height:10px; background:var(--sev-critical, #ef4444); border-radius:50%; border:2px solid var(--card-bg, #fff);"></span>
+                    {% endif %}
+                </button>
+
+                <div id="transferReqDropdown" style="display:none; position:absolute; top:45px; right:0; width:340px; background:var(--card-bg, #fff); border:1px solid var(--border, #e5e7eb); border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,0.1); z-index:100; overflow:hidden;">
+                    <div style="padding:12px 16px; border-bottom:1px solid var(--border, #e5e7eb); display:flex; justify-content:space-between; align-items:center; background:var(--bg-secondary, #fafafa);">
+                        <h4 style="margin:0; font-size:14px; color:var(--dark, #111827); font-weight:600;">Transfer Requests</h4>
+                        <span style="font-size:12px; color:var(--text-secondary, #6b7280);">{% if global_transfer_requests %}{{ global_transfer_requests|length }}{% else %}0{% endif %} pending</span>
+                    </div>
+                    <div style="max-height:320px; overflow-y:auto; padding:8px;">
+                        {% if global_transfer_requests %}
+                            {% for req in global_transfer_requests %}
+                            <div id="top-req-card-{{ req.id }}" style="padding:12px; border:1px solid var(--border, #e5e7eb); border-radius:8px; margin-bottom:8px; background:var(--card-bg, #fff);">
+                                <div style="font-size:13px; font-weight:600; color:var(--dark, #111827); margin-bottom:2px;">{{ req.student.full_name }}</div>
+                                <div style="font-size:11px; color:var(--text-secondary, #6b7280); margin-bottom:6px; display: flex; align-items: center; gap: 4px;">
+                                    <i data-lucide="hash" style="width:10px;height:10px;"></i>
+                                    {{ req.student.student_code or 'Unknown ID' }} &emsp; <i data-lucide="graduation-cap" style="width:10px;height:10px;margin-left:4px;"></i> {{ req.student.department or 'General' }}
+                                </div>
+                                <div style="font-size:12px; color:var(--text-secondary, #4b5563); margin-bottom:10px; line-height: 1.4;">
+                                    <strong>{{ req.requester.full_name }}</strong> has requested to formally transfer this student into their classroom.
+                                </div>
+                                <div style="display:flex; gap:8px;">
+                                    <button onclick="resolveTransferRequestGlobal('{{ req.id }}', 'accept', this)" style="flex:1; padding:6px; background:var(--success-color, #10b981); color:white; border:none; border-radius:6px; font-size:12px; font-weight:500; cursor:pointer; display:flex; justify-content:center; align-items:center; gap:4px;">
+                                        <i data-lucide="check" style="width:12px;height:12px;"></i> Accept
+                                    </button>
+                                    <button onclick="resolveTransferRequestGlobal('{{ req.id }}', 'reject', this)" style="flex:1; padding:6px; background:transparent; border:1px solid var(--sev-critical, #ef4444); color:var(--sev-critical, #ef4444); border-radius:6px; font-size:12px; font-weight:500; cursor:pointer; display:flex; justify-content:center; align-items:center; gap:4px;">
+                                        <i data-lucide="x" style="width:12px;height:12px;"></i> Decline
+                                    </button>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div style="padding:24px 0; text-align:center; color:var(--text-secondary, #6b7280); font-size:13px; display:flex; flex-direction:column; align-items:center; gap:8px;">
+                                <i data-lucide="check-circle" style="width:24px; height:24px; opacity:0.5;"></i>
+                                No pending requests
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
                 <button class="dm-toggle" id="dmToggle" onclick="toggleDarkMode()" title="Toggle dark mode">
                     <i data-lucide="moon" id="dmIcon"></i>
                 </button>
             </div>
         </div>
+
+        <!-- Incoming Transfer Requests -->
+        {% if incoming_requests %}
+        <div class="card" style="margin-bottom: 24px; border: 1px solid var(--primary); box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+                <h3 style="margin:0; color: var(--primary);">
+                    <i data-lucide="bell" style="width:18px;height:18px; margin-right:4px;"></i> 
+                    Incoming Transfer Requests
+                </h3>
+            </div>
+            <div class="table-container">
+                <table id="requestsTable">
+                    <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th>Requested By</th>
+                            <th>Message</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for req in incoming_requests %}
+                        <tr id="req-row-{{ req.id }}">
+                            <td><div style="font-weight:600">{{ req.student.full_name }}</div></td>
+                            <td>{{ req.requester.full_name }}</td>
+                            <td><span style="font-size:13px; color:var(--text-secondary);">Needs this student for their class</span></td>
+                            <td>
+                                <div style="display:flex; gap:8px;">
+                                    <button class="btn-sm" style="background:var(--success); color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer;" onclick="resolveRequest('{{ req.id }}', 'accept')">Accept</button>
+                                    <button class="btn-sm" style="background:transparent; color:var(--danger); border:1px solid var(--danger); padding:6px 12px; border-radius:6px; cursor:pointer;" onclick="resolveRequest('{{ req.id }}', 'reject')">Decline</button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
 
         <!-- Student List -->
         <div class="card">
@@ -139,8 +219,86 @@
                 </table>
             </div>
         </div>
-    </div>
+        <!-- Incoming Transfer Requests -->
+        {% if incoming_requests %}
+        <div class="card" style="margin-bottom: 24px; border: 1px dashed var(--primary); background: rgba(99, 102, 241, 0.02);">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+                <h3 style="margin:0; color: var(--text-primary); display: flex; align-items: center; gap: 6px;">
+                    <i data-lucide="inbox" style="width:18px;height:18px; color: var(--primary);"></i> 
+                    Incoming Transfer Requests
+                </h3>
+            </div>
+            <div class="table-container">
+                <table id="incomingRequestsTable">
+                    <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th>Requested By</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for req in incoming_requests %}
+                        <tr id="req-row-{{ req.id }}">
+                            <td><div style="font-weight:600">{{ req.student.full_name }}</div></td>
+                            <td>{{ req.requester.full_name }}</td>
+                            <td><span style="font-size:11px; font-weight:600; color:var(--warning-color, #f59e0b); background:rgba(245, 158, 11, 0.1); padding:4px 10px; border-radius:12px; border:1px solid rgba(245, 158, 11, 0.2);">Pending Review</span></td>
+                            <td style="display: flex; gap: 8px;">
+                                <button onclick="resolveTransferRequestGlobal('{{ req.id }}', 'accept', this)" class="btn-sm" style="background:var(--success-color, #10b981); color:white; border:none; display:flex; align-items:center; gap:4px;">
+                                    <i data-lucide="check" style="width:14px;height:14px;"></i> Accept
+                                </button>
+                                <button onclick="resolveTransferRequestGlobal('{{ req.id }}', 'reject', this)" class="btn-sm" style="background:transparent; color:var(--sev-critical, #ef4444); border:1px solid var(--sev-critical, #ef4444); display:flex; align-items:center; gap:4px;">
+                                    <i data-lucide="x" style="width:14px;height:14px;"></i> Decline
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
 
+        <!-- Outgoing Transfer Requests -->
+        {% if outgoing_requests %}
+        <div class="card" style="margin-bottom: 24px; border: 1px dashed var(--border);">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+                <h3 style="margin:0; color: var(--text-secondary);">
+                    <i data-lucide="clock" style="width:18px;height:18px; margin-right:4px;"></i> 
+                    Sent Requests (Pending)
+                </h3>
+            </div>
+            <div class="table-container">
+                <table id="outgoingRequestsTable">
+                    <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th>Waiting on Teacher</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for req in outgoing_requests %}
+                        <tr id="req-row-{{ req.id }}">
+                            <td><div style="font-weight:600">{{ req.student.full_name }}</div></td>
+                            <td>{{ req.current_owner.full_name }}</td>
+                            <td><span style="font-size:11px; font-weight:600; color:var(--text-secondary); background:var(--bg-main); padding:4px 10px; border-radius:12px; border:1px solid var(--border);">Pending Approval</span></td>
+                            <td>
+                                <button onclick="resolveTransferRequestGlobal('{{ req.id }}', 'cancel', this)" class="btn-sm" style="background:transparent; color:var(--text-muted, #9ca3af); border:1px solid var(--text-muted, #9ca3af); display:flex; align-items:center; gap:4px; font-weight: 500;" onmouseover="this.style.color='var(--sev-critical, #ef4444)'; this.style.borderColor='var(--sev-critical, #ef4444)';" onmouseout="this.style.color='var(--text-muted, #9ca3af)'; this.style.borderColor='var(--text-muted, #9ca3af)';">
+                                    <i data-lucide="x-circle" style="width:14px;height:14px;"></i> Cancel
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
     <!-- ── Assignment Modal ── -->
     <div class="modal-overlay" id="assignModal" onclick="handleOverlayClick(event)">
         <div class="modal-glass">
@@ -266,31 +424,41 @@
         function renderUnassignedList(students) {
             const listEl = document.getElementById('unassignedList');
             if (!students.length) {
-                listEl.innerHTML = '<div class="modal-empty">No unassigned students found.</div>';
+                listEl.innerHTML = '<div class="modal-empty">No students found.</div>';
                 return;
             }
             listEl.innerHTML = students.map(s => {
                 const cgpa = s.current_cgpa != null ? s.current_cgpa.toFixed(2) : '--';
                 const statusClass = s.performance_status ? `badge-status-${s.performance_status}` : '';
+                
+                const isAssigned = s.assigned_teacher != null;
+                const assignmentBadge = isAssigned 
+                    ? `<span style="font-size:11px; padding:3px 8px; border-radius:12px; background:rgba(239, 68, 68, 0.1); border:1px solid rgba(239, 68, 68, 0.2); color:#ef4444; margin-left:8px; font-weight:500; display:inline-flex; align-items:center;"><i data-lucide="lock" style="width:10px;height:10px;margin-right:4px;"></i>Assigned to ${s.assigned_teacher}</span>` 
+                    : `<span style="font-size:11px; padding:3px 8px; border-radius:12px; background:rgba(34, 197, 94, 0.1); color:#22c55e; border:1px solid rgba(34, 197, 94, 0.2); margin-left:8px; font-weight:500; display:inline-flex; align-items:center;"><i data-lucide="unlock" style="width:10px;height:10px;margin-right:4px;"></i>Available</span>`;
+
+                const actionButton = isAssigned 
+                    ? `<button class="btn-assign-outline" onclick="requestAssignment(${s.id}, this)">Request</button>` 
+                    : `<button class="btn-assign" style="background:linear-gradient(90deg, #6366f1, #8b5cf6); color:white; border:none; font-weight:600; padding:8px 18px; border-radius:8px; cursor:pointer; transition:opacity 0.2s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'" onclick="assignStudent(${s.id}, this, '${s.full_name.replace(/'/g, "&apos;")}')">Assign</button>`;
+
                 return `
                 <div class="assign-row" data-id="${s.id}" data-name="${s.full_name.toLowerCase()}">
                     <div class="assign-row-info">
                         <h4>${s.full_name}</h4>
                         ${s.student_code ? `<div style="font-family:'Menlo','Consolas',monospace;font-size:11px;color:var(--text-secondary);margin-bottom:2px;">ID ${s.student_code}</div>` : ''}
-                        <div class="assign-row-meta">
+                        <div class="assign-row-meta" style="align-items:center; flex-wrap:wrap;">
                             <span>${s.department}</span>
                             <span>Class ${s.class_level}-${s.section}</span>
+                            ${assignmentBadge}
                         </div>
                     </div>
                     <div style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
                         <span class="badge-cgpa">${cgpa}</span>
                         <span class="${statusClass}">${s.performance_status || ''}</span>
-                        <button class="btn-assign" onclick="assignStudent(${s.id}, this, '${s.full_name.replace(/'/g, "&apos;")}')">
-                            Assign
-                        </button>
+                        ${actionButton}
                     </div>
                 </div>`;
             }).join('');
+            lucide.createIcons({root: listEl});
         }
 
         // Live client-side search filter
@@ -358,13 +526,64 @@
                     </td>
                     <td><button class="btn-remove" onclick="removeStudent(${s.id}, this)">Remove</button></td>`;
                 tbody.appendChild(newTr);
-                lucide.createIcons();   // re-init so the send icon renders
-                updateAssignedCount();
+                // Refresh the modal to reflect they are no longer unassigned
+                openAssignModal();
 
-            } catch (e) {
-                console.error(e);
+            } catch (err) {
+                showToast('Network error.', 'error');
                 btn.disabled = false;
                 btn.textContent = 'Assign';
+            }
+        }
+
+        // POST request assignment
+        async function requestAssignment(studentId, btn) {
+            btn.disabled = true;
+            btn.textContent = '…';
+            try {
+                const res = await fetch('/api/teacher/request-assignment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ student_id: studentId })
+                });
+                if (!res.ok) {
+                    const err = await res.json();
+                    showToast(err.msg || 'Request failed.', 'error');
+                    btn.disabled = false;
+                    btn.textContent = 'Request';
+                    return;
+                }
+                showToast('Transfer request sent!', 'success');
+                btn.textContent = 'Requested';
+            } catch(e) {
+                showToast('Network error.', 'error');
+                btn.disabled = false;
+                btn.textContent = 'Request';
+            }
+        }
+
+        // Resolve incoming request
+        async function resolveRequest(requestId, action) {
+            try {
+                const res = await fetch('/api/teacher/resolve-request', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ request_id: requestId, action: action })
+                });
+                if (!res.ok) {
+                    showToast('Failed to resolve request.', 'error');
+                    return;
+                }
+                showToast(`Request ${action}ed!`, 'success');
+                const row = document.getElementById(`req-row-${requestId}`);
+                if (row) row.remove();
+
+                // If accepted, student was removed from this teacher's list, refresh to update UI
+                if (action === 'accept') {
+                    setTimeout(() => window.location.reload(), 1500);
+                }
+            } catch(e) {
+                showToast('Network error.', 'error');
             }
         }
 
@@ -508,6 +727,81 @@
         lucide.createIcons();
         updateDmIcon(localStorage.getItem('teacher_theme') || 'light');
     </script>
+
+<!-- Transfer Accept logic -->
+<script>
+async function resolveTransferRequestGlobal(reqId, action, btn) {
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i data-lucide="loader-2" class="spinner" style="width:14px;height:14px;"></i> Processing';
+        if(typeof lucide !== 'undefined') lucide.createIcons();
+    }
+    try {
+        const res = await fetch('/api/teacher/resolve-request', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ request_id: reqId, action: action })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+            // Remove from Bell
+            const card = document.getElementById('top-req-card-' + reqId);
+            if (card) card.remove();
+            
+            // Remove from inline page Tables if any
+            const row = document.getElementById('req-row-' + reqId);
+            if (row) row.remove();
+
+            if (typeof showToast === 'function') {
+                showToast('Transfer request ' + action + 'ed!', 'success');
+            } else {
+                alert('Transfer request ' + action + 'ed successfully!');
+            }
+            
+            setTimeout(() => window.location.reload(), 800);
+        } else {
+            if (typeof showToast === 'function') {
+                showToast(data.msg || 'Action failed.', 'error');
+            } else {
+                alert(data.msg || 'Action failed.');
+            }
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = action === 'accept' ? 'Accept' : 'Decline';
+            }
+        }
+    } catch (e) {
+        console.error(e);
+        if (typeof showToast === 'function') showToast('Network error.', 'error');
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = action === 'accept' ? 'Accept' : 'Decline';
+        }
+    }
+}
+</script>
+
+
+<!-- Notification Bell Toggle -->
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const bellBtn = document.getElementById('transferReqBellBtn');
+    const bellDropdown = document.getElementById('transferReqDropdown');
+    if(bellBtn && bellDropdown) {
+        bellBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            bellDropdown.style.display = bellDropdown.style.display === 'none' ? 'block' : 'none';
+        });
+        document.addEventListener('click', (e) => {
+            if(!bellDropdown.contains(e.target) && !bellBtn.contains(e.target)) {
+                bellDropdown.style.display = 'none';
+            }
+        });
+    }
+});
+</script>
+
 </body>
 
 </html>

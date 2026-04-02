@@ -15,7 +15,7 @@ from models.user import User, UserToken  # noqa: F401
 from models.student import StudentProfile, AcademicMetric, StudentSettings  # noqa: F401
 
 # ── Teacher ──
-from models.teacher import TeacherProfile, TeacherAssignment  # noqa: F401
+from models.teacher import TeacherProfile, TeacherAssignment, AssignmentTransferRequest  # noqa: F401
 
 # ── Academic Records ──
 from models.academic import (  # noqa: F401

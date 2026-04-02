@@ -42,3 +42,16 @@ class TeacherAssignment(db.Model):
         db.Index('ix_teacher_assignment_teacher_id', 'teacher_id'),
         db.Index('ix_teacher_assignment_student_id', 'student_id'),
     )
+
+class AssignmentTransferRequest(db.Model):
+    """Tracks requests between teachers to transfer a student assignment."""
+    id = db.Column(db.Integer, primary_key=True)
+    requester_id = db.Column(db.Integer, db.ForeignKey('teacher_profile.id'), nullable=False)
+    current_owner_id = db.Column(db.Integer, db.ForeignKey('teacher_profile.id'), nullable=False)
+    student_id = db.Column(db.Integer, db.ForeignKey('student_profile.id'), nullable=False)
+    status = db.Column(db.String(20), default='pending') # pending, accepted, rejected
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    requester = db.relationship('TeacherProfile', foreign_keys=[requester_id])
+    current_owner = db.relationship('TeacherProfile', foreign_keys=[current_owner_id])
+    student = db.relationship('StudentProfile', foreign_keys=[student_id])
