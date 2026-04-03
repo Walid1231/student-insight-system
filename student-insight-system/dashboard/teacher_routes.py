@@ -174,7 +174,7 @@ def teacher_dashboard():
             )
             .filter(StudentSkill.student_id.in_(student_ids))
             .group_by(StudentSkill.skill_name)
-            .order_by(func.avg(StudentSkill.proficiency_score).desc())
+            .order_by(func.count(StudentSkill.student_id).desc())
             .limit(8)
             .all()
         )

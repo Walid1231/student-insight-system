@@ -14,7 +14,7 @@ class StudySession(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     student_id = db.Column(db.Integer, db.ForeignKey('student_profile.id'), nullable=False)
 
-    date = db.Column(db.Date, default=datetime.utcnow)
+    date = db.Column(db.Date, default=lambda: datetime.utcnow().date())
     duration_minutes = db.Column(db.Integer, nullable=False)
     topic_studied = db.Column(db.String(255))
     related_skill = db.Column(db.String(255), nullable=True)
