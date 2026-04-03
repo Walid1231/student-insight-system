@@ -1,0 +1,124 @@
+============================================================
+ALL TEACHERS:
+============================================================
+  ID=1  user_id=5  name=eva
+  ID=2  user_id=17  name=gf
+  ID=3  user_id=18  name=ibrahim
+  ID=4  user_id=21  name=walid
+  ID=5  user_id=29  name=Dr. Sarah Johnson
+  ID=6  user_id=37  name=Khanki
+  ID=7  user_id=38  name=masud
+  ID=8  user_id=40  name=Testing New User
+  ID=9  user_id=43  name=masud
+  ID=10  user_id=44  name=Testing New Teacher
+  ID=11  user_id=45  name=mehdi
+  ID=12  user_id=46  name=Brand New User
+  ID=13  user_id=47  name=pparvez
+  ID=14  user_id=48  name=nur
+  ID=15  user_id=49  name=emon
+  ID=16  user_id=50  name=kabbo
+
+============================================================
+ALL TRANSFER REQUESTS (any status):
+============================================================
+  ReqID=2  status=accepted
+    requester_id=16 (kabbo)
+    current_owner_id=14 (nur)
+    student_id=33 (Testing Student 2)
+  ReqID=8  status=pending
+    requester_id=16 (kabbo)
+    current_owner_id=2 (gf)
+    student_id=5 (Ahmed Al-Rashid)
+  ReqID=9  status=accepted
+    requester_id=16 (kabbo)
+    current_owner_id=14 (nur)
+    student_id=23 (Alice)
+  ReqID=7  status=accepted
+    requester_id=16 (kabbo)
+    current_owner_id=1 (eva)
+    student_id=6 (Fatima Noor)
+  ReqID=10  status=pending
+    requester_id=1 (eva)
+    current_owner_id=2 (gf)
+    student_id=5 (Ahmed Al-Rashid)
+  ReqID=12  status=accepted
+    requester_id=1 (eva)
+    current_owner_id=14 (nur)
+    student_id=32 (Testing Student 1)
+  ReqID=13  status=pending
+    requester_id=1 (eva)
+    current_owner_id=5 (Dr. Sarah Johnson)
+    student_id=28 (Eve Wilson)
+  ReqID=14  status=pending
+    requester_id=1 (eva)
+    current_owner_id=4 (walid)
+    student_id=6 (Fatima Noor)
+  ReqID=15  status=pending
+    requester_id=1 (eva)
+    current_owner_id=16 (kabbo)
+    student_id=23 (Alice)
+
+============================================================
+BELL NOTIFICATION SIMULATION (get_global_transfer_requests):
+============================================================
+  Teacher 'eva' (ID=1): 0 incoming pending
+  Teacher 'gf' (ID=2): 2 incoming pending
+    -> ReqID=8 from requester_id=16 for student_id=5
+    -> ReqID=10 from requester_id=1 for student_id=5
+  Teacher 'ibrahim' (ID=3): 0 incoming pending
+  Teacher 'walid' (ID=4): 1 incoming pending
+    -> ReqID=14 from requester_id=1 for student_id=6
+  Teacher 'Dr. Sarah Johnson' (ID=5): 1 incoming pending
+    -> ReqID=13 from requester_id=1 for student_id=28
+  Teacher 'Khanki' (ID=6): 0 incoming pending
+  Teacher 'masud' (ID=7): 0 incoming pending
+  Teacher 'Testing New User' (ID=8): 0 incoming pending
+  Teacher 'masud' (ID=9): 0 incoming pending
+  Teacher 'Testing New Teacher' (ID=10): 0 incoming pending
+  Teacher 'mehdi' (ID=11): 0 incoming pending
+  Teacher 'Brand New User' (ID=12): 0 incoming pending
+  Teacher 'pparvez' (ID=13): 0 incoming pending
+  Teacher 'nur' (ID=14): 0 incoming pending
+  Teacher 'emon' (ID=15): 0 incoming pending
+  Teacher 'kabbo' (ID=16): 1 incoming pending
+    -> ReqID=15 from requester_id=1 for student_id=23
+
+============================================================
+TEACHER ASSIGNMENTS (all):
+============================================================
+  AssignID=3  teacher_id=1  student_id=8
+  AssignID=4  teacher_id=1  student_id=11
+  AssignID=8  teacher_id=1  student_id=10
+  AssignID=9  teacher_id=1  student_id=12
+  AssignID=13  teacher_id=2  student_id=5
+  AssignID=14  teacher_id=1  student_id=7
+  AssignID=15  teacher_id=1  student_id=15
+  AssignID=17  teacher_id=4  student_id=8
+  AssignID=18  teacher_id=4  student_id=14
+  AssignID=19  teacher_id=4  student_id=13
+  AssignID=20  teacher_id=4  student_id=2
+  AssignID=21  teacher_id=4  student_id=11
+  AssignID=22  teacher_id=4  student_id=4
+  AssignID=23  teacher_id=4  student_id=9
+  AssignID=24  teacher_id=4  student_id=12
+  AssignID=25  teacher_id=4  student_id=16
+  AssignID=26  teacher_id=4  student_id=10
+  AssignID=27  teacher_id=4  student_id=7
+  AssignID=28  teacher_id=4  student_id=6
+  AssignID=29  teacher_id=4  student_id=15
+  AssignID=30  teacher_id=4  student_id=5
+  AssignID=31  teacher_id=5  student_id=24
+  AssignID=32  teacher_id=5  student_id=25
+  AssignID=33  teacher_id=5  student_id=26
+  AssignID=34  teacher_id=5  student_id=27
+  AssignID=35  teacher_id=5  student_id=28
+  AssignID=36  teacher_id=5  student_id=29
+  AssignID=37  teacher_id=5  student_id=30
+  AssignID=45  teacher_id=14  student_id=28
+  AssignID=47  teacher_id=14  student_id=29
+  AssignID=48  teacher_id=14  student_id=30
+  AssignID=63  teacher_id=14  student_id=31
+  AssignID=69  teacher_id=16  student_id=33
+  AssignID=70  teacher_id=16  student_id=23
+  AssignID=71  teacher_id=16  student_id=6
+  AssignID=72  teacher_id=1  student_id=32
