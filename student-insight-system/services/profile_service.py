@@ -32,11 +32,13 @@ class ProfileService:
 
     @staticmethod
     def update_profile(user_id: str, data, profile_picture_file=None,
-                       upload_root=None) -> None:
+                       cover_picture_file=None, upload_root=None) -> None:
         """Update profile fields and optionally upload a picture."""
         student = ProfileService._get_student(user_id)
 
         student.full_name = data.full_name
+        if getattr(data, 'email', None):
+            student.user.email = data.email
         if data.university is not None:
             student.university = data.university
         if data.department is not None:
@@ -55,13 +57,19 @@ class ProfileService:
             student.bio = data.bio
 
         # Handle profile picture
-        if profile_picture_file and profile_picture_file.filename:
-            filename = secure_filename(profile_picture_file.filename)
-            if upload_root:
-                upload_folder = os.path.join(upload_root, 'static', 'uploads', 'profile_pics')
-                os.makedirs(upload_folder, exist_ok=True)
+        if upload_root:
+            upload_folder = os.path.join(upload_root, 'static', 'uploads', 'profile_pics')
+            os.makedirs(upload_folder, exist_ok=True)
+            
+            if profile_picture_file and profile_picture_file.filename:
+                filename = secure_filename(profile_picture_file.filename)
                 profile_picture_file.save(os.path.join(upload_folder, filename))
                 student.profile_picture = filename
+                
+            if cover_picture_file and cover_picture_file.filename:
+                cover_filename = secure_filename(cover_picture_file.filename)
+                cover_picture_file.save(os.path.join(upload_folder, cover_filename))
+                student.cover_picture = cover_filename
 
         db.session.commit()
         logger.info("Profile updated for student_id=%d", student.id)

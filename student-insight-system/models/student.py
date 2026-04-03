@@ -23,6 +23,7 @@ class StudentProfile(db.Model):
     github_profile = db.Column(db.String(300))
     bio = db.Column(db.Text)
     profile_picture = db.Column(db.String(200))
+    cover_picture = db.Column(db.String(200))
 
     # Enhanced tracking
     grading_scale = db.Column(db.Float, default=4.0)

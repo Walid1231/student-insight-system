@@ -1,271 +1,857 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="preload">
 
 <head>
     <meta charset="UTF-8">
     <title>My Profile | Student Insight</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <!-- Unified Styles -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/unified_styles.css') }}?v=2">
+    <!-- Preconnect -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+
+    <!-- FOUC Prevention -->
+    <style>
+        html.preload body {
+            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+
+        body {
+            opacity: 1;
+            visibility: visible;
+            transition: opacity 0.3s ease-in;
+        }
+    </style>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/unified_styles.css') }}?v=3">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="{{ url_for('static', filename='css/ui_alerts.css') }}" rel="stylesheet">
     <script src="{{ url_for('static', filename='js/ui_alerts.js') }}"></script>
+
+    <!-- Anti-FOUC Script -->
+    <script>
+        (function () {
+            const safetyTimer = setTimeout(function () {
+                document.documentElement.classList.remove('preload');
+            }, 3000);
+            Promise.all([
+                document.fonts.ready,
+                new Promise(resolve => {
+                    if (document.readyState === 'loading') {
+                        document.addEventListener('DOMContentLoaded', resolve);
+                    } else { resolve(); }
+                })
+            ]).then(() => {
+                clearTimeout(safetyTimer);
+                requestAnimationFrame(() => {
+                    document.documentElement.classList.remove('preload');
+                });
+            });
+        })();
+    </script>
 </head>
 
-<body class="preload">
-
+<body>
     {% set active_page = 'profile' %}
     {% include 'components/sidebar.html' %}
 
-    <div class="main-content">
-        <!-- 1. HEADER (Always Visible) -->
-        <div class="profile-header">
-            <div class="profile-img-container">
-                <img src="{{ url_for('static', filename='uploads/profile_pics/' + student.profile_picture) if student.profile_picture else 'https://ui-avatars.com/api/?name=' + student.full_name + '&background=0D8ABC&color=fff' }}"
-                    alt="Profile" class="profile-img" id="profileDisplay">
-                <label for="profile_upload" class="upload-btn">
-                    <i class="fas fa-camera"></i>
-                </label>
+    <main class="main-content">
+        <style>
+            /* ═══════════════════════════════════════════════════════
+               PROFILE PAGE — Full Page Integrated UI
+               ═══════════════════════════════════════════════════════ */
+
+            .profile-layout {
+                width: 100%;
+                display: flex;
+                flex-direction: column;
+                gap: 0; /* Cohesive look */
+                padding-bottom: 60px;
+            }
+
+            /* Overwrite dashboard-container padding for full-bleed look if needed */
+            .profile-page-container {
+                max-width: 1400px;
+                margin: 0 auto;
+                padding: 24px;
+            }
+
+            /* ── Hero Banner (Fills Width) ── */
+            .profile-hero {
+                position: relative;
+                border-radius: 24px;
+                overflow: hidden;
+                background: var(--bg-surface, #fff);
+                border: 1px solid var(--border-light, #e5e7eb);
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+                margin-bottom: 32px;
+            }
+
+            .profile-hero-cover {
+                height: 200px;
+                background: linear-gradient(135deg, #4f46e5 0%, #6366f1 40%, #a5b4fc 100%);
+                position: relative;
+            }
+            
+            @media (min-width: 1200px) {
+                .profile-hero-cover { height: 260px; }
+            }
+
+            .profile-hero-cover::after {
+                content: '';
+                position: absolute;
+                inset: 0;
+                background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.08'%3E%3Cpath d='M30 30h30v30H30zM0 0h30v30H0z'/%3E%3C/g%3E%3C/svg%3E");
+                opacity: 0.4;
+            }
+
+            .profile-hero-body {
+                display: flex;
+                align-items: flex-end;
+                gap: 32px;
+                padding: 0 48px 40px;
+                margin-top: -70px;
+                position: relative;
+                z-index: 2;
+                flex-wrap: wrap;
+            }
+
+            .profile-avatar-wrap {
+                position: relative;
+                flex-shrink: 0;
+            }
+
+            .profile-avatar {
+                width: 160px;
+                height: 160px;
+                border-radius: 50%;
+                object-fit: cover;
+                border: 8px solid var(--bg-surface, #fff);
+                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
+                background: var(--bg-surface, #fff);
+            }
+
+            .profile-avatar-upload {
+                position: absolute;
+                bottom: 12px;
+                right: 12px;
+                width: 44px;
+                height: 44px;
+                border-radius: 50%;
+                background: #6366f1;
+                color: #fff;
+                border: 4px solid var(--bg-surface, #fff);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                font-size: 16px;
+                transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            }
+
+            .profile-avatar-upload:hover {
+                background: #4338ca;
+                transform: scale(1.1) rotate(15deg);
+            }
+
+            .profile-cover-upload {
+                position: absolute;
+                top: 20px;
+                right: 20px;
+                padding: 10px 16px;
+                border-radius: 8px;
+                background: rgba(0, 0, 0, 0.5);
+                color: #fff;
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                backdrop-filter: blur(4px);
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                cursor: pointer;
+                font-size: 14px;
+                font-weight: 600;
+                transition: all 0.3s ease;
+                z-index: 3;
+            }
+
+            .profile-cover-upload:hover {
+                background: rgba(0, 0, 0, 0.7);
+                border-color: rgba(255, 255, 255, 0.4);
+            }
+
+            .profile-hero-info {
+                flex: 1;
+                min-width: 300px;
+                padding-bottom: 10px;
+            }
+
+            .profile-hero-name {
+                font-size: 36px;
+                font-weight: 850;
+                color: var(--text-dark, #111827);
+                margin: 0 0 10px;
+                letter-spacing: -1px;
+                line-height: 1;
+            }
+
+            .profile-hero-meta {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 20px;
+            }
+
+            .profile-hero-meta span {
+                font-size: 16px;
+                font-weight: 500;
+                color: var(--text-muted, #6b7280);
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .profile-hero-meta span i {
+                font-size: 15px;
+                color: #6366f1;
+            }
+
+            .profile-hero-actions {
+                margin-left: auto;
+                display: flex;
+                gap: 12px;
+                align-self: center;
+                flex-shrink: 0;
+            }
+
+            .btn-hero {
+                padding: 14px 28px;
+                border-radius: 12px;
+                font-size: 15px;
+                font-weight: 700;
+                cursor: pointer;
+                font-family: 'Inter', sans-serif;
+                display: inline-flex;
+                align-items: center;
+                gap: 10px;
+                transition: all 0.25s ease;
+                border: 2px solid transparent;
+            }
+
+            .btn-hero-primary {
+                background: #6366f1;
+                color: #fff;
+                border-color: #6366f1;
+                box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+            }
+
+            .btn-hero-primary:hover {
+                background: #4f46e5;
+                border-color: #4f46e5;
+                transform: translateY(-2px);
+                box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
+            }
+
+            .btn-hero-cancel {
+                background: var(--bg-surface, #fff);
+                color: var(--text-dark, #374151);
+                border-color: var(--border-light, #e5e7eb);
+            }
+
+            .btn-hero-cancel:hover {
+                background: var(--bg-body, #f9fafb);
+                border-color: var(--text-tertiary, #d1d5db);
+            }
+
+            /* ── Full Page Surface ── */
+            .profile-main-surface {
+                background: var(--bg-surface, #fff);
+                border: 1px solid var(--border-light, #e5e7eb);
+                border-radius: 24px;
+                padding: 60px;
+                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.02);
+            }
+
+            @media (max-width: 768px) {
+                .profile-main-surface { padding: 32px; }
+            }
+
+            .profile-section {
+                margin-bottom: 64px;
+            }
+
+            .profile-section:last-child {
+                margin-bottom: 0;
+            }
+
+            .profile-section-title {
+                display: flex;
+                align-items: center;
+                gap: 16px;
+                margin-bottom: 32px;
+            }
+
+            .profile-section-title i {
+                width: 48px;
+                height: 48px;
+                background: rgba(99, 102, 241, 0.08);
+                color: #6366f1;
+                border-radius: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 20px;
+            }
+
+            .profile-section-title h3 {
+                font-size: 22px;
+                font-weight: 850;
+                color: var(--text-dark, #111827);
+                margin: 0;
+                letter-spacing: -0.5px;
+            }
+
+            /* ── Info Grid ── */
+            .profile-info-grid {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 48px 32px;
+            }
+
+            @media (max-width: 1024px) {
+                .profile-info-grid { grid-template-columns: 1fr 1fr; }
+            }
+
+            @media (max-width: 640px) {
+                .profile-info-grid { grid-template-columns: 1fr; }
+            }
+
+            .profile-info-item {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .profile-info-item.full-span {
+                grid-column: 1 / -1;
+            }
+
+            .profile-info-label {
+                font-size: 12px;
+                font-weight: 800;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                color: var(--text-muted, #9ca3af);
+            }
+
+            .profile-info-value {
+                font-size: 17px;
+                font-weight: 600;
+                color: var(--text-dark, #111827);
+                line-height: 1.5;
+            }
+
+            .profile-info-value.bio-text {
+                font-weight: 400;
+                color: var(--text-muted, #4b5563);
+                font-size: 16px;
+                white-space: pre-wrap;
+                max-width: 800px;
+            }
+
+            .profile-info-empty {
+                color: #d1d5db;
+                font-style: italic;
+                font-weight: 400;
+            }
+
+            /* ── Links ── */
+            .profile-links-flex {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 16px;
+            }
+
+            .profile-link-card {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 16px 24px;
+                border-radius: 16px;
+                border: 2px solid var(--border-light, #e5e7eb);
+                text-decoration: none;
+                color: var(--text-dark, #111827);
+                font-weight: 700;
+                font-size: 15px;
+                transition: all 0.25s;
+                background: transparent;
+            }
+
+            .profile-link-card:hover {
+                border-color: #6366f1;
+                background: rgba(99, 102, 241, 0.03);
+                color: #6366f1;
+                transform: translateY(-3px);
+            }
+
+            .profile-link-card i { font-size: 18px; }
+            .profile-link-card .fa-linkedin { color: #0a66c2; }
+            .profile-link-card .fa-github { color: #181717; }
+
+            /* ── Form Styling ── */
+            .profile-form-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 24px 32px;
+            }
+
+            @media (max-width: 768px) {
+                .profile-form-grid { grid-template-columns: 1fr; }
+            }
+
+            .profile-form-group {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .profile-form-group.full-span {
+                grid-column: 1 / -1;
+            }
+
+            .profile-form-group label {
+                font-size: 13px;
+                font-weight: 700;
+                color: var(--text-dark, #374151);
+                padding-left: 2px;
+            }
+
+            .profile-form-group input,
+            .profile-form-group select,
+            .profile-form-group textarea {
+                padding: 14px 18px;
+                border: 2px solid var(--border-light, #e5e7eb);
+                border-radius: 12px;
+                font-size: 15px;
+                font-family: inherit;
+                background: var(--bg-surface, #fff);
+                color: var(--text-dark, #111827);
+                transition: border-color 0.2s, box-shadow 0.2s;
+                outline: none;
+            }
+
+            .profile-form-group input:focus,
+            .profile-form-group select:focus,
+            .profile-form-group textarea:focus {
+                border-color: #6366f1;
+                box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+            }
+
+            .profile-form-group textarea {
+                min-height: 140px;
+                resize: vertical;
+            }
+
+            .profile-form-section-head {
+                grid-column: 1 / -1;
+                margin: 24px 0 8px;
+                font-size: 14px;
+                font-weight: 800;
+                color: #6366f1;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            }
+
+            .profile-form-section-head::after {
+                content: '';
+                flex: 1;
+                height: 2px;
+                background: rgba(99, 102, 241, 0.1);
+            }
+
+            /* ── Danger Management ── */
+            .profile-danger-box {
+                background: #fef2f2;
+                border: 2px dashed #fca5a5;
+                border-radius: 20px;
+                padding: 32px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 24px;
+                flex-wrap: wrap;
+            }
+
+            .danger-text-wrap h4 {
+                color: #991b1b;
+                margin: 0 0 6px;
+                font-weight: 800;
+                font-size: 18px;
+            }
+
+            .danger-text-wrap p {
+                color: #b91c1c;
+                margin: 0;
+                font-size: 15px;
+                opacity: 0.8;
+            }
+
+            .btn-danger-large {
+                background: #ef4444;
+                color: #fff;
+                padding: 14px 28px;
+                border-radius: 12px;
+                font-weight: 700;
+                border: none;
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+
+            .btn-danger-large:hover {
+                background: #dc2626;
+                transform: scale(1.02);
+                box-shadow: 0 8px 20px rgba(239, 68, 68, 0.3);
+            }
+
+            /* ═══ DARK THEME OVERRIDES ═══ */
+            html[data-theme="dark"] .profile-hero,
+            html[data-theme="dark"] .profile-main-surface {
+                background: #141720;
+                border-color: #2d3241;
+            }
+
+            html[data-theme="dark"] .profile-hero-cover {
+                background: linear-gradient(135deg, #3730a3 0%, #4338ca 40%, #6366f1 100%);
+            }
+
+            html[data-theme="dark"] .profile-avatar { border-color: #141720; }
+            html[data-theme="dark"] .profile-hero-name { color: #f3f4f6; }
+            html[data-theme="dark"] .profile-section-title h3 { color: #f3f4f6; }
+            html[data-theme="dark"] .profile-info-value { color: #e5e7eb; }
+            html[data-theme="dark"] .profile-section-title i { background: rgba(129, 140, 248, 0.1); color: #818cf8; }
+            html[data-theme="dark"] .profile-link-card { border-color: #2d3241; color: #e5e7eb; }
+            html[data-theme="dark"] .profile-link-card .fa-github { color: #f3f4f6; }
+            html[data-theme="dark"] .profile-link-card:hover { border-color: #818cf8; background: rgba(129, 140, 248, 0.05); color: #818cf8; }
+            
+            html[data-theme="dark"] .profile-form-group input,
+            html[data-theme="dark"] .profile-form-group select,
+            html[data-theme="dark"] .profile-form-group textarea {
+                background: #0f1117;
+                border-color: #2d3241;
+                color: #f3f4f6;
+            }
+
+            html[data-theme="dark"] .profile-form-group label { color: #9ca3af; }
+
+            html[data-theme="dark"] .profile-danger-box {
+                background: rgba(239, 68, 68, 0.05);
+                border-color: rgba(239, 68, 68, 0.2);
+            }
+            html[data-theme="dark"] .danger-text-wrap h4 { color: #f87171; }
+            html[data-theme="dark"] .danger-text-wrap p { color: #fca5a5; }
+
+            /* SPA Fade */
+            @keyframes profileGlobalIn {
+                from { opacity: 0; transform: translateY(15px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+            .profile-layout { animation: profileGlobalIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+            /* Modal Style Dark */
+            html[data-theme="dark"] .profile-modal-dialog {
+                background: #1a1d27;
+            }
+            
+            .profile-modal-overlay {
+                position: fixed;
+                inset: 0;
+                background: rgba(0, 0, 0, 0.5);
+                backdrop-filter: blur(12px);
+                z-index: 9999;
+                display: none;
+                align-items: center;
+                justify-content: center;
+            }
+            .profile-modal-overlay.active { display: flex; }
+            .profile-modal-dialog {
+                background: #fff;
+                border-radius: 24px;
+                padding: 40px;
+                max-width: 480px;
+                width: 90%;
+            }
+        </style>
+
+        <div class="profile-page-container">
+            <div class="profile-layout">
+
+                <!-- ═══ HERO BANNER ═══ -->
+                <div class="profile-hero">
+                    <div class="profile-hero-cover" id="profile-hero-cover" {% if student.cover_picture %}style="background: url('{{ url_for('static', filename='uploads/profile_pics/' + student.cover_picture) }}') center/cover no-repeat;"{% endif %}>
+                        <label for="cover_upload" class="profile-cover-upload hidden" id="cover-upload-btn" title="Upload new cover photo">
+                            <i class="fas fa-camera"></i> Change Cover
+                        </label>
+                    </div>
+                    <div class="profile-hero-body">
+                        <div class="profile-avatar-wrap">
+                            <img src="{{ url_for('static', filename='uploads/profile_pics/' + student.profile_picture) if student.profile_picture else 'https://ui-avatars.com/api/?name=' + student.full_name + '&background=6366f1&color=fff&size=320' }}"
+                                alt="Profile" class="profile-avatar" id="profileDisplay">
+                            <label for="profile_upload" class="profile-avatar-upload" title="Upload new photo">
+                                <i class="fas fa-camera"></i>
+                            </label>
+                        </div>
+                        <div class="profile-hero-info">
+                            <h1 class="profile-hero-name" id="header-name">{{ student.full_name }}</h1>
+                            <div class="profile-hero-meta">
+                                {% if student.university %}
+                                <span><i class="fas fa-university"></i> {{ student.university }}</span>
+                                {% endif %}
+                                {% if student.department %}
+                                <span><i class="fas fa-graduation-cap"></i> {{ student.department }}</span>
+                                {% endif %}
+                                {% if student.current_year %}
+                                <span><i class="fas fa-calendar-alt"></i> {{ student.current_year }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="profile-hero-actions" id="hero-actions-read">
+                            <button class="btn-hero btn-hero-primary" onclick="toggleEditMode()">
+                                <i class="fas fa-edit"></i> Edit Profile
+                            </button>
+                        </div>
+                        <div class="profile-hero-actions hidden" id="hero-actions-edit">
+                            <button class="btn-hero btn-hero-cancel" onclick="toggleEditMode()">
+                                <i class="fas fa-times"></i> Discard
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ═══ MAIN SURFACE (No Cards) ═══ -->
+                <div id="read-only-view" class="profile-main-surface">
+                    
+                    <!-- Section: Basic Info -->
+                    <div class="profile-section">
+                        <div class="profile-section-title">
+                            <i class="fas fa-id-card"></i>
+                            <h3>Basic Information</h3>
+                        </div>
+                        <div class="profile-info-grid">
+                            <div class="profile-info-item">
+                                <span class="profile-info-label">Full Name</span>
+                                <span class="profile-info-value" id="display-name">{{ student.full_name or '—' }}</span>
+                            </div>
+                            <div class="profile-info-item">
+                                <span class="profile-info-label">Email Address</span>
+                                <span class="profile-info-value" id="display-email">{{ student.user.email or '—' }}</span>
+                            </div>
+                            <div class="profile-info-item">
+                                <span class="profile-info-label">University / Institute</span>
+                                <span class="profile-info-value" id="display-university">{% if student.university %}{{ student.university }}{% else %}<span class="profile-info-empty">Not shared</span>{% endif %}</span>
+                            </div>
+                            <div class="profile-info-item">
+                                <span class="profile-info-label">Department</span>
+                                <span class="profile-info-value" id="display-department">{% if student.department %}{{ student.department }}{% else %}<span class="profile-info-empty">Not chosen</span>{% endif %}</span>
+                            </div>
+                            <div class="profile-info-item">
+                                <span class="profile-info-label">Academic Year</span>
+                                <span class="profile-info-value" id="display-year">{% if student.current_year %}{{ student.current_year }}{% else %}<span class="profile-info-empty">Unspecified</span>{% endif %}</span>
+                            </div>
+                            <div class="profile-info-item">
+                                <span class="profile-info-label">Target GPA Goal</span>
+                                <span class="profile-info-value" id="display-cgpa">{% if student.cgpa %}{{ student.cgpa }}{% else %}<span class="profile-info-empty">No goal set</span>{% endif %}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section: Career & Bio -->
+                    <div class="profile-section">
+                        <div class="profile-section-title">
+                            <i class="fas fa-compass"></i>
+                            <h3>Aspirations & Background</h3>
+                        </div>
+                        <div class="profile-info-grid">
+                            <div class="profile-info-item full-span">
+                                <span class="profile-info-label">Primary Career Goal</span>
+                                <span class="profile-info-value" id="display-career-goal">{% if student.career_goal %}{{ student.career_goal }}{% else %}<span class="profile-info-empty">Define your goal to get better matches</span>{% endif %}</span>
+                            </div>
+                            <div class="profile-info-item full-span">
+                                <span class="profile-info-label">About Me</span>
+                                <p class="profile-info-value bio-text" id="display-bio">{% if student.bio %}{{ student.bio }}{% else %}<span class="profile-info-empty">Share a bit about your academic journey and interests.</span>{% endif %}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section: Links -->
+                    <div class="profile-section">
+                        <div class="profile-section-title">
+                            <i class="fas fa-globe"></i>
+                            <h3>Professional Networks</h3>
+                        </div>
+                        <div class="profile-links-flex">
+                            <a href="{{ student.linkedin_profile or '#' }}" target="_blank" class="profile-link-card" id="display-linkedin" style="display: {{ 'flex' if student.linkedin_profile else 'none' }};">
+                                <i class="fab fa-linkedin"></i> LinkedIn Profile
+                            </a>
+                            <a href="{{ student.github_profile or '#' }}" target="_blank" class="profile-link-card" id="display-github" style="display: {{ 'flex' if student.github_profile else 'none' }};">
+                                <i class="fab fa-github"></i> GitHub Portfolio
+                            </a>
+                            {% if not student.linkedin_profile and not student.github_profile %}
+                            <p class="profile-info-empty">No external profiles connected yet.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Section: Danger Zone -->
+                    <div class="profile-section" style="margin-top: 80px; border-top: 1px solid var(--border-light); padding-top: 60px;">
+                        <div class="profile-danger-box">
+                            <div class="danger-text-wrap">
+                                <h4>Delete Account</h4>
+                                <p>Permanently remove your account and all academic data. This is irreversible.</p>
+                            </div>
+                            <button class="btn-danger-large" onclick="confirmDeleteProfile(event)">
+                                <i class="fas fa-trash-alt"></i> Delete Forever
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ═══ EDIT VIEW ═══ -->
+                <div id="edit-view" class="hidden profile-main-surface">
+                    <div class="profile-section-title">
+                        <i class="fas fa-user-edit"></i>
+                        <h3>Update Your Profile</h3>
+                    </div>
+                    
+                    <form action="{{ url_for('dashboard.student_profile') }}" method="POST" enctype="multipart/form-data" id="profile-form" onsubmit="handleProfileSubmit(event)">
+                        <input type="file" id="profile_upload" name="profile_picture" accept="image/*" style="display: none;"
+                            onchange="previewImage(this, 'profileDisplay')">
+                        <input type="file" id="cover_upload" name="cover_picture" accept="image/*" style="display: none;"
+                            onchange="previewImage(this, 'profile-hero-cover')">
+
+                        <div class="profile-form-grid">
+                            <div class="profile-form-section-head">Personal Details</div>
+                            <div class="profile-form-group">
+                                <label>Full Name</label>
+                                <input type="text" name="full_name" value="{{ student.full_name }}" placeholder="How do you want to be called?">
+                            </div>
+
+                            <div class="profile-form-group">
+                                <label>Email Address</label>
+                                <input type="email" name="email" value="{{ student.user.email }}" placeholder="your.email@example.com">
+                            </div>
+
+                            <div class="profile-form-group">
+                                <label>University / College</label>
+                                <input type="text" name="university" value="{{ student.university or '' }}"
+                                    placeholder="e.g. Stanford University">
+                            </div>
+
+                            <div class="profile-form-group">
+                                <label>Department</label>
+                                <select name="department" id="department-select">
+                                    <option value="">— Choose your department —</option>
+                                    {% for group_name, depts in dept_groups %}
+                                    <optgroup label="{{ group_name }}">
+                                        {% for dept in depts %}
+                                        <option value="{{ dept }}" {% if student.department == dept %}selected{% endif %}>{{ dept }}</option>
+                                        {% endfor %}
+                                    </optgroup>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="profile-form-group">
+                                <label>Current Academic Year</label>
+                                <select name="current_year">
+                                    <option value="1st Year" {% if student.current_year=='1st Year' %}selected{% endif %}>1st Year</option>
+                                    <option value="2nd Year" {% if student.current_year=='2nd Year' %}selected{% endif %}>2nd Year</option>
+                                    <option value="3rd Year" {% if student.current_year=='3rd Year' %}selected{% endif %}>3rd Year</option>
+                                    <option value="4th Year" {% if student.current_year=='4th Year' %}selected{% endif %}>4th Year</option>
+                                </select>
+                            </div>
+
+                            <div class="profile-form-section-head">Academic & Career Goals</div>
+                            <div class="profile-form-group">
+                                <label>Target GPA / CGPA</label>
+                                <input type="number" step="0.01" name="cgpa"
+                                    value="{{ student.cgpa or '' }}" placeholder="4.00">
+                            </div>
+
+                            <div class="profile-form-group">
+                                <label>Primary Career Ambition</label>
+                                <input type="text" name="career_goal"
+                                    value="{{ student.career_goal or '' }}" placeholder="e.g. Data Scientist / ML Engineer">
+                            </div>
+
+                            <div class="profile-form-group">
+                                <label>LinkedIn Profile</label>
+                                <input type="url" name="linkedin_profile"
+                                    value="{{ student.linkedin_profile or '' }}" placeholder="https://linkedin.com/in/...">
+                            </div>
+
+                            <div class="profile-form-group">
+                                <label>GitHub / Portfolio</label>
+                                <input type="url" name="github_profile"
+                                    value="{{ student.github_profile or '' }}" placeholder="https://github.com/...">
+                            </div>
+
+                            <div class="profile-form-section-head">Your Story / Bio</div>
+                            <div class="profile-form-group full-span">
+                                <label>Personal Biography</label>
+                                <textarea name="bio"
+                                    placeholder="Tell us about yourself, your skills, and what drives you. This bio will help teachers and peers know you better.">{{ student.bio or '' }}</textarea>
+                            </div>
+
+                            <div class="profile-form-actions" style="grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 16px; margin-top: 32px; border-top: 1px solid var(--border-light); padding-top: 32px;">
+                                <button type="button" class="btn-hero btn-hero-cancel" onclick="toggleEditMode()">Cancel</button>
+                                <button type="submit" class="btn-hero btn-hero-primary btn-save">Save Profile Changes</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
             </div>
-            <div class="profile-info">
-                <h1 id="header-name">{{ student.full_name }}</h1>
-                <!-- Only show fields that exist in this quick header view -->
-                {% if student.university %}
-                <p><i class="fas fa-university" style="margin-right: 5px; color: var(--accent-gold);"></i>{{
-                    student.university }}</p>
-                {% else %}
-                <p>{{ student.email }}</p>
-                {% endif %}
-            </div>
-        </div>
-
-        <!-- 2. READ-ONLY VIEW (Default) -->
-        <div id="read-only-view" class="card">
-            <div class="card-header">
-                <div class="card-title"><i class="fas fa-id-card"></i> Profile Details</div>
-                <!-- EDIT BUTTON -->
-                <button class="btn-action btn-edit" onclick="toggleEditMode()">
-                    <i class="fas fa-edit"></i> Edit Profile
-                </button>
-            </div>
-
-            <div class="info-grid">
-                <!-- Conditionally Render Fields -->
-                {% if student.full_name %}
-                <div class="info-group">
-                    <div class="info-label">Full Name</div>
-                    <div class="info-value" id="display-name">{{ student.full_name }}</div>
-                </div>
-                {% endif %}
-
-                {% if student.email %}
-                <div class="info-group">
-                    <div class="info-label">Email</div>
-                    <div class="info-value">{{ student.email }}</div>
-                </div>
-                {% endif %}
-
-                {% if student.university %}
-                <div class="info-group">
-                    <div class="info-label">University</div>
-                    <div class="info-value" id="display-university">{{ student.university }}</div>
-                </div>
-                {% endif %}
-
-                {% if student.department %}
-                <div class="info-group">
-                    <div class="info-label">Department</div>
-                    <div class="info-value" id="display-department">{{ student.department }}</div>
-                </div>
-                {% endif %}
-
-                {% if student.current_year %}
-                <div class="info-group">
-                    <div class="info-label">Year</div>
-                    <div class="info-value" id="display-year">{{ student.current_year }}</div>
-                </div>
-                {% endif %}
-
-                {% if student.cgpa %}
-                <div class="info-group">
-                    <div class="info-label">Target CGPA</div>
-                    <div class="info-value" id="display-cgpa">{{ student.cgpa }}</div>
-                </div>
-                {% endif %}
-
-                {% if student.career_goal %}
-                <div class="info-group full-width">
-                    <div class="info-label">Career Goal</div>
-                    <div class="info-value" id="display-career-goal">{{ student.career_goal }}</div>
-                </div>
-                {% endif %}
-
-                {% if student.bio %}
-                <div class="info-group full-width">
-                    <div class="info-label">Bio</div>
-                    <div class="info-value bio" id="display-bio">{{ student.bio }}</div>
-                </div>
-                {% endif %}
-
-                {% if student.linkedin_profile %}
-                <div class="info-group">
-                    <div class="info-label">LinkedIn</div>
-                    <div class="info-value"><a href="{{ student.linkedin_profile }}" id="display-linkedin" target="_blank">View Profile</a>
-                    </div>
-                </div>
-                {% endif %}
-
-                {% if student.github_profile %}
-                <div class="info-group">
-                    <div class="info-label">GitHub</div>
-                    <div class="info-value"><a href="{{ student.github_profile }}" id="display-github" target="_blank">View Profile</a>
-                    </div>
-                </div>
-                {% endif %}
-            </div>
-
-            <div class="action-bar">
-                <button class="btn-action btn-cancel" style="border-color: #ef4444; color: #ef4444;"
-                    onclick="confirmDeleteProfile(event)">
-                    <i class="fas fa-trash-alt"></i> Delete Account
-                </button>
-            </div>
-        </div>
-
-        <!-- 3. EDIT VIEW (Hidden by default) -->
-        <div id="edit-view" class="card hidden">
-            <div class="card-header">
-                <div class="card-title"><i class="fas fa-user-edit"></i> Edit Profile</div>
-            </div>
-
-            <form action="{{ url_for('dashboard.student_profile') }}" method="POST" enctype="multipart/form-data" id="profile-form" onsubmit="handleProfileSubmit(event)">
-                <input type="file" id="profile_upload" name="profile_picture" accept="image/*" style="display: none;"
-                    onchange="previewImage(this)">
-
-                <div class="form-grid">
-                    <!-- Basic Info -->
-                    <div class="form-section-title">Basic Information</div>
-
-                    <div class="form-group">
-                        <label>Full Name</label>
-                        <input type="text" class="form-control" name="full_name" value="{{ student.full_name }}">
-                    </div>
-
-                    <div class="form-group">
-                        <label>University / College</label>
-                        <input type="text" class="form-control" name="university" value="{{ student.university or '' }}"
-                            placeholder="e.g. Daffodil International University">
-                    </div>
-
-                    <div class="form-group">
-                        <label>Department</label>
-                        <select spellcheck="false" class="form-control" name="department" id="department-select">
-                            <option value="">— Choose your department —</option>
-                            {% for group_name, depts in dept_groups %}
-                            <optgroup label="{{ group_name }}">
-                                {% for dept in depts %}
-                                <option value="{{ dept }}" {% if student.department == dept %}selected{% endif %}>{{ dept }}</option>
-                                {% endfor %}
-                            </optgroup>
-                            {% endfor %}
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Current Year</label>
-                        <select class="form-control" name="current_year">
-                            <option value="1st Year" {% if student.current_year=='1st Year' %}selected{% endif %}>1st
-                                Year</option>
-                            <option value="2nd Year" {% if student.current_year=='2nd Year' %}selected{% endif %}>2nd
-                                Year</option>
-                            <option value="3rd Year" {% if student.current_year=='3rd Year' %}selected{% endif %}>3rd
-                                Year</option>
-                            <option value="4th Year" {% if student.current_year=='4th Year' %}selected{% endif %}>4th
-                                Year</option>
-                        </select>
-                    </div>
-
-                    <!-- Goals -->
-                    <div class="form-section-title">Goals & Links</div>
-
-                    <div class="form-group">
-                        <label>Target CGPA</label>
-                        <input type="number" step="0.01" class="form-control" name="cgpa"
-                            value="{{ student.cgpa or '' }}" placeholder="4.00">
-                    </div>
-
-                    <div class="form-group">
-                        <label>Career Goal</label>
-                        <input type="text" class="form-control" name="career_goal"
-                            value="{{ student.career_goal or '' }}" placeholder="e.g. Software Engineer">
-                    </div>
-
-                    <div class="form-group">
-                        <label>LinkedIn Profile URL</label>
-                        <input type="url" class="form-control" name="linkedin_profile"
-                            value="{{ student.linkedin_profile or '' }}" placeholder="https://linkedin.com/in/...">
-                    </div>
-
-                    <div class="form-group">
-                        <label>GitHub Profile URL</label>
-                        <input type="url" class="form-control" name="github_profile"
-                            value="{{ student.github_profile or '' }}" placeholder="https://github.com/...">
-                    </div>
-
-                    <div class="form-section-title">About Me</div>
-                    <div class="form-group">
-                        <label>Bio</label>
-                        <textarea class="form-control" name="bio"
-                            placeholder="Tell us about yourself...">{{ student.bio or '' }}</textarea>
-                    </div>
-                </div>
-
-                <div class="action-bar">
-                    <button type="button" class="btn-action btn-cancel" onclick="toggleEditMode()">Cancel</button>
-                    <button type="submit" class="btn-action btn-save">Save Changes</button>
-                </div>
-            </form>
         </div>
 
     <!-- DELETE MODAL -->
-    <div class="modal-overlay" id="deleteModal">
-        <div class="modal-dialog">
-            <div class="modal-header">
-                <div class="modal-title">Delete Account</div>
-            </div>
-            <div class="modal-body">
-                <p class="modal-warning-text">Are you sure you want to delete your account? This action cannot be
-                    undone.</p>
-            </div>
-            <div class="modal-footer">
-                <button class="modal-btn modal-btn-ok" onclick="executeDeleteProfile()">Yes, Delete</button>
-                <button class="modal-btn modal-btn-cancel" onclick="closeDeleteModal()">Cancel</button>
+    <div class="profile-modal-overlay" id="deleteModal">
+        <div class="profile-modal-dialog">
+            <h3 style="color: #ef4444; margin-top: 0; font-weight: 850;"><i class="fas fa-exclamation-triangle"></i> Strategic Decision</h3>
+            <p style="font-size: 16px; line-height: 1.6; color: #4b5563;">You are about to permanently delete your academic profile. All your study routines, analytics highlights, and career projections will be lost forever. Are you absolutely certain?</p>
+            <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 32px;">
+                <button class="btn-hero btn-hero-cancel" onclick="closeDeleteModal()">I'll stay</button>
+                <button class="btn-danger-large" onclick="executeDeleteProfile()">Confirm Deletion</button>
             </div>
         </div>
     </div>
 
     <script>
-        // ═══════════════════════════════════════════════════════
-        //  PROFILE PAGE — SPA-safe, self-contained script
-        //  Works on both full page load AND sidebar SPA navigation
-        // ═══════════════════════════════════════════════════════
         (function profilePageInit() {
-            // ── Polyfill showToast if ui_alerts.js wasn't loaded via SPA ──
             if (typeof showToast !== 'function') {
                 window.showToast = function(msg, type) {
                     var t = document.createElement('div');
                     t.textContent = msg;
-                    t.style.cssText = 'position:fixed;top:24px;right:24px;padding:14px 20px;border-radius:8px;color:#fff;font-size:14px;font-weight:500;z-index:10001;opacity:0;transform:translateY(-10px);transition:all .3s ease;';
+                    t.style.cssText = 'position:fixed;top:24px;right:24px;padding:16px 24px;border-radius:12px;color:#fff;font-size:14px;font-weight:600;z-index:20000;animation:profileToastIn 0.3s ease;';
                     t.style.background = (type === 'error') ? '#ef4444' : '#059669';
                     document.body.appendChild(t);
-                    requestAnimationFrame(function() { t.style.opacity = '1'; t.style.transform = 'translateY(0)'; });
-                    setTimeout(function() { t.style.opacity = '0'; setTimeout(function() { t.remove(); }, 300); }, 3000);
+                    if (!document.getElementById('profile-toast-anim')) {
+                        var style = document.createElement('style');
+                        style.id = 'profile-toast-anim';
+                        style.textContent = '@keyframes profileToastIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }';
+                        document.head.appendChild(style);
+                    }
+                    setTimeout(function() { t.style.opacity = '0'; t.style.transition = 'opacity 0.3s'; setTimeout(function() { t.remove(); }, 300); }, 3000);
                 };
             }
 
             var _originalImgSrc = '';
+            var _originalCoverStyle = '';
 
             function getEls() {
                 return {
@@ -273,8 +859,11 @@
                     edit: document.getElementById('edit-view'),
                     form: document.getElementById('profile-form'),
                     img: document.getElementById('profileDisplay'),
+                    cover: document.getElementById('profile-hero-cover'),
+                    coverBtn: document.getElementById('cover-upload-btn'),
                     headerName: document.getElementById('header-name'),
-                    deleteModal: document.getElementById('deleteModal')
+                    heroRead: document.getElementById('hero-actions-read'),
+                    heroEdit: document.getElementById('hero-actions-edit')
                 };
             }
 
@@ -282,30 +871,42 @@
                 var els = getEls();
                 if (!els.readOnly || !els.edit) return;
 
-                if (els.readOnly.classList.contains('hidden')) {
+                const isClosing = els.readOnly.classList.contains('hidden');
+                
+                if (isClosing) {
                     if (els.form) els.form.reset();
                     if (_originalImgSrc && els.img) els.img.src = _originalImgSrc;
+                    if (els.cover) els.cover.style.cssText = _originalCoverStyle;
                     els.edit.classList.add('hidden');
                     els.readOnly.classList.remove('hidden');
-                    els.readOnly.style.animation = 'none';
-                    void els.readOnly.offsetHeight;
-                    els.readOnly.style.animation = 'profileFadeIn 0.3s ease both';
+                    if (els.coverBtn) els.coverBtn.classList.add('hidden');
+                    if (els.heroRead) els.heroRead.classList.remove('hidden');
+                    if (els.heroEdit) els.heroEdit.classList.add('hidden');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
                 } else {
                     if (els.img) _originalImgSrc = els.img.src;
+                    if (els.cover) _originalCoverStyle = els.cover.style.cssText;
                     els.readOnly.classList.add('hidden');
                     els.edit.classList.remove('hidden');
-                    els.edit.style.animation = 'none';
-                    void els.edit.offsetHeight;
-                    els.edit.style.animation = 'profileFadeIn 0.3s ease both';
+                    if (els.coverBtn) els.coverBtn.classList.remove('hidden');
+                    if (els.heroRead) els.heroRead.classList.add('hidden');
+                    if (els.heroEdit) els.heroEdit.classList.remove('hidden');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
                 }
             };
 
-            window.previewImage = function(input) {
+            window.previewImage = function(input, targetId) {
                 if (input.files && input.files[0]) {
                     var reader = new FileReader();
                     reader.onload = function(e) {
-                        var img = document.getElementById('profileDisplay');
-                        if (img) img.src = e.target.result;
+                        var target = document.getElementById(targetId);
+                        if (target) {
+                            if (target.tagName === 'IMG') {
+                                target.src = e.target.result;
+                            } else {
+                                target.style.background = "url('" + e.target.result + "') center/cover no-repeat";
+                            }
+                        }
                     };
                     reader.readAsDataURL(input.files[0]);
                 }
@@ -313,29 +914,28 @@
 
             function updateOrInject(id, labelText, valueHTML, isFullWidth, isLink) {
                 var el = document.getElementById(id);
+                if (!el) return;
+                
+                var container = el.closest('.profile-info-item');
+                
                 if (!valueHTML) {
-                    if (el) el.closest('.info-group').style.display = 'none';
+                    if (container) {
+                        container.style.display = 'none';
+                    } else if (isLink) {
+                        el.style.display = 'none';
+                    } else {
+                        el.innerHTML = '<span class="profile-info-empty">Not specified</span>';
+                    }
                     return;
                 }
-                if (el) {
-                    el.closest('.info-group').style.display = 'block';
-                    if (isLink) { el.href = valueHTML; }
-                    else { el.textContent = valueHTML; }
-                } else {
-                    var grid = document.querySelector('.info-grid');
-                    if (!grid) return;
-                    var group = document.createElement('div');
-                    group.className = 'info-group' + (isFullWidth ? ' full-width' : '');
-                    var label = document.createElement('div');
-                    label.className = 'info-label';
-                    label.textContent = labelText;
-                    var val = document.createElement('div');
-                    val.className = 'info-value' + (id === 'display-bio' ? ' bio' : '');
-                    if (isLink) { val.innerHTML = '<a id="' + id + '" href="' + valueHTML + '" target="_blank">View Profile</a>'; }
-                    else { val.id = id; val.textContent = valueHTML; }
-                    group.appendChild(label);
-                    group.appendChild(val);
-                    grid.appendChild(group);
+                
+                if (container) container.style.display = 'flex';
+                
+                if (isLink) { 
+                    el.href = valueHTML; 
+                    el.style.display = 'flex'; 
+                } else { 
+                    el.textContent = valueHTML; 
                 }
             }
 
@@ -346,9 +946,8 @@
                 formData.append('_ajax', '1');
 
                 var btn = form.querySelector('.btn-save');
-                if (!btn) return;
                 var oldText = btn.innerHTML;
-                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+                btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Committing...';
                 btn.disabled = true;
 
                 fetch(form.action || '/student/profile', {
@@ -356,84 +955,54 @@
                     body: formData,
                     headers: { 'X-Requested-With': 'XMLHttpRequest' }
                 })
-                .then(function(r) { return r.json(); })
-                .then(function(data) {
+                .then(r => r.json())
+                .then(data => {
                     if (data.success) {
                         showToast('Profile updated successfully', 'success');
                         var els = getEls();
                         if (els.headerName) els.headerName.textContent = data.name;
-                        updateOrInject('display-name', 'Full Name', data.name);
-                        updateOrInject('display-university', 'University', data.university);
-                        updateOrInject('display-department', 'Department', data.department);
-                        updateOrInject('display-year', 'Year', data.current_year);
-                        updateOrInject('display-cgpa', 'Target CGPA', data.cgpa);
-                        updateOrInject('display-career-goal', 'Career Goal', data.career_goal, true);
-                        updateOrInject('display-bio', 'Bio', data.bio, true);
-                        updateOrInject('display-linkedin', 'LinkedIn', data.linkedin, false, true);
-                        updateOrInject('display-github', 'GitHub', data.github, false, true);
+                        updateOrInject('display-name', '', data.name);
+                        updateOrInject('display-email', '', data.email);
+                        updateOrInject('display-university', '', data.university);
+                        updateOrInject('display-department', '', data.department);
+                        updateOrInject('display-year', '', data.current_year);
+                        updateOrInject('display-cgpa', '', data.cgpa);
+                        updateOrInject('display-career-goal', '', data.career_goal);
+                        updateOrInject('display-bio', '', data.bio);
+                        updateOrInject('display-linkedin', '', data.linkedin, false, true);
+                        updateOrInject('display-github', '', data.github, false, true);
                         if (data.profile_picture && els.img) {
                             els.img.src = '/static/uploads/profile_pics/' + data.profile_picture;
-                        } else if (els.img && els.img.src.includes('ui-avatars.com') && data.name) {
-                            var url = new URL(els.img.src);
-                            url.searchParams.set('name', data.name);
-                            els.img.src = url.toString();
                         }
-                        Array.from(form.elements).forEach(function(el) {
-                            if (el.name && el.name !== 'profile_picture') {
-                                if (el.type === 'select-one') {
-                                    Array.from(el.options).forEach(function(opt) { opt.defaultSelected = opt.selected; });
-                                } else if (el.type !== 'file') {
-                                    el.defaultValue = el.value;
-                                }
-                            }
-                        });
+                        if (data.cover_picture && els.cover) {
+                            els.cover.style.background = "url('/static/uploads/profile_pics/" + data.cover_picture + "') center/cover no-repeat";
+                        }
                         if (els.img) _originalImgSrc = els.img.src;
-                        setTimeout(function() { toggleEditMode(); }, 200);
+                        if (els.cover) _originalCoverStyle = els.cover.style.cssText;
+                        setTimeout(toggleEditMode, 100);
                     } else {
-                        showToast(data.error || 'Validation failed.', 'error');
+                        showToast(data.error || 'Update failed.', 'error');
                     }
                 })
-                .catch(function(err) {
-                    console.error('Profile save error:', err);
-                    showToast('Network error saving profile.', 'error');
-                })
-                .finally(function() {
-                    btn.innerHTML = oldText;
-                    btn.disabled = false;
-                });
+                .catch(() => showToast('Connection issue while saving.', 'error'))
+                .finally(() => { btn.innerHTML = oldText; btn.disabled = false; });
             };
 
-            window.confirmDeleteProfile = function(event) {
-                event.preventDefault();
-                var m = document.getElementById('deleteModal');
-                if (m) m.classList.add('active');
+            window.confirmDeleteProfile = function(e) {
+                e.preventDefault();
+                document.getElementById('deleteModal').classList.add('active');
             };
             window.closeDeleteModal = function() {
-                var m = document.getElementById('deleteModal');
-                if (m) m.classList.remove('active');
+                document.getElementById('deleteModal').classList.remove('active');
             };
             window.executeDeleteProfile = function() {
-                closeDeleteModal();
-                fetch('/student/delete-profile', { method: 'DELETE', headers: { 'Content-Type': 'application/json' } })
-                    .then(function(r) { return r.json(); })
-                    .then(function(d) {
-                        if (d.success) { showToast('Profile deleted.', 'success'); window.location.href = '/'; }
-                        else showToast('Error: ' + d.error, 'error');
-                    })
-                    .catch(function() { showToast('Error deleting profile.', 'error'); });
+                fetch('/student/delete-profile', { method: 'DELETE' })
+                    .then(r => r.json())
+                    .then(d => { if (d.success) window.location.href = '/'; else showToast(d.error, 'error'); })
+                    .catch(() => showToast('Failed to delete profile.', 'error'));
             };
-
-            var dm = document.getElementById('deleteModal');
-            if (dm) dm.addEventListener('click', function(e) { if (e.target === this) closeDeleteModal(); });
-
-            if (!document.getElementById('profile-anim-style')) {
-                var s = document.createElement('style');
-                s.id = 'profile-anim-style';
-                s.textContent = '@keyframes profileFadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }';
-                document.head.appendChild(s);
-            }
         })();
     </script>
-    </div> <!-- /main-content -->
+    </main>
 </body>
 </html>
