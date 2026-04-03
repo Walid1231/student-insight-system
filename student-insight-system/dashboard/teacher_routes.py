@@ -1013,6 +1013,8 @@ def api_request_assignment():
     if existing_request:
         return jsonify({"msg": "You already have a pending request for this student."}), 409
 
+    current_owner = TeacherProfile.query.get(existing_assignment.teacher_id)
+
     transfer_req = AssignmentTransferRequest(
         requester_id=teacher.id,
         current_owner_id=existing_assignment.teacher_id,
@@ -1021,7 +1023,12 @@ def api_request_assignment():
     db.session.add(transfer_req)
     db.session.commit()
 
-    return jsonify({"success": True})
+    return jsonify({
+        "success": True,
+        "request_id": transfer_req.id,
+        "student_name": student.full_name,
+        "current_owner_name": current_owner.full_name if current_owner else "Unknown",
+    })
 
 @teacher_bp.route("/api/teacher/resolve-request", methods=["POST"])
 @jwt_required()
@@ -1168,7 +1175,7 @@ def teacher_profile_page():
         "teacher_profile.html",
         teacher=teacher,
         now_date=datetime.now().strftime("%d %B, %Y"),
-        nav_alerts_count=get_teacher_notification_count(teacher),
+        global_transfer_requests=get_global_transfer_requests(teacher),
     )
 
 
@@ -1227,3 +1234,54 @@ def api_update_teacher_picture():
     teacher.profile_picture = filename
     db.session.commit()
     return jsonify({"success": True, "filename": filename, "msg": "Picture updated"})
+
+
+@teacher_bp.route("/api/teacher/profile/delete", methods=["DELETE"])
+@jwt_required()
+def api_delete_teacher_profile():
+    """Delete the teacher profile, free all assigned students, and remove the user account."""
+    teacher, err = _get_teacher_or_403()
+    if err:
+        return err
+
+    try:
+        user_id = teacher.user_id
+
+        # 1. Delete all assignments (frees students)
+        TeacherAssignment.query.filter_by(teacher_id=teacher.id).delete()
+
+        # 2. Cancel all pending transfer requests (both incoming and outgoing)
+        AssignmentTransferRequest.query.filter(
+            db.or_(
+                AssignmentTransferRequest.requester_id == teacher.id,
+                AssignmentTransferRequest.current_owner_id == teacher.id,
+            )
+        ).delete(synchronize_session='fetch')
+
+        # 3. Delete teacher notes
+        StudentNote.query.filter_by(teacher_id=teacher.id).delete()
+
+        # 4. Remove profile picture file
+        if teacher.profile_picture:
+            upload_dir = os.path.join(current_app.root_path, 'static', 'uploads', 'teacher_pics')
+            pic_path = os.path.join(upload_dir, teacher.profile_picture)
+            if os.path.exists(pic_path):
+                os.remove(pic_path)
+
+        # 5. Delete the teacher profile
+        db.session.delete(teacher)
+
+        # 6. Delete the user account
+        from models.user import User
+        user = User.query.get(user_id)
+        if user:
+            db.session.delete(user)
+
+        db.session.commit()
+        return jsonify({"success": True, "msg": "Profile deleted successfully."})
+
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Profile deletion failed: {e}")
+        return jsonify({"success": False, "msg": "Failed to delete profile."}), 500
+

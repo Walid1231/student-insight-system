@@ -741,6 +741,29 @@
                 </div>
 
             </div>
+
+            <!-- ── Danger Zone ── -->
+            <div class="info-card full" style="border-color: rgba(239, 68, 68, 0.3); margin-top: 8px;">
+                <div class="info-card-title" style="color: #ef4444;">
+                    <i data-lucide="alert-triangle" style="color: #ef4444;"></i> Danger Zone
+                </div>
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;">
+                    <div>
+                        <div style="font-size:14px; font-weight:600; color:var(--text-primary, #111827); margin-bottom:4px;">Delete Profile</div>
+                        <div style="font-size:13px; color:var(--text-secondary, #6b7280); line-height:1.5;">
+                            Permanently delete your teacher profile, unassign all students,<br>
+                            cancel all pending requests, and remove your account.
+                        </div>
+                    </div>
+                    <button id="deleteProfileBtn" onclick="deleteProfile()"
+                        style="flex-shrink:0; padding:10px 24px; background:transparent; border:1.5px solid #ef4444; color:#ef4444; border-radius:9px; font-size:13px; font-weight:600; cursor:pointer; transition:all 0.2s; display:flex; align-items:center; gap:7px;"
+                        onmouseover="this.style.background='#ef4444'; this.style.color='white';"
+                        onmouseout="this.style.background='transparent'; this.style.color='#ef4444';">
+                        <i data-lucide="trash-2" style="width:15px;height:15px;"></i> Delete Profile
+                    </button>
+                </div>
+            </div>
+
         </div>
     </div>
 
@@ -858,6 +881,36 @@
                 showToast('Upload error.', 'error');
             }
             input.value = '';
+        }
+
+        // ── Delete Profile ──
+        async function deleteProfile() {
+            showConfirm(
+                'Delete Your Profile?',
+                'This will permanently delete your teacher profile, unassign ALL your students (making them available), cancel all pending transfer requests, and remove your account. This action CANNOT be undone.',
+                async () => {
+                    const btn = document.getElementById('deleteProfileBtn');
+                    if (btn) { btn.disabled = true; btn.textContent = 'Deleting…'; }
+                    try {
+                        const res = await fetch('/api/teacher/profile/delete', {
+                            method: 'DELETE',
+                            headers: { 'Content-Type': 'application/json' }
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            showToast('Profile deleted. Redirecting…', 'success');
+                            setTimeout(() => { window.location.href = '/logout'; }, 1200);
+                        } else {
+                            showToast(data.msg || 'Deletion failed.', 'error');
+                            if (btn) { btn.disabled = false; btn.textContent = 'Delete Profile'; }
+                        }
+                    } catch (e) {
+                        showToast('Network error.', 'error');
+                        if (btn) { btn.disabled = false; btn.textContent = 'Delete Profile'; }
+                    }
+                },
+                'Delete Forever'
+            );
         }
 
         lucide.createIcons();

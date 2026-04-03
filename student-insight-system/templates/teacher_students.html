@@ -108,44 +108,7 @@
             </div>
         </div>
 
-        <!-- Incoming Transfer Requests -->
-        {% if incoming_requests %}
-        <div class="card" style="margin-bottom: 24px; border: 1px solid var(--primary); box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);">
-            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
-                <h3 style="margin:0; color: var(--primary);">
-                    <i data-lucide="bell" style="width:18px;height:18px; margin-right:4px;"></i> 
-                    Incoming Transfer Requests
-                </h3>
-            </div>
-            <div class="table-container">
-                <table id="requestsTable">
-                    <thead>
-                        <tr>
-                            <th>Student</th>
-                            <th>Requested By</th>
-                            <th>Message</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for req in incoming_requests %}
-                        <tr id="req-row-{{ req.id }}">
-                            <td><div style="font-weight:600">{{ req.student.full_name }}</div></td>
-                            <td>{{ req.requester.full_name }}</td>
-                            <td><span style="font-size:13px; color:var(--text-secondary);">Needs this student for their class</span></td>
-                            <td>
-                                <div style="display:flex; gap:8px;">
-                                    <button class="btn-sm" style="background:var(--success); color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer;" onclick="resolveRequest('{{ req.id }}', 'accept')">Accept</button>
-                                    <button class="btn-sm" style="background:transparent; color:var(--danger); border:1px solid var(--danger); padding:6px 12px; border-radius:6px; cursor:pointer;" onclick="resolveRequest('{{ req.id }}', 'reject')">Decline</button>
-                                </div>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        {% endif %}
+
 
         <!-- Student List -->
         <div class="card">
@@ -261,8 +224,7 @@
         {% endif %}
 
         <!-- Outgoing Transfer Requests -->
-        {% if outgoing_requests %}
-        <div class="card" style="margin-bottom: 24px; border: 1px dashed var(--border);">
+        <div id="outgoingRequestsCard" class="card" style="margin-bottom: 24px; border: 1px dashed var(--border); {% if not outgoing_requests %}display:none;{% endif %}">
             <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
                 <h3 style="margin:0; color: var(--text-secondary);">
                     <i data-lucide="clock" style="width:18px;height:18px; margin-right:4px;"></i> 
@@ -281,7 +243,7 @@
                     </thead>
                     <tbody>
                         {% for req in outgoing_requests %}
-                        <tr id="req-row-{{ req.id }}">
+                        <tr id="outgoing-req-row-{{ req.id }}">
                             <td><div style="font-weight:600">{{ req.student.full_name }}</div></td>
                             <td>{{ req.current_owner.full_name }}</td>
                             <td><span style="font-size:11px; font-weight:600; color:var(--text-secondary); background:var(--bg-main); padding:4px 10px; border-radius:12px; border:1px solid var(--border);">Pending Approval</span></td>
@@ -296,7 +258,6 @@
                 </table>
             </div>
         </div>
-        {% endif %}
 
     </div>
     <!-- ── Assignment Modal ── -->
@@ -546,15 +507,38 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ student_id: studentId })
                 });
+                const data = await res.json();
                 if (!res.ok) {
-                    const err = await res.json();
-                    showToast(err.msg || 'Request failed.', 'error');
+                    showToast(data.msg || 'Request failed.', 'error');
                     btn.disabled = false;
                     btn.textContent = 'Request';
                     return;
                 }
                 showToast('Transfer request sent!', 'success');
                 btn.textContent = 'Requested';
+                btn.style.opacity = '0.6';
+
+                // Instantly add a row to the Outgoing Requests table using API data
+                const studentName = data.student_name || 'Student';
+                const ownerTeacher = data.current_owner_name || 'Other Teacher';
+                const reqId = data.request_id || ('new-' + studentId);
+
+                const outgoingCard = document.getElementById('outgoingRequestsCard');
+                if (outgoingCard) {
+                    outgoingCard.style.display = '';
+                    const tbody = outgoingCard.querySelector('#outgoingRequestsTable tbody');
+                    if (tbody) {
+                        const tr = document.createElement('tr');
+                        tr.id = `outgoing-req-row-${reqId}`;
+                        tr.innerHTML = `
+                            <td><div style="font-weight:600">${studentName}</div></td>
+                            <td>${ownerTeacher}</td>
+                            <td><span style="font-size:11px; font-weight:600; color:var(--text-secondary); background:var(--bg-main); padding:4px 10px; border-radius:12px; border:1px solid var(--border);">Pending Approval</span></td>
+                            <td><span style="font-size:12px; color:var(--success-color, #10b981); font-weight:500;">✓ Just Sent</span></td>
+                        `;
+                        tbody.appendChild(tr);
+                    }
+                }
             } catch(e) {
                 showToast('Network error.', 'error');
                 btn.disabled = false;
@@ -744,13 +728,34 @@ async function resolveTransferRequestGlobal(reqId, action, btn) {
         });
         const data = await res.json();
         if (res.ok && data.success) {
-            // Remove from Bell
+            // Remove from Bell dropdown
             const card = document.getElementById('top-req-card-' + reqId);
             if (card) card.remove();
             
-            // Remove from inline page Tables if any
+            // Remove from inline page tables (incoming)
             const row = document.getElementById('req-row-' + reqId);
             if (row) row.remove();
+
+            // Remove from outgoing table
+            const outRow = document.getElementById('outgoing-req-row-' + reqId);
+            if (outRow) outRow.remove();
+
+            // Update the bell pending counter
+            const bellDropdown = document.getElementById('transferReqDropdown');
+            if (bellDropdown) {
+                const remainingCards = bellDropdown.querySelectorAll('[id^="top-req-card-"]');
+                const countSpan = bellDropdown.querySelector('[style*="pending"]');
+                if (countSpan) countSpan.textContent = remainingCards.length + ' pending';
+                // Remove bell dot if no more requests
+                if (remainingCards.length === 0) {
+                    const bellDot = document.querySelector('#transferReqBellBtn span');
+                    if (bellDot) bellDot.remove();
+                    // Show empty state
+                    const listArea = bellDropdown.querySelector('[style*="max-height"]');
+                    if (listArea) listArea.innerHTML = '<div style="padding:24px 0; text-align:center; color:var(--text-secondary, #6b7280); font-size:13px; display:flex; flex-direction:column; align-items:center; gap:8px;"><i data-lucide="check-circle" style="width:24px; height:24px; opacity:0.5;"></i>No pending requests</div>';
+                    if(typeof lucide !== 'undefined') lucide.createIcons();
+                }
+            }
 
             if (typeof showToast === 'function') {
                 showToast('Transfer request ' + action + 'ed!', 'success');
@@ -758,7 +763,10 @@ async function resolveTransferRequestGlobal(reqId, action, btn) {
                 alert('Transfer request ' + action + 'ed successfully!');
             }
             
-            setTimeout(() => window.location.reload(), 800);
+            // Only reload for accept (assignment changes), otherwise just update DOM
+            if (action === 'accept') {
+                setTimeout(() => window.location.reload(), 800);
+            }
         } else {
             if (typeof showToast === 'function') {
                 showToast(data.msg || 'Action failed.', 'error');
