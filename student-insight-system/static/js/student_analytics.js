@@ -418,7 +418,7 @@
                         return h >= maxH * 0.8
                             ? C.blue
                             : h > 0
-                                ? (isDark() ? 'rgba(99,102,241,0.55)' : C.purpleFaded)
+                                ? (isDark() ? 'rgba(99,102,241,0.55)' : 'rgba(99,102,241,0.65)')
                                 : (isDark() ? 'rgba(99,102,241,0.10)' : 'rgba(99,102,241,0.15)');
                     }),
                     borderRadius: 8,
@@ -457,13 +457,6 @@
                 labels: D.effort_labels,
                 datasets: [
                     {
-                        label: 'Previous 7 days',
-                        data: safeArr(D.effort_week_a),
-                        backgroundColor: 'rgba(99,102,241,0.7)',
-                        borderRadius: 6,
-                        maxBarThickness: 28
-                    },
-                    {
                         label: 'Last 7 days',
                         data: safeArr(D.effort_week_b),
                         backgroundColor: C.blue,
@@ -476,16 +469,7 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            color: tc(),
-                            usePointStyle: true,
-                            pointStyle: 'rect',
-                            padding: 14,
-                            font: { size: 11 }
-                        }
-                    }
+                    legend: { display: false }
                 },
                 scales: {
                     y: {
