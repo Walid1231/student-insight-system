@@ -638,7 +638,9 @@ def teacher_student_detail(student_id):
         }
 
     # G) Full Dashboard Data (for rendering interactive charts)
-    dashboard_data = DashboardService.get_dashboard_data(student_id)
+    # NOTE: get_dashboard_data() resolves via StudentProfile.user_id,
+    # so we must pass the student's user_id, NOT the StudentProfile.id.
+    dashboard_data = DashboardService.get_dashboard_data(student.user_id)
 
     return render_template(
         "student_detail.html",

@@ -9,6 +9,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- Chart.js: defer = download in parallel, execute after HTML parsed -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
+    <!-- Chart.js Datalabels Plugin -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0" defer></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link href="{{ url_for('static', filename='css/dashboard.css') }}" rel="stylesheet">
     <!-- Anti-flicker: apply saved theme before first paint -->
@@ -650,6 +652,7 @@
 
                 new Chart(el.getContext('2d'), {
                     type: 'line',
+                    plugins: [typeof ChartDataLabels !== 'undefined' ? ChartDataLabels : null].filter(Boolean),
                     data: {
                         labels: labels,
                         datasets: [{
@@ -669,8 +672,23 @@
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
+                        layout: {
+                            padding: { top: 24, left: 10, right: 15 }
+                        },
                         plugins: {
                             legend: { display: false },
+                            datalabels: {
+                                display: function(ctx) { return ctx.dataset.data[ctx.dataIndex] > 0; },
+                                align: 'top',
+                                anchor: 'center',
+                                offset: 12,
+                                backgroundColor: isDark() ? '#1f2937' : '#f3f4f6',
+                                borderRadius: 6,
+                                color: isDark() ? '#f3f4f6' : '#111827',
+                                padding: { top: 3, bottom: 3, left: 7, right: 7 },
+                                font: { weight: '700', size: 11 },
+                                formatter: function(value) { return value; }
+                            },
                             tooltip: {
                                 callbacks: {
                                     label: function (ctx) {
@@ -682,6 +700,7 @@
                         scales: {
                             y: {
                                 beginAtZero: true,
+                                grace: '20%',
                                 grid: { color: gc() },
                                 ticks: {
                                     color: tc(),
