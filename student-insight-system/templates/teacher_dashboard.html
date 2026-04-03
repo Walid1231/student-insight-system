@@ -365,11 +365,8 @@
                         </div>
                         <div class="alert-actions">
                             <span class="alert-badge {{ alert.severity }}">{{ alert.severity }}</span>
-                            <button class="action-btn quiz" onclick="showToast('Quiz sent to {{ alert.student.full_name }}', 'success')" title="Send Quiz">
-                                <i data-lucide="file-question" style="width:12px;height:12px;"></i> Quiz
-                            </button>
-                            <button class="action-btn material" onclick="showToast('Study material shared with {{ alert.student.full_name }}', 'success')" title="Share Material">
-                                <i data-lucide="book-open" style="width:12px;height:12px;"></i> Material
+                            <button class="action-btn material" onclick="openNoteModal({{ alert.student.id }}, '{{ alert.student.full_name }}', '{{ alert.message }}')" title="Send Note">
+                                <i data-lucide="pen-line" style="width:12px;height:12px;"></i> Send Note
                             </button>
                             <button class="action-btn resolve" onclick="resolveAlert({{ alert.id }})" title="Resolve">
                                 <i data-lucide="check" style="width:12px;height:12px;"></i> Resolve
@@ -930,6 +927,102 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+});
+</script>
+
+<!-- ═══ Send Note Modal ═══ -->
+<div id="sendNoteModal" style="display:none; position:fixed; inset:0; z-index:2000; background:rgba(0,0,0,0.5); backdrop-filter:blur(4px); display:none; align-items:center; justify-content:center;">
+    <div style="background:var(--card-bg, #fff); border-radius:16px; width:90%; max-width:480px; box-shadow:0 20px 60px rgba(0,0,0,0.2); overflow:hidden; animation:noteModalIn 0.25s ease; margin:auto; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%);">
+        <div style="padding:20px 24px; border-bottom:1px solid var(--border, #e5e7eb); display:flex; align-items:center; justify-content:space-between; background:var(--bg-secondary, #fafafa);">
+            <div style="display:flex; align-items:center; gap:8px;">
+                <i data-lucide="pen-line" style="width:18px; height:18px; color:var(--primary, #6366f1);"></i>
+                <h3 style="margin:0; font-size:15px; font-weight:700; color:var(--dark, #111827);">Send Note to Student</h3>
+            </div>
+            <button onclick="closeNoteModal()" style="background:none; border:none; cursor:pointer; color:var(--text-secondary); padding:4px;">
+                <i data-lucide="x" style="width:18px; height:18px;"></i>
+            </button>
+        </div>
+        <div style="padding:20px 24px;">
+            <div style="margin-bottom:14px;">
+                <div style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-secondary, #6b7280); margin-bottom:4px;">Recipient</div>
+                <div id="noteModalStudentName" style="font-size:14px; font-weight:600; color:var(--dark, #111827);"></div>
+            </div>
+            <div style="margin-bottom:14px; padding:10px 14px; background:rgba(245, 158, 11, 0.08); border-left:3px solid #f59e0b; border-radius:6px;">
+                <div style="font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; color:#b45309; margin-bottom:2px;">Alert Context</div>
+                <div id="noteModalAlertMsg" style="font-size:12px; color:var(--text-secondary, #4b5563); line-height:1.5;"></div>
+            </div>
+            <div style="margin-bottom:16px;">
+                <label style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-secondary, #6b7280); display:block; margin-bottom:6px;">Your Note</label>
+                <textarea id="noteModalContent" rows="4" placeholder="Write your note here... (e.g. guidance, feedback, next steps)" style="width:100%; padding:10px 14px; border:1.5px solid var(--border, #e5e7eb); border-radius:9px; font-size:13px; font-family:inherit; background:var(--bg-surface, #f9fafb); color:var(--text-primary, #111827); resize:vertical; box-sizing:border-box; transition:border-color 0.2s;"></textarea>
+            </div>
+            <div style="display:flex; gap:10px; justify-content:flex-end;">
+                <button onclick="closeNoteModal()" style="padding:9px 20px; border:1.5px solid var(--border, #e5e7eb); border-radius:9px; background:transparent; font-size:13px; font-weight:500; cursor:pointer; color:var(--text-secondary, #6b7280);">Cancel</button>
+                <button id="noteModalSendBtn" onclick="sendAlertNote()" style="padding:9px 24px; background:linear-gradient(90deg, #6366f1, #8b5cf6); color:white; border:none; border-radius:9px; font-size:13px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:6px; transition:opacity 0.2s;">
+                    <i data-lucide="send" style="width:13px; height:13px;"></i> Send Note
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+    @keyframes noteModalIn { from { opacity:0; transform:translate(-50%,-48%) scale(0.96); } to { opacity:1; transform:translate(-50%,-50%) scale(1); } }
+    #noteModalContent:focus { outline:none; border-color:#6366f1; box-shadow:0 0 0 3px rgba(99,102,241,0.12); }
+    html[data-theme="dark"] #sendNoteModal > div { background:#1a1d27; }
+    html[data-theme="dark"] #sendNoteModal > div > div:first-child { background:#141720; border-color:#2d3241; }
+    html[data-theme="dark"] #noteModalContent { background:#141720; border-color:#2d3241; color:#e5e7eb; }
+</style>
+
+<script>
+let _noteStudentId = null;
+
+function openNoteModal(studentId, studentName, alertMsg) {
+    _noteStudentId = studentId;
+    document.getElementById('noteModalStudentName').textContent = studentName;
+    document.getElementById('noteModalAlertMsg').textContent = alertMsg;
+    document.getElementById('noteModalContent').value = '';
+    document.getElementById('sendNoteModal').style.display = 'block';
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+    setTimeout(() => document.getElementById('noteModalContent').focus(), 150);
+}
+
+function closeNoteModal() {
+    document.getElementById('sendNoteModal').style.display = 'none';
+    _noteStudentId = null;
+}
+
+async function sendAlertNote() {
+    const content = document.getElementById('noteModalContent').value.trim();
+    if (!content) { showToast('Please write a note before sending.', 'error'); return; }
+    const btn = document.getElementById('noteModalSendBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i data-lucide="loader-2" class="spinner" style="width:13px;height:13px;"></i> Sending…';
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+
+    try {
+        const res = await fetch('/api/teacher/notes', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ student_id: _noteStudentId, content: content, is_private: false })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+            showToast('Note sent successfully!', 'success');
+            closeNoteModal();
+        } else {
+            showToast(data.msg || 'Failed to send note.', 'error');
+        }
+    } catch (e) {
+        console.error(e);
+        showToast('Network error.', 'error');
+    }
+    btn.disabled = false;
+    btn.innerHTML = '<i data-lucide="send" style="width:13px;height:13px;"></i> Send Note';
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+// Close modal on backdrop click
+document.getElementById('sendNoteModal')?.addEventListener('click', function(e) {
+    if (e.target === this) closeNoteModal();
 });
 </script>
 
