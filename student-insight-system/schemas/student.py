@@ -43,6 +43,7 @@ class StudySessionUpdate(BaseModel):
 class ProfileUpdate(BaseModel):
     """Validates profile edit input."""
     full_name: str = Field(min_length=1, max_length=150)
+    email: Optional[str] = Field(default=None, max_length=120)
     university: Optional[str] = Field(default=None, max_length=200)
     department: Optional[str] = Field(default=None, max_length=200)
     current_year: Optional[str] = Field(default=None, max_length=20)
