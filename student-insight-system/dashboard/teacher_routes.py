@@ -1151,7 +1151,7 @@ def api_create_note():
     )
     db.session.add(note)
     db.session.commit()
-    return jsonify({"msg": "Note created", "id": note.id})
+    return jsonify({"success": True, "msg": "Note created", "id": note.id})
 
 
 # ─────────────────────────────────────────────────────────────────────────────
