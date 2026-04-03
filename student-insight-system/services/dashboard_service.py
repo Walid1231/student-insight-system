@@ -108,10 +108,10 @@ class DashboardService:
         )
         for row in rows:
             if row.date in day_map:
-                day_map[row.date] = round(row.total_minutes / 60, 1)
+                day_map[row.date] += row.total_minutes / 60.0
 
         weekly_labels = [d.strftime('%a ') + str(d.day) for d in day_map]
-        weekly_hours = list(day_map.values())
+        weekly_hours = [round(h, 1) for h in day_map.values()]
         has_recent_sessions = any(h > 0 for h in weekly_hours)
 
         # ── 5. SKILL EFFORT ──

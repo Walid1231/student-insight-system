@@ -1380,10 +1380,81 @@
                     </div>
                 </div>
 
-                <!-- ══ STEP 2 · Career Goals ══ -->
-                <div class="gg-card gg-collapsible" id="card-goals">
+                <!-- ══ STEP 3 · Skill Matches ══ -->
+                <div class="gg-card gg-collapsible card-visible" id="card-matches">
                     <div class="gg-card-header">
-                        <h2><span class="step-number">3</span><i class="fas fa-star"></i> Career Goals</h2>
+                        <h2><span class="step-number">3</span><i class="fas fa-magic"></i> Skill Matches</h2>
+                        <p>Suggested careers based on your current skills</p>
+                    </div>
+                    <div class="gg-card-body">
+                        <div id="matching-careers-area">
+                            {% if matching_careers %}
+                            <div class="goal-grid">
+                                {% for career in matching_careers %}
+                                <div class="goal-card" id="cr-{{ career.id }}">
+                                    <div class="goal-card-header">
+                                        <h4>{{ career.title }}</h4>
+                                        <div class="career-actions">
+                                            {% if career.id not in goal_career_ids %}
+                                            <select class="goal-type-sel" id="gt-{{ career.id }}" style="padding: 2px 5px; height: 24px; font-size: 10px;">
+                                                <option value="Long Term">Long Term</option>
+                                                <option value="Short Term">Short Term</option>
+                                            </select>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="goal-card-body">
+                                        <div class="match-stat">
+                                            <span class="match-score">{{ career.match_count }} of {{ career.total_req }} skills</span>
+                                            {% set pct = (career.match_count / career.total_req * 100) | round | int if career.total_req > 0 else 0 %}
+                                            <span class="badge-added">{{ pct }}% MATCH</span>
+                                        </div>
+                                        <div class="match-bar-bg">
+                                            <div class="match-bar-fill" style="width: {{ pct }}%"></div>
+                                        </div>
+                                        
+                                        <div class="sk-list">
+                                            {% for s in career.skills %}
+                                            <span class="sk-pill {% if s.matched %}matched{% endif %}">
+                                                {% if s.matched %}<i class="fas fa-check"></i> {% endif %}{{ s.name }}
+                                            </span>
+                                            {% endfor %}
+                                        </div>
+                                        
+                                        <p style="margin-top:10px; margin-bottom:0; opacity:0.8; font-size:11px;">Field: {{ career.field_category or 'General' }}</p>
+                                    </div>
+                                    <div class="goal-card-footer" style="flex-wrap: wrap; gap: 8px;">
+                                        {% if career.id not in goal_career_ids %}
+                                        <button class="btn-card-action btn-set-primary" onclick="addAndSetPrimary({{ career.id }})" style="border-style: solid; background: var(--gold); color: #fff; border-color: var(--gold); flex: 1;">
+                                            <i class="fas fa-star"></i> Set as Primary Goal
+                                        </button>
+                                        <button class="btn-card-action btn-set-primary" onclick="addGoal({{ career.id }})" style="border-style: solid; flex: 1;">
+                                            <i class="fas fa-plus"></i> Add to Goals
+                                        </button>
+                                        {% else %}
+                                        <span class="type-badge type-core"><i class="fas fa-check"></i> Already Saved</span>
+                                        <button class="btn-delete-goal" onclick="deleteGoalByCareer({{ career.id }})">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <div class="gg-empty">
+                                <i class="fas fa-search"></i>
+                                <p>Add skills above to see matching career paths here.</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ══ STEP 4 · Career Goals ══ -->
+                <div class="gg-card gg-collapsible card-visible" id="card-goals">
+                    <div class="gg-card-header">
+                        <h2><span class="step-number">4</span><i class="fas fa-star"></i> Career Goals</h2>
                         <p>Set your target CGPA and choose career paths you're working towards</p>
                     </div>
                     <div class="gg-card-body">
@@ -1421,78 +1492,7 @@
                             </button>
                         </div>
 
-                        <div class="matches-dropdown" id="matches-dropdown">
-                            <div class="matches-dropdown-header" onclick="toggleMatches()">
-                                <div class="label-content">
-                                    <i class="fas fa-magic" style="color:var(--navy);"></i>
-                                    Matches Based on Your Skills
-                                </div>
-                                <i class="fas fa-chevron-down"></i>
-                            </div>
-                            <div class="matches-dropdown-body">
-                                <div id="matching-careers-area">
-                                    {% if matching_careers %}
-                                    <div class="goal-grid">
-                                        {% for career in matching_careers %}
-                                        <div class="goal-card" id="cr-{{ career.id }}">
-                                            <div class="goal-card-header">
-                                                <h4>{{ career.title }}</h4>
-                                                <div class="career-actions">
-                                                    {% if career.id not in goal_career_ids %}
-                                                    <select class="goal-type-sel" id="gt-{{ career.id }}" style="padding: 2px 5px; height: 24px; font-size: 10px;">
-                                                        <option value="Long Term">Long Term</option>
-                                                        <option value="Short Term">Short Term</option>
-                                                    </select>
-                                                    {% endif %}
-                                                </div>
-                                            </div>
-                                            <div class="goal-card-body">
-                                                <div class="match-stat">
-                                                    <span class="match-score">{{ career.match_count }} of {{ career.total_req }} skills</span>
-                                                    {% set pct = (career.match_count / career.total_req * 100) | round | int if career.total_req > 0 else 0 %}
-                                                    <span class="badge-added">{{ pct }}% MATCH</span>
-                                                </div>
-                                                <div class="match-bar-bg">
-                                                    <div class="match-bar-fill" style="width: {{ pct }}%"></div>
-                                                </div>
-                                                
-                                                <div class="sk-list">
-                                                    {% for s in career.skills %}
-                                                    <span class="sk-pill {% if s.matched %}matched{% endif %}">
-                                                        {% if s.matched %}<i class="fas fa-check"></i> {% endif %}{{ s.name }}
-                                                    </span>
-                                                    {% endfor %}
-                                                </div>
-                                                
-                                                <p style="margin-top:10px; margin-bottom:0; opacity:0.8; font-size:11px;">Field: {{ career.field_category or 'General' }}</p>
-                                            </div>
-                                            <div class="goal-card-footer" style="flex-wrap: wrap; gap: 8px;">
-                                                {% if career.id not in goal_career_ids %}
-                                                <button class="btn-card-action btn-set-primary" onclick="addAndSetPrimary({{ career.id }})" style="border-style: solid; background: var(--gold); color: #fff; border-color: var(--gold); flex: 1;">
-                                                    <i class="fas fa-star"></i> Set as Primary Goal
-                                                </button>
-                                                <button class="btn-card-action btn-set-primary" onclick="addGoal({{ career.id }})" style="border-style: solid; flex: 1;">
-                                                    <i class="fas fa-plus"></i> Add to Goals
-                                                </button>
-                                                {% else %}
-                                                <span class="type-badge type-core"><i class="fas fa-check"></i> Already Saved</span>
-                                                <button class="btn-delete-goal" onclick="deleteGoalByCareer({{ career.id }})">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                                {% endif %}
-                                            </div>
-                                        </div>
-                                        {% endfor %}
-                                    </div>
-                                    {% else %}
-                                    <div class="gg-empty">
-                                        <i class="fas fa-search"></i>
-                                        <p>Add skills above to see matching career paths here.</p>
-                                    </div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
+
 
                         <!-- Always-present separator and label for JS to show/hide -->
                         <hr class="gg-sep" id="goals-sep" style="display: {% if goals %}''{% else %}none{% endif %};">
@@ -1547,7 +1547,7 @@
                 <!-- ══ STEP 3 · Add Grade ══ -->
                 <div class="gg-card gg-collapsible" id="card-grade">
                     <div class="gg-card-header">
-                        <h2><span class="step-number">4</span><i class="fas fa-plus-circle"></i> Add a Grade</h2>
+                        <h2><span class="step-number">5</span><i class="fas fa-plus-circle"></i> Add a Grade</h2>
                         <p>Each grade instantly recalculates your CGPA — no page refresh needed</p>
                     </div>
                     <div class="gg-card-body">
