@@ -642,6 +642,7 @@ def student_profile():
         try:
             data = ProfileUpdate(
                 full_name=request.form.get("full_name", ""),
+                email=request.form.get("email"),
                 university=request.form.get("university"),
                 department=request.form.get("department"),
                 current_year=request.form.get("current_year"),
@@ -659,6 +660,7 @@ def student_profile():
         ProfileService.update_profile(
             user_id, data,
             profile_picture_file=request.files.get('profile_picture'),
+            cover_picture_file=request.files.get('cover_picture'),
             upload_root=current_app.root_path,
         )
         
@@ -667,6 +669,7 @@ def student_profile():
             return jsonify({
                 "success": True,
                 "name": data.full_name,
+                "email": updated_student.user.email,
                 "university": data.university,
                 "department": data.department,
                 "current_year": data.current_year,
@@ -676,6 +679,7 @@ def student_profile():
                 "bio": data.bio,
                 "linkedin": data.linkedin_profile,
                 "profile_picture": updated_student.profile_picture,
+                "cover_picture": updated_student.cover_picture,
             })
         return redirect(url_for('dashboard.student_profile'))
 
