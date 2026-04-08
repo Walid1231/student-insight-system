@@ -610,15 +610,9 @@
                         <div class="profile-hero-info">
                             <h1 class="profile-hero-name" id="header-name">{{ student.full_name }}</h1>
                             <div class="profile-hero-meta">
-                                {% if student.university %}
-                                <span><i class="fas fa-university"></i> {{ student.university }}</span>
-                                {% endif %}
-                                {% if student.department %}
-                                <span><i class="fas fa-graduation-cap"></i> {{ student.department }}</span>
-                                {% endif %}
-                                {% if student.current_year %}
-                                <span><i class="fas fa-calendar-alt"></i> {{ student.current_year }}</span>
-                                {% endif %}
+                                <span id="hero-university" style="display: {{ 'inline-flex' if student.university else 'none' }};"><i class="fas fa-university"></i> <span class="val">{{ student.university }}</span></span>
+                                <span id="hero-department" style="display: {{ 'inline-flex' if student.department else 'none' }};"><i class="fas fa-graduation-cap"></i> <span class="val">{{ student.department }}</span></span>
+                                <span id="hero-year" style="display: {{ 'inline-flex' if student.current_year else 'none' }};"><i class="fas fa-calendar-alt"></i> <span class="val">{{ student.current_year }}</span></span>
                             </div>
                         </div>
                         <div class="profile-hero-actions" id="hero-actions-read">
@@ -918,7 +912,7 @@
                 
                 var container = el.closest('.profile-info-item');
                 
-                if (!valueHTML) {
+                if (valueHTML === null || valueHTML === undefined || valueHTML === '') {
                     if (container) {
                         container.style.display = 'none';
                     } else if (isLink) {
@@ -971,6 +965,24 @@
                         updateOrInject('display-bio', '', data.bio);
                         updateOrInject('display-linkedin', '', data.linkedin, false, true);
                         updateOrInject('display-github', '', data.github, false, true);
+
+                        // Update Hero Meta
+                        const hUni = document.getElementById('hero-university');
+                        if (hUni) {
+                            hUni.querySelector('.val').textContent = data.university || '';
+                            hUni.style.display = data.university ? 'inline-flex' : 'none';
+                        }
+                        const hDept = document.getElementById('hero-department');
+                        if (hDept) {
+                            hDept.querySelector('.val').textContent = data.department || '';
+                            hDept.style.display = data.department ? 'inline-flex' : 'none';
+                        }
+                        const hYear = document.getElementById('hero-year');
+                        if (hYear) {
+                            hYear.querySelector('.val').textContent = data.current_year || '';
+                            hYear.style.display = data.current_year ? 'inline-flex' : 'none';
+                        }
+
                         if (data.profile_picture && els.img) {
                             els.img.src = '/static/uploads/profile_pics/' + data.profile_picture;
                         }
