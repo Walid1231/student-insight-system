@@ -5,22 +5,28 @@
     <meta charset="UTF-8">
     <title>Get Started | Student Insight</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="Complete your onboarding journey to unlock AI-driven insights and live charts on your Student Insight dashboard.">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
             --navy: #002D62;
-            --blue: #3b82f6;
-            --green: #10b981;
-            --amber: #f59e0b;
-            --purple: #8b5cf6;
-            --red: #ef4444;
-            --bg: #f1f5f9;
+            --blue: #4a7cdc;
+            --blue-light: #e8f0fe;
+            --green: #3db88c;
+            --green-light: #e6f7f0;
+            --amber: #e6a640;
+            --amber-light: #fef5e0;
+            --purple: #8b6cc2;
+            --purple-light: #f0ebf8;
+            --bg: #e9effa;
             --surface: #ffffff;
-            --border: #e2e8f0;
-            --muted: #64748b;
+            --border: #d6dde8;
+            --muted: #6b7a8d;
             --dark: #1e293b;
+            --card-shadow: 0 4px 20px rgba(0, 50, 120, 0.07);
         }
 
         * {
@@ -29,451 +35,1473 @@
             padding: 0;
         }
 
+        html,
+        body {
+            height: 100%;
+        }
+
         body {
             font-family: 'Inter', system-ui, sans-serif;
             background: var(--bg);
+            background-image:
+                radial-gradient(ellipse 80% 60% at 30% 20%, rgba(74, 124, 220, 0.08), transparent),
+                radial-gradient(ellipse 60% 50% at 80% 70%, rgba(139, 108, 194, 0.06), transparent);
             min-height: 100vh;
             display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 40px 20px;
+            flex-direction: column;
+            overflow-x: hidden;
         }
 
-        .page-wrap {
+        /* ── Page Layout ── */
+        .ob-page {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 32px 24px 20px;
             width: 100%;
-            max-width: 680px;
+        }
+
+        .ob-container {
+            width: 100%;
+            max-width: 1120px;
+            display: flex;
+            flex-direction: column;
+            gap: 0;
         }
 
         /* ── Header ── */
         .ob-header {
             text-align: center;
-            margin-bottom: 36px;
+            margin-bottom: 28px;
         }
 
         .ob-badge {
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            background: rgba(59, 130, 246, 0.1);
+            background: rgba(74, 124, 220, 0.12);
             color: var(--blue);
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 700;
-            letter-spacing: 1px;
+            letter-spacing: 1.5px;
             text-transform: uppercase;
-            padding: 6px 16px;
+            padding: 7px 18px;
             border-radius: 50px;
-            margin-bottom: 20px;
+            margin-bottom: 18px;
+            backdrop-filter: blur(4px);
         }
 
         .ob-title {
-            font-size: 34px;
+            font-size: 38px;
             font-weight: 800;
-            color: var(--dark);
-            line-height: 1.2;
-            margin-bottom: 12px;
+            color: var(--navy);
+            line-height: 1.15;
+            margin-bottom: 10px;
         }
 
         .ob-title span {
             color: var(--blue);
+            font-style: italic;
+            font-weight: 700;
         }
 
         .ob-subtitle {
             font-size: 15px;
             color: var(--muted);
-            max-width: 460px;
+            max-width: 520px;
             margin: 0 auto;
-            line-height: 1.6;
+            line-height: 1.65;
         }
 
-        /* ── Progress Bar ── */
-        .progress-wrap {
+        /* ── Main Grid: Journey + Sidebar ── */
+        .ob-main {
+            display: grid;
+            grid-template-columns: 1fr 280px;
+            gap: 28px;
+            align-items: start;
+        }
+
+        /* ── Journey Map ── */
+        .journey-map {
+            position: relative;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: auto auto;
+            gap: 24px;
+            padding: 10px 0 20px;
+        }
+
+        /* SVG connectors */
+        .journey-connectors {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .journey-connectors path {
+            fill: none;
+            stroke-width: 2.5;
+            stroke-linecap: round;
+            opacity: 0.35;
+        }
+
+        /* ── Node Card ── */
+        .node-card {
+            position: relative;
+            z-index: 1;
             background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            padding: 20px 24px;
-            margin-bottom: 24px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-        }
-
-        .progress-meta {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-
-        .progress-label {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--dark);
-        }
-
-        .progress-count {
-            font-size: 14px;
-            font-weight: 700;
-            color: var(--blue);
-        }
-
-        .progress-track {
-            height: 8px;
-            background: var(--border);
-            border-radius: 50px;
-            overflow: hidden;
-        }
-
-        .progress-fill {
-            height: 100%;
-            border-radius: 50px;
-            background: linear-gradient(90deg, var(--blue), #60a5fa);
-            transition: width 0.6s ease;
-        }
-
-        /* ── Step Cards ── */
-        .steps-list {
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-            margin-bottom: 28px;
-        }
-
-        .step-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            padding: 18px 20px;
-            display: flex;
-            align-items: center;
-            gap: 18px;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
-            transition: transform 0.15s, box-shadow 0.15s;
+            border-radius: 18px;
+            padding: 22px 22px 18px;
+            box-shadow: var(--card-shadow);
+            border: 2px solid transparent;
+            transition: transform 0.2s, box-shadow 0.2s, border-color 0.25s;
+            cursor: pointer;
             text-decoration: none;
             color: inherit;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
 
-        .step-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+        .node-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 36px rgba(0, 50, 120, 0.13);
         }
 
-        .step-card.done {
-            border-color: #bbf7d0;
-            background: #f0fdf4;
+        .node-card.done {
+            border-color: var(--green);
+            background: linear-gradient(135deg, #f0fdf6 0%, #ffffff 60%);
         }
 
-        .step-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
+        .node-card.blue-accent {
+            border-left: 4px solid var(--blue);
+        }
+
+        .node-card.green-accent {
+            border-left: 4px solid var(--green);
+        }
+
+        .node-card.amber-accent {
+            border-left: 4px solid var(--amber);
+        }
+
+        .node-card.purple-accent {
+            border-left: 4px solid var(--purple);
+        }
+
+        .node-card.done.blue-accent,
+        .node-card.done.green-accent,
+        .node-card.done.amber-accent,
+        .node-card.done.purple-accent {
+            border-left-color: var(--green);
+        }
+
+        .node-icon-wrap {
+            width: 50px;
+            height: 50px;
+            border-radius: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 20px;
+            font-size: 22px;
             flex-shrink: 0;
+            position: relative;
         }
 
-        .step-icon.blue {
-            background: rgba(59, 130, 246, 0.12);
+        .node-icon-wrap.blue {
+            background: var(--blue-light);
             color: var(--blue);
         }
 
-        .step-icon.green {
-            background: rgba(16, 185, 129, 0.12);
+        .node-icon-wrap.green {
+            background: var(--green-light);
             color: var(--green);
         }
 
-        .step-icon.amber {
-            background: rgba(245, 158, 11, 0.12);
+        .node-icon-wrap.amber {
+            background: var(--amber-light);
             color: var(--amber);
         }
 
-        .step-icon.purple {
-            background: rgba(139, 92, 246, 0.12);
+        .node-icon-wrap.purple {
+            background: var(--purple-light);
             color: var(--purple);
         }
 
-        .step-icon.done-icon {
-            background: rgba(16, 185, 129, 0.15);
-            color: var(--green);
+        .node-icon-wrap.done-icon {
+            background: var(--green-light) !important;
+            color: var(--green) !important;
         }
 
-        .step-body {
-            flex: 1;
-        }
-
-        .step-title {
-            font-size: 15px;
+        .node-label {
+            font-size: 11px;
             font-weight: 700;
-            color: var(--dark);
-            margin-bottom: 3px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: -4px;
         }
 
-        .step-desc {
+        .node-title {
+            font-size: 17px;
+            font-weight: 800;
+            color: var(--dark);
+            line-height: 1.25;
+        }
+
+        .node-desc {
             font-size: 13px;
             color: var(--muted);
+            line-height: 1.55;
         }
 
-        .step-status {
-            flex-shrink: 0;
+        .node-desc strong {
+            color: var(--dark);
+            font-weight: 700;
+        }
+
+        /* Progress bar inside each node */
+        .node-progress {
+            height: 5px;
+            background: var(--border);
+            border-radius: 50px;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+
+        .node-progress-fill {
+            height: 100%;
+            border-radius: 50px;
+            transition: width 0.5s ease;
+        }
+
+        .node-progress-fill.blue {
+            background: var(--blue);
+        }
+
+        .node-progress-fill.green {
+            background: var(--green);
+        }
+
+        .node-progress-fill.amber {
+            background: var(--amber);
+        }
+
+        .node-progress-fill.purple {
+            background: var(--purple);
+        }
+
+        .node-progress-fill.done {
+            background: var(--green);
+        }
+
+        /* Done checkmark */
+        .node-done-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
             width: 28px;
             height: 28px;
             border-radius: 50%;
+            background: var(--green);
+            color: #fff;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 13px;
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.35);
         }
 
-        .step-status.done-badge {
-            background: var(--green);
-            color: #fff;
-        }
-
-        .step-status.pending-badge {
-            background: var(--border);
-            color: var(--muted);
-        }
-
-        /* ── CTA ── */
-        .cta-row {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-
-        .btn-primary {
-            flex: 1;
-            min-width: 200px;
+        /* CTA inside journey */
+        .journey-cta {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
-            padding: 14px 24px;
+            padding: 32px 0 10px;
+            width: 100%;
+        }
+
+        .btn-begin {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px 40px;
             background: var(--navy);
             color: #fff;
-            border-radius: 10px;
+            border-radius: 50px;
             font-size: 15px;
             font-weight: 700;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
             text-decoration: none;
-            transition: background 0.2s, transform 0.1s;
+            border: none;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+            box-shadow: 0 4px 16px rgba(0, 45, 98, 0.25);
         }
 
-        .btn-primary:hover {
-            background: #004080;
-            transform: translateY(-1px);
+        .btn-begin:hover {
+            background: #004090;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 28px rgba(0, 45, 98, 0.3);
         }
 
-        .btn-ghost {
+        .btn-begin i {
+            font-size: 14px;
+            transition: transform 0.2s;
+        }
+
+        .btn-begin:hover i {
+            transform: translateX(3px);
+        }
+
+        /* ── Sidebar: Insights Preview ── */
+        .insights-panel {
+            background: var(--surface);
+            border-radius: 18px;
+            padding: 22px 20px;
+            box-shadow: var(--card-shadow);
+            position: sticky;
+            top: 32px;
+        }
+
+        .insights-header {
             display: flex;
             align-items: center;
-            justify-content: center;
-            gap: 8px;
-            padding: 14px 24px;
-            background: transparent;
-            color: var(--muted);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            font-size: 14px;
-            font-weight: 600;
-            text-decoration: none;
-            transition: background 0.15s;
+            justify-content: space-between;
+            margin-bottom: 18px;
         }
 
-        .btn-ghost:hover {
-            background: var(--surface);
+        .insights-title {
+            font-size: 16px;
+            font-weight: 800;
             color: var(--dark);
         }
 
-        /* ── Tip Banner ── */
-        .tip-banner {
-            margin-top: 24px;
-            background: rgba(59, 130, 246, 0.06);
-            border: 1px solid rgba(59, 130, 246, 0.2);
-            border-radius: 10px;
-            padding: 14px 18px;
+        .insights-count {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--blue);
+            background: var(--blue-light);
+            padding: 3px 10px;
+            border-radius: 50px;
+        }
+
+        .insight-item {
             display: flex;
-            gap: 12px;
+            align-items: center;
+            gap: 14px;
+            padding: 14px 0;
+            border-top: 1px solid var(--border);
+        }
+
+        .insight-item:first-of-type {
+            border-top: none;
+        }
+
+        .insight-icon {
+            width: 52px;
+            height: 44px;
+            border-radius: 10px;
+            background: #f4f6fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: var(--muted);
+            flex-shrink: 0;
+        }
+
+        .insight-icon.unlocked {
+            background: var(--green-light);
+            color: var(--green);
+        }
+
+        .insight-label {
+            font-size: 12px;
+            color: var(--muted);
+            line-height: 1.45;
+        }
+
+        .insight-label strong {
+            display: block;
+            font-size: 13px;
+            color: var(--dark);
+            font-weight: 700;
+            margin-bottom: 1px;
+        }
+
+        /* ── Footer Bar ── */
+        .ob-footer {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding: 16px 28px;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(8px);
+            border-top: 1px solid var(--border);
+            margin-top: auto;
+        }
+
+        .footer-tip {
+            display: flex;
             align-items: flex-start;
+            gap: 10px;
             font-size: 13px;
             color: var(--muted);
             line-height: 1.5;
+            max-width: 600px;
         }
 
-        .tip-banner i {
-            color: var(--blue);
+        .footer-tip i {
+            color: var(--amber);
             margin-top: 2px;
             flex-shrink: 0;
         }
 
-        /* ── Done CTA ── */
-        .all-done {
+        .footer-tip strong {
+            color: var(--dark);
+            font-weight: 700;
+        }
+
+        .footer-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+
+        .footer-actions span {
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .btn-browse {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 9px 20px;
+            background: var(--surface);
+            color: var(--dark);
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: background 0.15s, border-color 0.15s;
+        }
+
+        .btn-browse:hover {
+            background: #f0f4f8;
+            border-color: var(--blue);
+            color: var(--blue);
+        }
+
+        /* ── All Done State ── */
+        .ob-done-banner {
             text-align: center;
-            padding: 20px;
-            background: #f0fdf4;
-            border: 1px solid #bbf7d0;
-            border-radius: 14px;
+            padding: 28px;
+            background: linear-gradient(135deg, #f0fdf6 0%, #e6f7f0 100%);
+            border: 1.5px solid #a7f3d0;
+            border-radius: 18px;
             margin-bottom: 24px;
         }
 
-        .all-done i {
-            font-size: 36px;
+        .ob-done-banner i {
+            font-size: 40px;
             color: var(--green);
-            margin-bottom: 10px;
+            margin-bottom: 12px;
             display: block;
         }
 
-        .all-done h3 {
-            font-size: 20px;
+        .ob-done-banner h3 {
+            font-size: 22px;
             font-weight: 800;
             color: var(--dark);
             margin-bottom: 6px;
         }
 
-        .all-done p {
+        .ob-done-banner p {
             font-size: 14px;
             color: var(--muted);
+        }
+
+        /* ── Animations ── */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(18px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .ob-header {
+            animation: fadeInUp 0.5s ease both;
+        }
+
+        .node-card:nth-child(1) {
+            animation: fadeInUp 0.45s 0.1s ease both;
+        }
+
+        .node-card:nth-child(2) {
+            animation: fadeInUp 0.45s 0.2s ease both;
+        }
+
+        .node-card:nth-child(3) {
+            animation: fadeInUp 0.45s 0.3s ease both;
+        }
+
+        .node-card:nth-child(4) {
+            animation: fadeInUp 0.45s 0.4s ease both;
+        }
+
+        .journey-cta {
+            animation: fadeInUp 0.45s 0.5s ease both;
+        }
+
+        .insights-panel {
+            animation: fadeInUp 0.5s 0.35s ease both;
+        }
+
+        .ob-footer {
+            animation: fadeInUp 0.4s 0.55s ease both;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 900px) {
+            .ob-main {
+                grid-template-columns: 1fr;
+            }
+
+            .insights-panel {
+                position: static;
+            }
+
+            .ob-title {
+                font-size: 30px;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .journey-map {
+                grid-template-columns: 1fr;
+            }
+
+            .ob-footer {
+                flex-direction: column;
+                gap: 14px;
+                text-align: center;
+            }
+
+            .footer-tip {
+                justify-content: center;
+            }
+
+            .ob-page {
+                padding: 20px 14px 16px;
+            }
+
+            .ob-title {
+                font-size: 26px;
+            }
+        }
+
+        /* ═══ Browse First Overlay ═══ */
+        .browse-overlay {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(135deg, #eef2f9 0%, #e0e7f4 50%, #f0f3fa 100%);
+            z-index: 9999;
+            display: none;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .browse-overlay.active {
+            display: flex;
+        }
+
+        .browse-header {
+            text-align: center;
+            padding: 40px 24px 10px;
+            animation: fadeInUp 0.4s ease both;
+        }
+
+        .browse-header h2 {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--navy);
+            margin-bottom: 6px;
+        }
+
+        .browse-header p {
+            font-size: 14px;
+            color: var(--muted);
+            max-width: 440px;
+            margin: 0 auto;
+        }
+
+        .browse-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 28px;
+            padding: 28px 32px 40px;
+            max-width: 1100px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        @media (max-width: 700px) {
+            .browse-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .skel-card {
+            background: var(--surface);
+            border-radius: 18px;
+            box-shadow: 0 6px 24px rgba(0, 50, 120, 0.08);
+            overflow: hidden;
+            transition: transform 0.25s, box-shadow 0.25s, border-color 0.25s;
+            cursor: default;
+            animation: fadeInUp 0.45s ease both;
+            border: 2px solid transparent;
+        }
+
+        /* Per-card accent colors */
+        .skel-card:nth-child(1) { animation-delay: 0.08s; border-color: rgba(74, 124, 220, 0.3); }
+        .skel-card:nth-child(2) { animation-delay: 0.16s; border-color: rgba(61, 184, 140, 0.3); }
+        .skel-card:nth-child(3) { animation-delay: 0.24s; border-color: rgba(230, 166, 64, 0.3); }
+        .skel-card:nth-child(4) { animation-delay: 0.32s; border-color: rgba(139, 108, 194, 0.3); }
+
+        .skel-card:nth-child(1):hover { border-color: var(--blue); box-shadow: 0 14px 40px rgba(74, 124, 220, 0.18); }
+        .skel-card:nth-child(2):hover { border-color: var(--green); box-shadow: 0 14px 40px rgba(61, 184, 140, 0.18); }
+        .skel-card:nth-child(3):hover { border-color: var(--amber); box-shadow: 0 14px 40px rgba(230, 166, 64, 0.18); }
+        .skel-card:nth-child(4):hover { border-color: var(--purple); box-shadow: 0 14px 40px rgba(139, 108, 194, 0.18); }
+
+        .skel-card:hover {
+            transform: translateY(-5px);
+        }
+
+        /* Miniature title bar — per-card color */
+        .skel-titlebar {
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .skel-card:nth-child(1) .skel-titlebar { background: linear-gradient(135deg, #3b6fd4, #5b8ee6); }
+        .skel-card:nth-child(2) .skel-titlebar { background: linear-gradient(135deg, #2ea377, #45c99a); }
+        .skel-card:nth-child(3) .skel-titlebar { background: linear-gradient(135deg, #d49330, #eab150); }
+        .skel-card:nth-child(4) .skel-titlebar { background: linear-gradient(135deg, #7b5bb5, #9d7dd4); }
+
+        .skel-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.45);
+        }
+
+        .skel-tab {
+            height: 8px;
+            width: 60px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.35);
+            margin-left: 8px;
+        }
+
+        /* Wireframe body */
+        .skel-body {
+            padding: 18px 16px 22px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        /* Generic skeleton line */
+        .sk-line {
+            height: 8px;
+            border-radius: 4px;
+            background: #d8dff0;
+        }
+
+        .sk-line.w100 { width: 100%; }
+        .sk-line.w90 { width: 90%; }
+        .sk-line.w80 { width: 80%; }
+        .sk-line.w70 { width: 70%; }
+        .sk-line.w60 { width: 60%; }
+        .sk-line.w50 { width: 50%; }
+        .sk-line.w40 { width: 40%; }
+        .sk-line.w30 { width: 30%; }
+        .sk-line.w20 { width: 20%; }
+
+        .sk-line.thick {
+            height: 10px;
+            background: #bcc8e0;
+        }
+
+        .sk-line.sm {
+            height: 6px;
+        }
+
+        .sk-line.xs {
+            height: 4px;
+            border-radius: 2px;
+        }
+
+        /* Skeleton blocks — per-card tinting */
+        .sk-block {
+            border-radius: 10px;
+            background: #e4e9f4;
+            min-height: 60px;
+        }
+        .skel-card:nth-child(1) .sk-block { background: rgba(74, 124, 220, 0.10); }
+        .skel-card:nth-child(2) .sk-block { background: rgba(61, 184, 140, 0.10); }
+        .skel-card:nth-child(3) .sk-block { background: rgba(230, 166, 64, 0.10); }
+        .skel-card:nth-child(4) .sk-block { background: rgba(139, 108, 194, 0.10); }
+
+        .sk-block.tall { min-height: 80px; }
+        .sk-block.short { min-height: 36px; }
+        .sk-block.xs { min-height: 24px; border-radius: 6px; }
+
+        /* Row layouts inside skeleton */
+        .sk-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .sk-row.col3 {
+            grid-template-columns: 1fr 1fr 1fr;
+        }
+
+        .sk-row.col4 {
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 8px;
+        }
+
+        /* Stat card skeleton (icon + lines) */
+        .sk-stat {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            background: #f0f3fb;
+            border-radius: 10px;
+            border: 1px solid #dce3f2;
+        }
+
+        .sk-stat-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            flex-shrink: 0;
+        }
+
+        .sk-stat-icon.blue { background: rgba(74, 124, 220, 0.25); }
+        .sk-stat-icon.green { background: rgba(61, 184, 140, 0.25); }
+        .sk-stat-icon.purple { background: rgba(139, 108, 194, 0.25); }
+        .sk-stat-icon.amber { background: rgba(230, 166, 64, 0.25); }
+
+        .sk-stat-lines {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        /* Pill shapes */
+        .sk-pill {
+            display: inline-block;
+            height: 22px;
+            border-radius: 11px;
+            background: #dce3f2;
+        }
+
+        .sk-pill.sm { height: 18px; }
+
+        .sk-pills-row {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        /* Circle shapes */
+        .sk-circle {
+            border-radius: 50%;
+            background: #dce3f2;
+            flex-shrink: 0;
+        }
+
+        /* Calendar grid skeleton */
+        .sk-cal-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 3px;
+        }
+
+        .sk-cal-cell {
+            aspect-ratio: 1;
+            background: #edf0f8;
+            border-radius: 4px;
+            border: 1px solid #dce3f2;
+        }
+
+        .sk-cal-cell.active {
+            background: rgba(61, 184, 140, 0.22);
+            border-color: rgba(61, 184, 140, 0.4);
+        }
+
+        /* Step card skeleton (for Goals & Grades) */
+        .sk-step-card {
+            background: #f4f6fc;
+            border-radius: 12px;
+            border: 1px solid #dce3f2;
+            padding: 12px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .sk-step-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sk-step-num {
+            width: 22px;
+            height: 22px;
+            border-radius: 6px;
+            flex-shrink: 0;
+        }
+
+        /* Form field placeholder */
+        .sk-field {
+            background: #edf0f8;
+            border: 1.5px solid #d1d9ec;
+            border-radius: 8px;
+            height: 32px;
+        }
+
+        .sk-field.tall { height: 50px; }
+
+        /* Section separator */
+        .sk-sep {
+            height: 1px;
+            background: #d1d9ec;
+            margin: 4px 0;
+        }
+
+        /* Horizontal bar chart skeleton */
+        .sk-bar-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sk-bar {
+            height: 14px;
+            border-radius: 7px;
+            background: linear-gradient(90deg, #c8d4ec 0%, #dde3f0 100%);
+        }
+        .skel-card:nth-child(3) .sk-bar { background: linear-gradient(90deg, rgba(230,166,64,0.25) 0%, rgba(230,166,64,0.10) 100%); }
+
+        /* Page label below skeleton */
+        .skel-label {
+            padding: 0 16px 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .skel-label i {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .skel-label .lab-icon-blue {
+            background: var(--blue-light);
+            color: var(--blue);
+        }
+
+        .skel-label .lab-icon-green {
+            background: var(--green-light);
+            color: var(--green);
+        }
+
+        .skel-label .lab-icon-amber {
+            background: var(--amber-light);
+            color: var(--amber);
+        }
+
+        .skel-label .lab-icon-purple {
+            background: var(--purple-light);
+            color: var(--purple);
+        }
+
+        .skel-label span {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .skel-label small {
+            font-size: 11px;
+            color: var(--muted);
+            display: block;
+            font-weight: 400;
+            margin-top: 1px;
+        }
+
+        /* Return button */
+        .browse-return {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 13px 32px;
+            background: var(--navy);
+            color: #fff;
+            border: none;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            margin: 0 auto 40px;
+            letter-spacing: 0.5px;
+            transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+            box-shadow: 0 4px 16px rgba(0, 45, 98, 0.25);
+            animation: fadeInUp 0.45s 0.4s ease both;
+        }
+
+        .browse-return:hover {
+            background: #004090;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 28px rgba(0, 45, 98, 0.3);
+        }
+
+        .browse-return i {
+            transition: transform 0.2s;
+        }
+
+        .browse-return:hover i {
+            transform: translateX(-3px);
         }
     </style>
 </head>
 
 <body>
 
-    <div class="page-wrap">
+    <div class="ob-page">
+        <div class="ob-container">
 
-        <!-- Header -->
-        <div class="ob-header">
-            <div class="ob-badge"><i class="fas fa-rocket"></i> Getting Started</div>
-            <h1 class="ob-title">Welcome, <span>{{ data.name }}</span>!</h1>
-            <p class="ob-subtitle">Complete these 4 quick steps to unlock your personalised dashboard with live charts
-                and AI insights.</p>
-        </div>
-
-        <!-- Progress -->
-        <div class="progress-wrap">
-            <div class="progress-meta">
-                <span class="progress-label">Setup Progress</span>
-                <span class="progress-count">{{ data.steps_done }} / 4 Complete</span>
+            <!-- Header -->
+            <div class="ob-header">
+                <div class="ob-badge"><i class="fas fa-rocket"></i> Getting Started</div>
+                <h1 class="ob-title">Welcome, <span>{{ data.name }}</span>!</h1>
+                <p class="ob-subtitle">Embark on your journey to unlock full live charts and AI-driven growth insights.
+                </p>
             </div>
-            <div class="progress-track">
-                <div class="progress-fill" style="width: {{ (data.steps_done / 4 * 100) | int }}%;"></div>
+
+            {% if data.steps_done == 3 %}
+            <div class="ob-done-banner">
+                <i class="fas fa-star"></i>
+                <h3>Almost there — 1 step left!</h3>
+                <p>Complete the last step to activate all charts on your dashboard.</p>
             </div>
+            {% endif %}
+
+            <!-- Main Grid -->
+            <div class="ob-main">
+
+                <!-- Journey Map -->
+                <div class="journey-map" id="journey-map">
+
+                    <!-- SVG Connectors – drawn dynamically -->
+                    <svg class="journey-connectors" id="connectors" preserveAspectRatio="none"></svg>
+
+                    <!-- Node 1: Your First Grade -->
+                    <a href="/student/goals-grades"
+                        class="node-card {% if data.has_grades %}done{% endif %} blue-accent" id="node-1">
+                        {% if data.has_grades %}<div class="node-done-badge"><i class="fas fa-check"></i></div>{% endif
+                        %}
+                        <div class="node-icon-wrap {% if data.has_grades %}done-icon{% else %}blue{% endif %}">
+                            <i class="fas {% if data.has_grades %}fa-check{% else %}fa-graduation-cap{% endif %}"></i>
+                        </div>
+                        <div class="node-label">Node 1</div>
+                        <div class="node-title">Your First Grade</div>
+                        <div class="node-desc">Go to <strong>Grades &amp; Goals</strong>. Enter one course grade.</div>
+                        <div class="node-progress">
+                            <div class="node-progress-fill {% if data.has_grades %}done{% else %}blue{% endif %}"
+                                style="width: {% if data.has_grades %}100{% else %}0{% endif %}%"></div>
+                        </div>
+                    </a>
+
+                    <!-- Node 2: Select 3 Skills -->
+                    <a href="/student/goals-grades#skills"
+                        class="node-card {% if data.has_skills %}done{% endif %} green-accent" id="node-2">
+                        {% if data.has_skills %}<div class="node-done-badge"><i class="fas fa-check"></i></div>{% endif
+                        %}
+                        <div class="node-icon-wrap {% if data.has_skills %}done-icon{% else %}green{% endif %}">
+                            <i class="fas {% if data.has_skills %}fa-check{% else %}fa-hashtag{% endif %}"></i>
+                        </div>
+                        <div class="node-label">Node 2</div>
+                        <div class="node-title">Select 3 Skills</div>
+                        <div class="node-desc">Go to <strong>Skills</strong>. Pick your top 3 talents.</div>
+                        <div class="node-progress">
+                            <div class="node-progress-fill {% if data.has_skills %}done{% else %}green{% endif %}"
+                                style="width: {% if data.has_skills %}100{% else %}0{% endif %}%"></div>
+                        </div>
+                    </a>
+
+                    <!-- Node 3: Core Career Goal (switched to row 2 col 2 like the image) -->
+                    <a href="/student/goals-grades#goals"
+                        class="node-card {% if data.has_goals %}done{% endif %} purple-accent" id="node-4">
+                        {% if data.has_goals %}<div class="node-done-badge"><i class="fas fa-check"></i></div>{% endif
+                        %}
+                        <div class="node-icon-wrap {% if data.has_goals %}done-icon{% else %}purple{% endif %}">
+                            <i class="fas {% if data.has_goals %}fa-check{% else %}fa-bullseye{% endif %}"></i>
+                        </div>
+                        <div class="node-label">Node 4</div>
+                        <div class="node-title">Core Career Goal</div>
+                        <div class="node-desc">Go to <strong>Goals</strong>. Define your career path.</div>
+                        <div class="node-progress">
+                            <div class="node-progress-fill {% if data.has_goals %}done{% else %}purple{% endif %}"
+                                style="width: {% if data.has_goals %}100{% else %}0{% endif %}%"></div>
+                        </div>
+                    </a>
+
+                    <!-- Node 4: First Study Session (row 2 col 1 in image) -->
+                    <a href="/student/weekly-routine"
+                        class="node-card {% if data.has_sessions %}done{% endif %} amber-accent" id="node-3">
+                        {% if data.has_sessions %}<div class="node-done-badge"><i class="fas fa-check"></i></div>{%
+                        endif %}
+                        <div class="node-icon-wrap {% if data.has_sessions %}done-icon{% else %}amber{% endif %}">
+                            <i class="fas {% if data.has_sessions %}fa-check{% else %}fa-calendar-alt{% endif %}"></i>
+                        </div>
+                        <div class="node-label">Node 3</div>
+                        <div class="node-title">First Study Session</div>
+                        <div class="node-desc">Log in <strong>Weekly Routine</strong>. Tag a skill.</div>
+                        <div class="node-progress">
+                            <div class="node-progress-fill {% if data.has_sessions %}done{% else %}amber{% endif %}"
+                                style="width: {% if data.has_sessions %}100{% else %}0{% endif %}%"></div>
+                        </div>
+                    </a>
+
+                </div><!-- /journey-map -->
+
+                <!-- Insights Preview Sidebar -->
+                <div class="insights-panel">
+                    <div class="insights-header">
+                        <span class="insights-title">Insights Preview</span>
+                        <span class="insights-count">{{ data.steps_done }}/4</span>
+                    </div>
+
+                    <!-- GPA Chart -->
+                    <div class="insight-item">
+                        <div class="insight-icon {% if data.has_grades %}unlocked{% endif %}">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="insight-label">
+                            {% if data.has_grades %}
+                            <strong><i class="fas fa-check-circle"
+                                    style="color:var(--green);margin-right:4px;font-size:11px;"></i> GPA Chart</strong>
+                            Unlocked — view on dashboard.
+                            {% else %}
+                            <strong>GPA Chart</strong>
+                            Complete Node 1 for GPA Chart
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Skill Radar -->
+                    <div class="insight-item">
+                        <div class="insight-icon {% if data.has_skills %}unlocked{% endif %}">
+                            <i class="fas fa-spider"></i>
+                        </div>
+                        <div class="insight-label">
+                            {% if data.has_skills %}
+                            <strong><i class="fas fa-check-circle"
+                                    style="color:var(--green);margin-right:4px;font-size:11px;"></i> Skill
+                                Radar</strong>
+                            Unlocked — view on dashboard.
+                            {% else %}
+                            <strong>Skill Radar</strong>
+                            Complete Node 2 for Skill Radar
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Skill Effort Chart -->
+                    <div class="insight-item">
+                        <div class="insight-icon {% if data.has_sessions %}unlocked{% endif %}">
+                            <i class="fas fa-chart-bar"></i>
+                        </div>
+                        <div class="insight-label">
+                            {% if data.has_sessions %}
+                            <strong><i class="fas fa-check-circle"
+                                    style="color:var(--green);margin-right:4px;font-size:11px;"></i> Skill Effort
+                                Chart</strong>
+                            Unlocked — view on dashboard.
+                            {% else %}
+                            <strong>Skill Effort Chart</strong>
+                            Complete Node 3 for Skill Effort Chart
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Career Path Charts -->
+                    <div class="insight-item">
+                        <div class="insight-icon {% if data.has_goals %}unlocked{% endif %}">
+                            <i class="fas fa-project-diagram"></i>
+                        </div>
+                        <div class="insight-label">
+                            {% if data.has_goals %}
+                            <strong><i class="fas fa-check-circle"
+                                    style="color:var(--green);margin-right:4px;font-size:11px;"></i> Career Path
+                                Charts</strong>
+                            Unlocked — view on dashboard.
+                            {% else %}
+                            <strong>Career Path Charts</strong>
+                            Complete Node 4 for Career Path Charts
+                            {% endif %}
+                        </div>
+                    </div>
+
+                </div><!-- /insights-panel -->
+
+            </div><!-- /ob-main -->
+
+            <!-- Begin Journey CTA -->
+            <div class="journey-cta">
+                {% set first_incomplete = '/student/goals-grades' %}
+                {% if not data.has_grades %}
+                {% set first_incomplete = '/student/goals-grades' %}
+                {% elif not data.has_skills %}
+                {% set first_incomplete = '/student/goals-grades#skills' %}
+                {% elif not data.has_sessions %}
+                {% set first_incomplete = '/student/weekly-routine' %}
+                {% elif not data.has_goals %}
+                {% set first_incomplete = '/student/goals-grades#goals' %}
+                {% endif %}
+                <a href="{{ first_incomplete }}" class="btn-begin">
+                    <i class="fas fa-arrow-right"></i> Begin Journey
+                </a>
+            </div>
+
+        </div><!-- /ob-container -->
+    </div><!-- /ob-page -->
+
+    <!-- ═══ Browse First Overlay ═══ -->
+    <div class="browse-overlay" id="browse-overlay">
+        <div class="browse-header">
+            <h2><i class="fas fa-eye" style="margin-right:8px;color:var(--blue);"></i>Quick Preview</h2>
+            <p>Here's what each section of your dashboard looks like. Complete onboarding to unlock live data!</p>
         </div>
 
-        {% if data.steps_done == 3 %}
-        <div class="all-done">
-            <i class="fas fa-star"></i>
-            <h3>Almost there — 1 step left!</h3>
-            <p>Complete the last step to activate all charts on your dashboard.</p>
-        </div>
-        {% endif %}
+        <div class="browse-grid">
 
-        <!-- Steps -->
-        <div class="steps-list">
-
-            <!-- Step 1: Add Grades -->
-            <a href="/student/goals-grades" class="step-card {% if data.has_grades %}done{% endif %}">
-                <div class="step-icon {% if data.has_grades %}done-icon{% else %}blue{% endif %}">
-                    <i class="fas {% if data.has_grades %}fa-check{% else %}fa-graduation-cap{% endif %}"></i>
+            <!-- ═══ Dashboard skeleton ═══ -->
+            <div class="skel-card">
+                <div class="skel-titlebar">
+                    <div class="skel-dot"></div>
+                    <div class="skel-dot"></div>
+                    <div class="skel-dot"></div>
+                    <div class="skel-tab"></div>
                 </div>
-                <div class="step-body">
-                    <div class="step-title">Add Your First Grade</div>
-                    <div class="step-desc">
-                        {% if data.has_grades %}
-                        Grades added ✓ — CGPA Trend and Course Distribution charts are ready.
-                        {% else %}
-                        Go to Goals &amp; Grades → Add Grade. Enter at least 1 course with a grade to activate CGPA
-                        charts.
-                        {% endif %}
+                <div class="skel-body">
+                    <!-- Page title -->
+                    <div class="sk-line thick w60"></div>
+                    <div class="sk-line sm w40" style="margin-top:-6px;"></div>
+                    <!-- 4 Quick-stat cards row -->
+                    <div class="sk-row col4">
+                        <div class="sk-stat"><div class="sk-stat-icon blue"></div><div class="sk-stat-lines"><div class="sk-line w60" style="height:6px;"></div><div class="sk-line xs w40"></div></div></div>
+                        <div class="sk-stat"><div class="sk-stat-icon green"></div><div class="sk-stat-lines"><div class="sk-line w60" style="height:6px;"></div><div class="sk-line xs w40"></div></div></div>
+                        <div class="sk-stat"><div class="sk-stat-icon purple"></div><div class="sk-stat-lines"><div class="sk-line w60" style="height:6px;"></div><div class="sk-line xs w40"></div></div></div>
+                        <div class="sk-stat"><div class="sk-stat-icon amber"></div><div class="sk-stat-lines"><div class="sk-line w60" style="height:6px;"></div><div class="sk-line xs w40"></div></div></div>
+                    </div>
+                    <!-- Row 1: 2 big chart cards -->
+                    <div class="sk-row">
+                        <div class="sk-block tall" style="min-height:66px;"></div>
+                        <div class="sk-block tall" style="min-height:66px;"></div>
+                    </div>
+                    <!-- Row 2: 3 smaller chart cards -->
+                    <div class="sk-row col3">
+                        <div class="sk-block" style="min-height:50px;"></div>
+                        <div class="sk-block" style="min-height:50px;"></div>
+                        <div class="sk-block" style="min-height:50px;"></div>
+                    </div>
+                    <!-- Row 3: 3 bottom cards -->
+                    <div class="sk-row col3">
+                        <div class="sk-block short"></div>
+                        <div class="sk-block short"></div>
+                        <div class="sk-block short"></div>
                     </div>
                 </div>
-                <div class="step-status {% if data.has_grades %}done-badge{% else %}pending-badge{% endif %}">
-                    <i class="fas {% if data.has_grades %}fa-check{% else %}fa-chevron-right{% endif %}"></i>
+                <div class="skel-label">
+                    <i class="fas fa-chart-line lab-icon-blue"></i>
+                    <div><span>Dashboard</span><small>Charts, GPA trends & analytics</small></div>
                 </div>
-            </a>
+            </div>
 
-            <!-- Step 2: Add Skills -->
-            <a href="/student/goals-grades#skills" class="step-card {% if data.has_skills %}done{% endif %}">
-                <div class="step-icon {% if data.has_skills %}done-icon{% else %}green{% endif %}">
-                    <i class="fas {% if data.has_skills %}fa-check{% else %}fa-crosshairs{% endif %}"></i>
+            <!-- ═══ Weekly Routine skeleton ═══ -->
+            <div class="skel-card">
+                <div class="skel-titlebar">
+                    <div class="skel-dot"></div>
+                    <div class="skel-dot"></div>
+                    <div class="skel-dot"></div>
+                    <div class="skel-tab"></div>
                 </div>
-                <div class="step-body">
-                    <div class="step-title">Select At Least 3 Skills</div>
-                    <div class="step-desc">
-                        {% if data.has_skills %}
-                        Skills saved ✓ — Skill Radar chart is active.
-                        {% else %}
-                        Go to Goals &amp; Grades → Skills section. Pick skills that reflect your strengths to activate
-                        the radar chart.
-                        {% endif %}
+                <div class="skel-body">
+                    <!-- Page title -->
+                    <div class="sk-line thick w50"></div>
+                    <div class="sk-line sm w70" style="margin-top:-6px;"></div>
+                    <!-- Form card + 3 stat cards row -->
+                    <div style="display:grid; grid-template-columns:1.3fr 1fr; gap:10px;">
+                        <!-- Form card -->
+                        <div class="sk-step-card" style="gap:6px;">
+                            <div class="sk-line sm w60"></div>
+                            <div class="sk-field"></div>
+                            <div class="sk-row" style="gap:6px;"><div class="sk-field"></div><div class="sk-field"></div></div>
+                            <div class="sk-field" style="height:24px;"></div>
+                            <div style="display:flex; gap:6px; justify-content:flex-end; margin-top:2px;">
+                                <div class="sk-pill" style="width:50px; height:18px;"></div>
+                                <div class="sk-pill" style="width:60px; height:18px; background:rgba(74,124,220,0.2);"></div>
+                            </div>
+                        </div>
+                        <!-- Stats column -->
+                        <div style="display:flex; flex-direction:column; gap:6px;">
+                            <div class="sk-stat"><div class="sk-stat-icon purple"></div><div class="sk-stat-lines"><div class="sk-line w70" style="height:6px;"></div><div class="sk-line xs w40"></div></div></div>
+                            <div class="sk-stat"><div class="sk-stat-icon green"></div><div class="sk-stat-lines"><div class="sk-line w60" style="height:6px;"></div><div class="sk-line xs w30"></div></div></div>
+                            <div class="sk-stat"><div class="sk-stat-icon blue"></div><div class="sk-stat-lines"><div class="sk-line w80" style="height:6px;"></div><div class="sk-line xs w50"></div></div></div>
+                        </div>
+                    </div>
+                    <!-- Calendar grid -->
+                    <div class="sk-step-card" style="padding:8px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding:0 6px 4px;">
+                            <div class="sk-line sm w30"></div>
+                            <div style="display:flex; gap:4px;"><div class="sk-pill sm" style="width:20px;"></div><div class="sk-pill sm" style="width:32px;"></div><div class="sk-pill sm" style="width:20px;"></div></div>
+                        </div>
+                        <div class="sk-cal-grid">
+                            <div class="sk-cal-cell"></div><div class="sk-cal-cell"></div><div class="sk-cal-cell"></div><div class="sk-cal-cell"></div><div class="sk-cal-cell"></div><div class="sk-cal-cell active"></div><div class="sk-cal-cell"></div>
+                            <div class="sk-cal-cell"></div><div class="sk-cal-cell active"></div><div class="sk-cal-cell"></div><div class="sk-cal-cell"></div><div class="sk-cal-cell active"></div><div class="sk-cal-cell"></div><div class="sk-cal-cell"></div>
+                            <div class="sk-cal-cell"></div><div class="sk-cal-cell"></div><div class="sk-cal-cell active"></div><div class="sk-cal-cell"></div><div class="sk-cal-cell"></div><div class="sk-cal-cell"></div><div class="sk-cal-cell active"></div>
+                        </div>
                     </div>
                 </div>
-                <div class="step-status {% if data.has_skills %}done-badge{% else %}pending-badge{% endif %}">
-                    <i class="fas {% if data.has_skills %}fa-check{% else %}fa-chevron-right{% endif %}"></i>
+                <div class="skel-label">
+                    <i class="fas fa-calendar-alt lab-icon-green"></i>
+                    <div><span>Weekly Routine</span><small>Study sessions & time tracking</small></div>
                 </div>
-            </a>
+            </div>
 
-            <!-- Step 3: Log Study Session -->
-            <a href="/student/weekly-routine" class="step-card {% if data.has_sessions %}done{% endif %}">
-                <div class="step-icon {% if data.has_sessions %}done-icon{% else %}amber{% endif %}">
-                    <i class="fas {% if data.has_sessions %}fa-check{% else %}fa-calendar-alt{% endif %}"></i>
+            <!-- ═══ Goals & Grades skeleton ═══ -->
+            <div class="skel-card">
+                <div class="skel-titlebar">
+                    <div class="skel-dot"></div>
+                    <div class="skel-dot"></div>
+                    <div class="skel-dot"></div>
+                    <div class="skel-tab"></div>
                 </div>
-                <div class="step-body">
-                    <div class="step-title">Log 1 Study Session</div>
-                    <div class="step-desc">
-                        {% if data.has_sessions %}
-                        Session logged ✓ — Weekly Hours and Skill Effort charts will reflect recent sessions.
-                        {% else %}
-                        Go to Weekly Routine and add a study session. Tag it with a skill to also power the Skill Effort
-                        chart.
-                        {% endif %}
+                <div class="skel-body">
+                    <!-- Page title -->
+                    <div class="sk-line thick w60"></div>
+                    <div class="sk-line sm w80" style="margin-top:-6px;"></div>
+                    <!-- Step 1: Department -->
+                    <div class="sk-step-card">
+                        <div class="sk-step-header">
+                            <div class="sk-step-num" style="background:rgba(74,124,220,0.15);"></div>
+                            <div class="sk-line sm w40"></div>
+                        </div>
+                        <div class="sk-field" style="height:26px;"></div>
+                        <div class="sk-pills-row">
+                            <div class="sk-pill sm" style="width:55px;"></div>
+                            <div class="sk-pill sm" style="width:68px;"></div>
+                            <div class="sk-pill sm" style="width:48px;"></div>
+                        </div>
+                    </div>
+                    <!-- Step 2: Skills -->
+                    <div class="sk-step-card">
+                        <div class="sk-step-header">
+                            <div class="sk-step-num" style="background:rgba(61,184,140,0.15);"></div>
+                            <div class="sk-line sm w30"></div>
+                        </div>
+                        <div class="sk-pills-row">
+                            <div class="sk-pill sm" style="width:52px; background:rgba(61,184,140,0.15);"></div>
+                            <div class="sk-pill sm" style="width:64px; background:rgba(61,184,140,0.15);"></div>
+                            <div class="sk-pill sm" style="width:44px; background:rgba(61,184,140,0.15);"></div>
+                        </div>
+                        <div style="display:flex; gap:6px; align-items:center;"><div class="sk-field" style="flex:1; height:24px;"></div><div class="sk-pill" style="width:48px; height:22px; background:rgba(74,124,220,0.2);"></div></div>
+                    </div>
+                    <!-- Step 3: Grade input -->
+                    <div class="sk-step-card">
+                        <div class="sk-step-header">
+                            <div class="sk-step-num" style="background:rgba(230,166,64,0.15);"></div>
+                            <div class="sk-line sm w40"></div>
+                        </div>
+                        <div class="sk-row col3" style="gap:6px;"><div class="sk-field"></div><div class="sk-field"></div><div class="sk-field"></div></div>
+                    </div>
+                    <!-- Step 4: Records table -->
+                    <div class="sk-step-card" style="gap:4px;">
+                        <div class="sk-step-header">
+                            <div class="sk-step-num" style="background:rgba(139,108,194,0.15);"></div>
+                            <div class="sk-line sm w50"></div>
+                        </div>
+                        <div class="sk-sep"></div>
+                        <div class="sk-bar-row"><div class="sk-line xs w20"></div><div class="sk-bar" style="flex:1; width:75%;"></div></div>
+                        <div class="sk-bar-row"><div class="sk-line xs w20"></div><div class="sk-bar" style="flex:1; width:60%;"></div></div>
+                        <div class="sk-bar-row"><div class="sk-line xs w20"></div><div class="sk-bar" style="flex:1; width:85%;"></div></div>
                     </div>
                 </div>
-                <div class="step-status {% if data.has_sessions %}done-badge{% else %}pending-badge{% endif %}">
-                    <i class="fas {% if data.has_sessions %}fa-check{% else %}fa-chevron-right{% endif %}"></i>
+                <div class="skel-label">
+                    <i class="fas fa-bullseye lab-icon-amber"></i>
+                    <div><span>Goals & Grades</span><small>Career goals, skills & CGPA</small></div>
                 </div>
-            </a>
+            </div>
 
-            <!-- Step 4: Set a Career Goal -->
-            <a href="/student/goals-grades#goals" class="step-card {% if data.has_goals %}done{% endif %}">
-                <div class="step-icon {% if data.has_goals %}done-icon{% else %}purple{% endif %}">
-                    <i class="fas {% if data.has_goals %}fa-check{% else %}fa-bullseye{% endif %}"></i>
+            <!-- ═══ Weekly Check-in skeleton ═══ -->
+            <div class="skel-card">
+                <div class="skel-titlebar">
+                    <div class="skel-dot"></div>
+                    <div class="skel-dot"></div>
+                    <div class="skel-dot"></div>
+                    <div class="skel-tab"></div>
                 </div>
-                <div class="step-body">
-                    <div class="step-title">Set 1 Career Goal</div>
-                    <div class="step-desc">
-                        {% if data.has_goals %}
-                        Goal set ✓ — Career Compatibility and Goal Achievability charts are active.
-                        {% else %}
-                        Go to Goals &amp; Grades → Goals section and pick a career path to unlock career charts.
-                        {% endif %}
+                <div class="skel-body">
+                    <!-- Page title -->
+                    <div class="sk-line thick w60"></div>
+                    <div class="sk-line sm w80" style="margin-top:-6px;"></div>
+                    <!-- Productivity slider row -->
+                    <div class="sk-step-card">
+                        <div class="sk-line sm w50"></div>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <div class="sk-line xs" style="flex:1;"></div>
+                            <div class="sk-circle" style="width:24px; height:24px; background:rgba(74,124,220,0.15);"></div>
+                        </div>
+                    </div>
+                    <!-- Mood circles row -->
+                    <div class="sk-step-card">
+                        <div class="sk-line sm w40"></div>
+                        <div style="display:flex; gap:10px; justify-content:center; padding:4px 0;">
+                            <div class="sk-circle" style="width:30px; height:30px;"></div>
+                            <div class="sk-circle" style="width:30px; height:30px;"></div>
+                            <div class="sk-circle" style="width:30px; height:30px; background:rgba(230,166,64,0.15);"></div>
+                            <div class="sk-circle" style="width:30px; height:30px;"></div>
+                            <div class="sk-circle" style="width:30px; height:30px;"></div>
+                        </div>
+                    </div>
+                    <!-- Difficulty radio row -->
+                    <div class="sk-step-card">
+                        <div class="sk-line sm w50"></div>
+                        <div style="display:flex; gap:8px;">
+                            <div class="sk-pill sm" style="width:44px; background:rgba(61,184,140,0.12);"></div>
+                            <div class="sk-pill sm" style="width:52px; background:rgba(230,166,64,0.12);"></div>
+                            <div class="sk-pill sm" style="width:40px; background:rgba(239,68,68,0.10);"></div>
+                        </div>
+                    </div>
+                    <!-- Goals achieved textarea -->
+                    <div class="sk-step-card">
+                        <div class="sk-line sm w60"></div>
+                        <div class="sk-field tall"></div>
+                    </div>
+                    <!-- Submit button -->
+                    <div style="display:flex; justify-content:flex-end;">
+                        <div class="sk-pill" style="width:80px; height:24px; background:rgba(74,124,220,0.2);"></div>
                     </div>
                 </div>
-                <div class="step-status {% if data.has_goals %}done-badge{% else %}pending-badge{% endif %}">
-                    <i class="fas {% if data.has_goals %}fa-check{% else %}fa-chevron-right{% endif %}"></i>
+                <div class="skel-label">
+                    <i class="fas fa-clipboard-check lab-icon-purple"></i>
+                    <div><span>Weekly Check-in</span><small>Reflections, mood & progress</small></div>
                 </div>
-            </a>
+            </div>
 
         </div>
 
-        <!-- CTA Row -->
-        <div class="cta-row">
-            <a href="/student/dashboard" class="btn-primary">
-                <i class="fas fa-chart-line"></i>
-                Go to Dashboard
-            </a>
-            <a href="/student/goals-grades" class="btn-ghost">
-                <i class="fas fa-arrow-right"></i>
-                Start with Grades &amp; Goals
-            </a>
-        </div>
-
-        <!-- Tip -->
-        <div class="tip-banner">
-            <i class="fas fa-lightbulb"></i>
-            <span>You can access the dashboard at any time — charts will show an empty-state guide for any data you
-                haven't added yet. Complete all 4 steps to see the full picture.</span>
-        </div>
-
+        <button class="browse-return" onclick="closeBrowseOverlay()">
+            <i class="fas fa-arrow-left"></i> Return
+        </button>
     </div>
+
+    <!-- Footer -->
+    <div class="ob-footer">
+        <div class="footer-actions">
+            <span>Maybe Later?</span>
+            <a href="javascript:void(0)" class="btn-browse" onclick="openBrowseOverlay()">Browse First</a>
+        </div>
+    </div>
+
+    <script>
+        // ── Draw SVG curve connectors between the nodes ──
+        function drawConnectors() {
+            const svg = document.getElementById('connectors');
+            const map = document.getElementById('journey-map');
+            if (!svg || !map) return;
+
+            const mapRect = map.getBoundingClientRect();
+            svg.setAttribute('width', mapRect.width);
+            svg.setAttribute('height', mapRect.height);
+            svg.setAttribute('viewBox', `0 0 ${mapRect.width} ${mapRect.height}`);
+
+            svg.innerHTML = ''; // clear previous
+
+            const pairs = [
+                { from: 'node-1', to: 'node-2', color: '#4a7cdc' },
+                { from: 'node-2', to: 'node-3', color: '#3db88c' },
+                { from: 'node-3', to: 'node-4', color: '#e6a640' },
+            ];
+
+            pairs.forEach(({ from, to, color }) => {
+                const a = document.getElementById(from);
+                const b = document.getElementById(to);
+                if (!a || !b) return;
+
+                const aRect = a.getBoundingClientRect();
+                const bRect = b.getBoundingClientRect();
+
+                // Calculate center bottom of source and center top of target relative to map
+                const x1 = aRect.left + aRect.width / 2 - mapRect.left;
+                const y1 = aRect.top + aRect.height - mapRect.top;
+                const x2 = bRect.left + bRect.width / 2 - mapRect.left;
+                const y2 = bRect.top - mapRect.top;
+
+                const midY = (y1 + y2) / 2;
+
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                path.setAttribute('d', `M ${x1} ${y1} C ${x1} ${midY}, ${x2} ${midY}, ${x2} ${y2}`);
+                path.setAttribute('stroke', color);
+                svg.appendChild(path);
+            });
+        }
+
+        // Draw on load and resize
+        window.addEventListener('load', () => setTimeout(drawConnectors, 100));
+        window.addEventListener('resize', drawConnectors);
+
+        // ── Browse overlay toggle ──
+        function openBrowseOverlay() {
+            document.getElementById('browse-overlay').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeBrowseOverlay() {
+            document.getElementById('browse-overlay').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    </script>
+
 </body>
 
 </html>
