@@ -9,7 +9,7 @@ Re-exports every model class so existing code continues to work:
 from core.extensions import db  # noqa: F401
 
 # ── Identity ──
-from models.user import User, UserToken  # noqa: F401
+from models.user import User, UserToken, PasswordResetToken  # noqa: F401
 
 # ── Student ──
 from models.student import StudentProfile, AcademicMetric, StudentSettings  # noqa: F401

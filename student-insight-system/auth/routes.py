@@ -91,3 +91,41 @@ def logout():
     resp.headers["Pragma"] = "no-cache"
     resp.headers["Expires"] = "0"
     return resp
+
+
+@auth_bp.route("/forgot-password", methods=["GET", "POST"])
+def forgot_password():
+    if request.method == "POST":
+        email = request.form.get("email", "").strip()
+        AuthService.request_password_reset(email)
+        # Always show the same message for privacy
+        return render_template("forgot_password.html", submitted=True)
+    return render_template("forgot_password.html", submitted=False)
+
+
+@auth_bp.route("/reset-password/<token>", methods=["GET", "POST"])
+def reset_password(token):
+    # Validate token on GET
+    token_obj = AuthService.validate_reset_token(token)
+    if not token_obj:
+        return render_template("reset_password.html", invalid=True, token=token)
+
+    if request.method == "POST":
+        password = request.form.get("password", "")
+        confirm = request.form.get("confirm_password", "")
+
+        if len(password) < 6:
+            return render_template("reset_password.html", invalid=False, token=token,
+                                   error="Password must be at least 6 characters.")
+
+        if password != confirm:
+            return render_template("reset_password.html", invalid=False, token=token,
+                                   error="Passwords do not match.")
+
+        try:
+            AuthService.reset_password(token, password)
+            return render_template("reset_password.html", success=True, token=token)
+        except Exception as e:
+            return render_template("reset_password.html", invalid=True, token=token)
+
+    return render_template("reset_password.html", invalid=False, token=token)
