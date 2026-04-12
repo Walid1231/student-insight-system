@@ -1919,6 +1919,43 @@ html[data-theme="dark"] .burnout-score-badge.green {
     border-color: rgba(16, 185, 129, .35);
 }
 
+/* Form Inputs Dark Mode Overrides */
+html[data-theme="dark"] #tableSearch,
+html[data-theme="dark"] .modal-search,
+html[data-theme="dark"] .notes-search,
+html[data-theme="dark"] #noteContent,
+html[data-theme="dark"] .form-input {
+    background: #1a1d27 !important;
+    color: #e5e7eb !important;
+    border-color: #2d3241 !important;
+}
+
+html[data-theme="dark"] #tableSearch::placeholder,
+html[data-theme="dark"] .modal-search::placeholder,
+html[data-theme="dark"] .notes-search::placeholder,
+html[data-theme="dark"] #noteContent::placeholder,
+html[data-theme="dark"] .form-input::placeholder {
+    color: #6b7280 !important;
+}
+
+/* Heatmap Scroller Dark Mode */
+html[data-theme="dark"] .heatmap-wrap::-webkit-scrollbar {
+    height: 8px;
+}
+html[data-theme="dark"] .heatmap-wrap::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05); 
+    border-radius: 4px;
+}
+html[data-theme="dark"] .heatmap-wrap::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2); 
+    border-radius: 4px;
+}
+html[data-theme="dark"] .heatmap-wrap::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+
+
 
 /* ════════════════════════════════════════════════════════════════
    TEACHER BENTO — Responsive

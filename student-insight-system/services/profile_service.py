@@ -81,6 +81,25 @@ class ProfileService:
         if not user:
             raise NotFoundError("User not found")
 
+        student = StudentProfile.query.filter_by(user_id=user.id).first()
+        if student:
+            s_id = student.id
+            from models.teacher import TeacherAssignment, AssignmentTransferRequest
+            from models.alerts import Attendance, StudentNote, StudentAlert
+            from models.skills import ActionPlan
+            from models.assessments import AssignmentSubmission, AssessmentResult
+            from models.analytics import StudentInsight
+            
+            TeacherAssignment.query.filter_by(student_id=s_id).delete()
+            AssignmentTransferRequest.query.filter_by(student_id=s_id).delete()
+            Attendance.query.filter_by(student_id=s_id).delete()
+            StudentNote.query.filter_by(student_id=s_id).delete()
+            StudentAlert.query.filter_by(student_id=s_id).delete()
+            ActionPlan.query.filter_by(student_id=s_id).delete()
+            AssignmentSubmission.query.filter_by(student_id=s_id).delete()
+            AssessmentResult.query.filter_by(student_id=s_id).delete()
+            StudentInsight.query.filter_by(student_id=s_id).delete()
+
         db.session.delete(user)
         db.session.commit()
         logger.info("User %d and profile deleted", user.id)

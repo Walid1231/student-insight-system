@@ -130,7 +130,13 @@
                                         <span class="badge-optional">optional</span>
                                     </label>
                                     <input type="text" name="related_skill"
-                                        placeholder="e.g., Machine Learning, Web Development" class="form-input">
+                                        placeholder="e.g., Machine Learning, Web Development" class="form-input"
+                                        list="skills-list" autocomplete="off">
+                                    <datalist id="skills-list">
+                                        {% for s in all_skills %}
+                                        <option value="{{ s.skill_name }}">
+                                        {% endfor %}
+                                    </datalist>
                                 </div>
                             </div>
 

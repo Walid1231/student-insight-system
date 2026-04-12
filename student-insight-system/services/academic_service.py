@@ -190,7 +190,8 @@ class AcademicService:
         student = AcademicService._get_student(user_id)
 
         catalog_course = CourseCatalog.query.filter(
-            db.func.lower(CourseCatalog.course_name) == data.course_name.lower()
+            db.func.lower(CourseCatalog.course_name) == data.course_name.lower(),
+            CourseCatalog.course_type == data.course_type
         ).first()
 
         if not catalog_course:
@@ -385,6 +386,10 @@ class AcademicService:
         )
         db.session.add(new_ss)
         db.session.commit()
+        
+        from dashboard.recalculate import recalculate_weekly_update
+        recalculate_weekly_update(student.id)
+        
         logger.info("Skill '%s' added for student_id=%d", name, student.id)
 
     @staticmethod
@@ -397,6 +402,10 @@ class AcademicService:
         if ss:
             db.session.delete(ss)
             db.session.commit()
+
+            from dashboard.recalculate import recalculate_weekly_update
+            recalculate_weekly_update(student.id)
+
             logger.info("Skill id=%d removed for student_id=%d",
                          student_skill_id, student.id)
 
