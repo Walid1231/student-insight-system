@@ -491,7 +491,10 @@ def api_department_data():
 @require_role("student")
 def student_dashboard():
     user_id = get_jwt_identity()
-    data = DashboardService.get_dashboard_data(user_id)
+    try:
+        data = DashboardService.get_dashboard_data(user_id)
+    except NotFoundError:
+        return redirect(url_for('auth.logout'))
 
     if data.pop("_is_new_student", False):
         return redirect(url_for('dashboard.onboarding_checklist'))
@@ -683,7 +686,10 @@ def student_profile():
             })
         return redirect(url_for('dashboard.student_profile'))
 
-    student = ProfileService.get_profile(user_id)
+    try:
+        student = ProfileService.get_profile(user_id)
+    except NotFoundError:
+        return redirect("/")
     return render_template("student_profile.html", student=student, dept_groups=DEPT_GROUPS)
 
 
@@ -692,7 +698,12 @@ def student_profile():
 def delete_profile():
     user_id = get_jwt_identity()
     ProfileService.delete_profile(user_id)
-    return jsonify({"success": True})
+    resp = jsonify({"success": True})
+    from flask_jwt_extended import unset_jwt_cookies
+    unset_jwt_cookies(resp)
+    resp.delete_cookie("access_token_cookie", path="/")
+    resp.delete_cookie("csrf_access_token", path="/")
+    return resp
 
 
 @dashboard_bp.route("/student/update-data", methods=["GET"])

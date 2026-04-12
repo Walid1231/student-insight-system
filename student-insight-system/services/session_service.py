@@ -10,7 +10,7 @@ from collections import defaultdict
 
 from core.errors import NotFoundError
 from core.extensions import db
-from models import StudentProfile, StudySession
+from models import StudentProfile, StudySession, Skill
 
 logger = logging.getLogger(__name__)
 
@@ -73,6 +73,7 @@ class SessionService:
             "top_topic_count": top_topic[1] if top_topic else 0,
             "current_year": today.year,
             "current_month": today.month,
+            "all_skills": Skill.query.order_by(Skill.skill_name).all(),
         }
 
     @staticmethod

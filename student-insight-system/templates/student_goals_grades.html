@@ -2319,6 +2319,24 @@
             // Fetch updated records from state
             const state = await api('/api/gg/state');
             if (state.ok) renderRecords(state.records);
+
+            // Safely add to datalist if it doesn't exist
+            const dl = document.getElementById('course-list');
+            if (dl) {
+                let exists = false;
+                for (let i = 0; i < dl.options.length; i++) {
+                    if (dl.options[i].value.toLowerCase() === course.toLowerCase() && dl.options[i].getAttribute('data-type') === type) {
+                        exists = true; break;
+                    }
+                }
+                if (!exists) {
+                    const opt = document.createElement('option');
+                    opt.value = course;
+                    opt.setAttribute('data-type', type);
+                    opt.setAttribute('data-credits', credits);
+                    dl.appendChild(opt);
+                }
+            }
         }
 
         async function deleteGrade(recordId) {
@@ -2380,16 +2398,6 @@
                     </td>
                 </tr>
             `).join('');
-
-            // Update datalist deduped
-            const dl = document.getElementById('course-list');
-            if (dl) {
-                const seen = new Set();
-                dl.innerHTML = recs.filter(r => {
-                    if (seen.has(r.course_name)) return false;
-                    seen.add(r.course_name); return true;
-                }).map(r => `<option value="${esc(r.course_name)}">`).join('');
-            }
         }
 
         // ═══════════════════════════════════════════════════════════
