@@ -165,7 +165,7 @@
                             <div class="setting-item">
                                 <div class="setting-info">
                                     <span class="setting-label">Change Password</span>
-                                    <span class="setting-desc">Last changed 3 months ago</span>
+                                    <span class="setting-desc"></span>
                                 </div>
                                 <button class="btn btn-outline btn-sm" onclick="openPasswordModal()">Update</button>
                             </div>
@@ -189,7 +189,9 @@
                                     <span class="setting-desc">Get a summary of your weekly progress.</span>
                                 </div>
                                 <label class="switch">
-                                    <input type="checkbox" onchange="updatePref('email_weekly_report', this.checked)" {% if not profile.settings or profile.settings.email_weekly_report %}checked{% endif %}>
+                                    <input type="checkbox" onchange="updatePref('email_weekly_report', this.checked)" {%
+                                        if not profile.settings or profile.settings.email_weekly_report %}checked{%
+                                        endif %}>
                                     <span class="slider"></span>
                                 </label>
                             </div>
@@ -199,7 +201,9 @@
                                     <span class="setting-desc">When a teacher adds a new task.</span>
                                 </div>
                                 <label class="switch">
-                                    <input type="checkbox" onchange="updatePref('email_new_assignments', this.checked)" {% if not profile.settings or profile.settings.email_new_assignments %}checked{% endif %}>
+                                    <input type="checkbox" onchange="updatePref('email_new_assignments', this.checked)"
+                                        {% if not profile.settings or profile.settings.email_new_assignments %}checked{%
+                                        endif %}>
                                     <span class="slider"></span>
                                 </label>
                             </div>
@@ -231,7 +235,8 @@
                                     <span class="setting-desc">Make the navigation sidebar smaller.</span>
                                 </div>
                                 <label class="switch">
-                                    <input type="checkbox" onchange="updatePref('compact_sidebar', this.checked)" {% if profile.settings and profile.settings.compact_sidebar %}checked{% endif %}>
+                                    <input type="checkbox" onchange="updatePref('compact_sidebar', this.checked)" {% if
+                                        profile.settings and profile.settings.compact_sidebar %}checked{% endif %}>
                                     <span class="slider"></span>
                                 </label>
                             </div>
@@ -245,8 +250,10 @@
         </div>
 
         <!-- Password Modal -->
-        <div id="passwordModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
-            <div style="background:var(--bg-surface, #fff); padding:24px; border-radius:12px; width:400px; max-width:90%;">
+        <div id="passwordModal"
+            style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
+            <div
+                style="background:var(--bg-surface, #fff); padding:24px; border-radius:12px; width:400px; max-width:90%;">
                 <h3 style="margin-top:0;">Change Password</h3>
                 <div class="form-group">
                     <label class="form-label">Current Password</label>
@@ -267,8 +274,8 @@
 
     <script>
         function openPasswordModal() { document.getElementById('passwordModal').style.display = 'flex'; }
-        function closePasswordModal() { 
-            document.getElementById('passwordModal').style.display = 'none'; 
+        function closePasswordModal() {
+            document.getElementById('passwordModal').style.display = 'none';
             document.getElementById('current_pass').value = '';
             document.getElementById('new_pass').value = '';
         }
@@ -276,8 +283,8 @@
         async function submitPasswordChange() {
             const current_password = document.getElementById('current_pass').value;
             const new_password = document.getElementById('new_pass').value;
-            if(!current_password || !new_password) return showToast('Please fill in both fields.', 'error');
-            
+            if (!current_password || !new_password) return showToast('Please fill in both fields.', 'error');
+
             try {
                 const res = await fetch('/api/student/change-password', {
                     method: 'POST',
@@ -285,7 +292,7 @@
                     body: JSON.stringify({ current_password, new_password })
                 });
                 const data = await res.json();
-                if(data.success) {
+                if (data.success) {
                     showToast('Password updated successfully!', 'success');
                     closePasswordModal();
                 } else {
@@ -313,7 +320,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ [key]: value })
                 });
-                
+
                 const data = await res.json();
                 if (!data.success && data.msg) {
                     showToast(data.msg, 'error');
@@ -353,12 +360,12 @@
 
             // Sync sidebar state from DB on profile load
             const dbCompact = {% if profile.settings and profile.settings.compact_sidebar %}true{% else %}false{% endif %};
-            if (localStorage.getItem('sidebarCollapsed') !== String(dbCompact)) {
-                localStorage.setItem('sidebarCollapsed', dbCompact);
-                document.cookie = `sidebar_collapsed=${dbCompact}; path=/; max-age=31536000`;
-                if(dbCompact) document.documentElement.classList.add('sidebar-is-collapsed');
-                else document.documentElement.classList.remove('sidebar-is-collapsed');
-            }
+        if (localStorage.getItem('sidebarCollapsed') !== String(dbCompact)) {
+            localStorage.setItem('sidebarCollapsed', dbCompact);
+            document.cookie = `sidebar_collapsed=${dbCompact}; path=/; max-age=31536000`;
+            if (dbCompact) document.documentElement.classList.add('sidebar-is-collapsed');
+            else document.documentElement.classList.remove('sidebar-is-collapsed');
+        }
         });
     </script>
 </body>
